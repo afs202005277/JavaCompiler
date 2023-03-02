@@ -37,6 +37,8 @@ public class Launcher {
         // Parse stage
         JmmParserResult parserResult = parser.parse(code, config);
 
+        System.out.println(parserResult.getRootNode().toTree());
+
         // Check if there are parsing errors
         TestUtils.noErrors(parserResult.getReports());
 

@@ -53,18 +53,6 @@ public class SimpleParser implements JmmParser {
             // Transforms tokens into a parse tree
             var parser = new JavammParser(tokens);
 
-            ParseTree root = parser.program();
-
-
-            //show AST in terminal
-            System.out.println(root.toStringTree(parser));
-
-            //show AST in GUI
-            TreeViewer viewer = new TreeViewer(
-                    Arrays.asList(parser.getRuleNames()),
-                    root);
-            viewer.open();
-
             // Convert ANTLR CST to JmmNode AST
             return AntlrParser.parse(lex, parser, startingRule)
                     // If there were no errors and a root node was generated, create a JmmParserResult with the node
