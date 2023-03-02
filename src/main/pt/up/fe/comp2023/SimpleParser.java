@@ -11,11 +11,14 @@ import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
 import pt.up.fe.comp2023.JavammLexer;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.gui.TreeViewer;
 import pt.up.fe.comp2023.JavammParser;
 
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Arrays;
 
 /**
  * Copyright 2022 SPeCS.
@@ -50,10 +53,22 @@ public class SimpleParser implements JmmParser {
             // Transforms tokens into a parse tree
             var parser = new JavammParser(tokens);
 
+            ParseTree root = parser.program();
+
+
+            //show AST in terminal
+            System.out.println(root.toStringTree(parser));
+
+            //show AST in GUI
+            TreeViewer viewer = new TreeViewer(
+                    Arrays.asList(parser.getRuleNames()),
+                    root);
+            viewer.open();
+
             // Convert ANTLR CST to JmmNode AST
             return AntlrParser.parse(lex, parser, startingRule)
                     // If there were no errors and a root node was generated, create a JmmParserResult with the node
-                    .map(root -> new JmmParserResult(root, Collections.emptyList(), config))
+                    .map(root2 -> new JmmParserResult(root2, Collections.emptyList(), config))
                     // If there were errors, create an error JmmParserResult without root node
                     .orElseGet(() -> JmmParserResult.newError(new Report(ReportType.WARNING, Stage.SYNTATIC, -1,
                             "There were syntax errors during parsing, terminating")));
