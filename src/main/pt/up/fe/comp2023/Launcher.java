@@ -37,12 +37,15 @@ public class Launcher {
         // Parse stage
         JmmParserResult parserResult = parser.parse(code, config);
 
-        System.out.println(parserResult.getRootNode().toTree());
+        if (parserResult.getRootNode() != null)
+            System.out.println(parserResult.getRootNode().toTree());
+        else {
+            for (pt.up.fe.comp.jmm.report.Report temp : parserResult.getReports()) {
+                System.out.println(temp);
+                System.out.println('\n');
+            }
+        }
 
-        // Check if there are parsing errors
-        TestUtils.noErrors(parserResult.getReports());
-
-        // ... add remaining stages
     }
 
     private static Map<String, String> parseArgs(String[] args) {
