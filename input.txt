@@ -1,7 +1,7 @@
 import io;
 
 class Fac {
-    public int computeFac(int num){
+    public int computeFac(int num, int tmp){
         int num_aux;
         if ( num < 1)
             num_aux = 1;
@@ -11,6 +11,6 @@ class Fac {
     }
 
     public static void main(String[] args){
-        io.println (new Fac().computeFac (10));
+        io.println(new Fac().computeFac(10));
     }
 }

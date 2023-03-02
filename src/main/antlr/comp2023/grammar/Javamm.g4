@@ -14,70 +14,76 @@ program
     ;
 
 importDeclaration
-    : 'import' ID ( '.' ID )* ';'
+    : 'import' importedClass = ID ( '.' ID )* ';'
     ;
 
 classDeclaration
-    : 'class' ID ('extends' ID)? '{' ( varDeclaration )* ( methodDeclaration )* '}'
+    : 'class' className = ID ('extends' extendedClassName = ID)? '{' ( varDeclaration )* ( methodDeclaration )* '}'
     ;
 
 varDeclaration
-    : type ID ';'
+    : type variableName = ID ';'
+    ;
+
+returnStmt
+    : 'return' expression
+    ;
+
+argument
+    : typeDecl argumentName=ID #MethodArgument
     ;
 
 methodDeclaration
-    : ('public')? type ID '(' ( type ID ( ',' type ID )* )? ')' '{' ( varDeclaration )* ( statement )* 'return' expression ';' '}'
-    | ('public')? 'static' 'void' 'main' '(' 'String' '[' ']' ID ')' '{' ( varDeclaration )* ( statement )* '}'
+    : (accessModifier='public')? typeRet methodName = ID '(' ( argument ( ',' argument )* )? ')' '{' ( varDeclaration )* ( statement )* returnStmt ';' '}'
+    | (accessModifier='public')? isStatic='static' 'void' name='main' '(' 'String' '[' ']' argumentName=ID ')' '{' ( varDeclaration )* ( statement )* '}'
     ;
+
+typeRet
+    : type #ReturnType
+    ;
+
+typeDecl
+    : type #DeclarationType
+    ;
+
 type
-    : 'int' '[' ']'
-    | 'boolean'
-    | 'int'
-    | 'String' // extra
-    | ID
+    : 'int' '[' ']' #IntegerArray
+    | 'boolean' #Boolean
+    | 'int' #Integer
+    | 'String' #String// extra
+    | ID #VariableID
     ;
+
+elseStmt
+    : 'else' statement #elseStmtBody
+    ;
+
+condition : expression;
 statement
-    : '{' ( statement )* '}'
-    | 'if' '(' expression ')' statement 'else' statement
-    | 'while' '(' expression ')' statement
-    | expression ';'
-    | ID '=' expression ';'
-    | ID '[' expression ']' '=' expression ';'
+    : '{' ( statement )* '}' #Body
+    | 'if' '(' condition ')' statement elseStmt? #IfStatement
+    | 'while' '(' expression ')' statement #WhileLoop
+    | expression ';' #Stmt
+    | variable = ID '=' expression ';' #Assignment
+    | ID '[' expression ']' '=' expression ';' #Assignment
     ;
 
 expression
-    : '(' expression ')'
-    | expression '[' expression ']'
-    | '!' expression
-    | expression ( '*' | '/' ) expression
-    | expression ('+' | '-' ) expression
-    | expression '<' expression
-    | expression '&&' expression
-    | expression '.' 'length'
-    | expression '.' ID '(' ( expression ( ',' expression )* )? ')'
-    | 'new' 'int' '[' expression ']'
-    | 'new' ID '(' ')'
-    | INTEGER
-    | 'true'
-    | 'false'
-    | ID
-    | 'this'
+    : '(' expression ')' #Parentheses
+    | expression '[' expression ']' #ArrayIndex
+    | '!' expression #UnaryOp
+    | value=expression op=( '*' | '/' ) value=expression #BinaryOp
+    | value=expression op=('+' | '-' ) value=expression #BinaryOp
+    | value=expression op='<' value=expression #BinaryOp
+    | value=expression op='&&' value=expression #BinaryOp
+    | expression '.' 'length' #Length
+    | expression '.' method = ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
+    | 'new' 'int' '[' expression ']' #IntArray
+      | 'new' objectName = ID '(' ')' #ObjectInstantiation
+      | integer=INTEGER #Literal
+      | bool='true' #Literal
+      | bool='false' #Literal
+      | id=ID #Literal
+      | id='this' #Literal
     ;
 
-/*
-Original
-expression
-    : expression ('&&' | '<' | '+' | '-' | '*' | '/' ) expression
-    | expression '[' expression ']'
-    | expression '.' 'length'
-    | expression '.' ID '(' ( expression ( ',' expression )* )? ')'
-    | 'new' 'int' '[' expression ']'
-    | 'new' ID '(' ')'
-    | '!' expression
-    | '(' expression ')'
-    | INTEGER
-    | 'true'
-    | 'false'
-    | ID
-    | 'this'
-    ;*/
