@@ -6,7 +6,6 @@ grammar Javamm;
 
 INTEGER : [0-9]+ ;
 ID : [a-zA-Z_][a-zA-Z_0-9]* ;
-//COMMENT : //.*|/\*(.|\n)*\*/ -> skip ;
 
 WS : [ \t\n\r\f]+ -> skip ;
 
@@ -15,80 +14,56 @@ program
     ;
 
 importDeclaration
-    : 'import' ID ( '.' ID )* ';'
+    : 'import' importedClass = ID ( '.' ID )* ';'
     ;
 
 classDeclaration
-    : 'class' ID ('extends' ID)? '{' ( varDeclaration )* ( methodDeclaration )* '}'
+    : 'class' className = ID ('extends' extendedClassName = ID)? '{' ( varDeclaration )* ( methodDeclaration )* '}'
     ;
 
 varDeclaration
-    : type ID ';'
-    | type statement ';'
+    : type variableName = ID ';'
     ;
 
 methodDeclaration
-    : ('public')? type ID '(' ( type ID ( ',' type ID )* )? ')' '{' ( varDeclaration )* ( statement )* 'return' expression ';' '}'
-    | ('public')? 'static' 'void' 'main' '(' 'String' '[' ']' ID ')' '{' ( varDeclaration )* ( statement )* '}'
+    : (accessModifier='public')? returnType=type methodName = ID '(' ( argumentType=type argumentName=ID ( ',' argumentType=type argumentName=ID )* )? ')' '{' ( varDeclaration )* ( statement )* 'return' expression ';' '}'
+    | (accessModifier='public')? isStatic='static' mainReturnType='void' name='main' '(' mainArgumentType='String' '[' ']' argumentName=ID ')' '{' ( varDeclaration )* ( statement )* '}'
     ;
 type
-    : 'int' '[' ']'
-    | 'boolean'
-    | 'int'
-    | 'String' // extra
-    | ID
+    : 'int' '[' ']' #IntegerArray
+    | 'boolean' #Boolean
+    | 'int' #Integer
+    | 'String' #String// extra
+    | ID #Variable
+    ;
+elseStmt
+    : 'else' statement #elseStmtBody
     ;
 statement
-    : '{' ( statement )* '}'
-    | 'if' '(' expression ')' statement 'else' statement
-    | 'while' '(' expression ')' statement
-    | 'for' '(' (varDeclaration | expression ';') expression ';' expression ')' statement
-    | expression ';'
-    | ID '=' expression ';'
-    | ID '[' expression ']' '=' expression ';'
+    : '{' ( statement )* '}' #Body
+    | 'if' '(' expression ')' statement elseStmt? #IfStmt
+    | 'while' '(' expression ')' statement #WhileLoop
+    | expression ';' #Stmt
+    | variable = ID '=' expression ';' #Assignment
+    | ID '[' expression ']' '=' expression ';' #Assignment
     ;
 
 expression
-    : ('(' expression ')' | '[' expression ']')
-    | expression '[' expression ']'
-    | ('++' | '--' | '+' | '-' | '!' | '~' | '(' type ')') expression
-    | expression ('++' | '--')
-    | expression ( '*' | '/' | '%' ) expression
-    | expression ('+' | '-' ) expression
-    | expression ('<<' | '>>' | '>>>')
-    | expression ('<' | '>' | '<=' | '>=' | '!=' ) expression
-    | 'instanceof' ID
-    | expression '&' expression
-    | expression '^' expression
-    | expression '|' expression
-    | expression '&&' expression
-    | expression '||' expression
-    | expression '?' expression ':' expression
-    | expression '.' 'length'
-    | expression '.' ID '(' ( expression ( ',' expression )* )? ')'
-    | 'new' 'int' '[' expression ']'
-    | 'new' ID '(' ')'
-    | INTEGER
-    | 'true'
-    | 'false'
-    | ID
-    | 'this'
+    : '(' expression ')' #PriorityOp
+    | expression '[' expression ']' #ArrayIndex
+    | '!' expression #UnaryOp
+    | value=expression op=( '*' | '/' ) value=expression #BinaryOp
+    | value=expression op=('+' | '-' ) value=expression #BinaryOp
+    | value=expression op='<' value=expression #BinaryOp
+    | value=expression op='&&' value=expression #BinaryOp
+    | expression '.' 'length' #Length
+    | expression '.' ID '(' ( expression ( ',' expression )* )? ')' #MethodChaining
+    | 'new' 'int' '[' expression ']' #IntArray
+    | 'new' ID '(' ')' #ObjectInstantiation
+    | integer=INTEGER #Literal
+    | bool='true' #Literal
+    | bool='false' #Literal
+    | id=ID #Literal
+    | id='this' #Literal
     ;
 
-/*
-Original
-expression
-    : expression ('&&' | '<' | '+' | '-' | '*' | '/' ) expression
-    | expression '[' expression ']'
-    | expression '.' 'length'
-    | expression '.' ID '(' ( expression ( ',' expression )* )? ')'
-    | 'new' 'int' '[' expression ']'
-    | 'new' ID '(' ')'
-    | '!' expression
-    | '(' expression ')'
-    | INTEGER
-    | 'true'
-    | 'false'
-    | ID
-    | 'this'
-    ;*/

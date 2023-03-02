@@ -11,6 +11,6 @@ class Fac {
     }
 
     public static void main(String[] args){
-        io.println (new Fac().computeFac (10));
+        io.println(new Fac().computeFac(10));
     }
 }
