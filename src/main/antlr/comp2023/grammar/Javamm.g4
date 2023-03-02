@@ -25,23 +25,43 @@ varDeclaration
     : type variableName = ID ';'
     ;
 
-methodDeclaration
-    : (accessModifier='public')? returnType=type methodName = ID '(' ( argumentType=type argumentName=ID ( ',' argumentType=type argumentName=ID )* )? ')' '{' ( varDeclaration )* ( statement )* 'return' expression ';' '}'
-    | (accessModifier='public')? isStatic='static' mainReturnType='void' name='main' '(' mainArgumentType='String' '[' ']' argumentName=ID ')' '{' ( varDeclaration )* ( statement )* '}'
+returnStmt
+    : 'return' expression
     ;
+
+argument
+    : typeDecl argumentName=ID #MethodArgument
+    ;
+
+methodDeclaration
+    : (accessModifier='public')? typeRet methodName = ID '(' ( argument ( ',' argument )* )? ')' '{' ( varDeclaration )* ( statement )* returnStmt ';' '}'
+    | (accessModifier='public')? isStatic='static' 'void' name='main' '(' 'String' '[' ']' argumentName=ID ')' '{' ( varDeclaration )* ( statement )* '}'
+    ;
+
+typeRet
+    : type #ReturnType
+    ;
+
+typeDecl
+    : type #DeclarationType
+    ;
+
 type
     : 'int' '[' ']' #IntegerArray
     | 'boolean' #Boolean
     | 'int' #Integer
     | 'String' #String// extra
-    | ID #Variable
+    | ID #VariableID
     ;
+
 elseStmt
     : 'else' statement #elseStmtBody
     ;
+
+condition : expression;
 statement
     : '{' ( statement )* '}' #Body
-    | 'if' '(' expression ')' statement elseStmt? #IfStmt
+    | 'if' '(' condition ')' statement elseStmt? #IfStatement
     | 'while' '(' expression ')' statement #WhileLoop
     | expression ';' #Stmt
     | variable = ID '=' expression ';' #Assignment
@@ -49,7 +69,7 @@ statement
     ;
 
 expression
-    : '(' expression ')' #PriorityOp
+    : '(' expression ')' #Parentheses
     | expression '[' expression ']' #ArrayIndex
     | '!' expression #UnaryOp
     | value=expression op=( '*' | '/' ) value=expression #BinaryOp
@@ -57,13 +77,13 @@ expression
     | value=expression op='<' value=expression #BinaryOp
     | value=expression op='&&' value=expression #BinaryOp
     | expression '.' 'length' #Length
-    | expression '.' ID '(' ( expression ( ',' expression )* )? ')' #MethodChaining
+    | expression '.' method = ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
     | 'new' 'int' '[' expression ']' #IntArray
-    | 'new' ID '(' ')' #ObjectInstantiation
-    | integer=INTEGER #Literal
-    | bool='true' #Literal
-    | bool='false' #Literal
-    | id=ID #Literal
-    | id='this' #Literal
+      | 'new' objectName = ID '(' ')' #ObjectInstantiation
+      | integer=INTEGER #Literal
+      | bool='true' #Literal
+      | bool='false' #Literal
+      | id=ID #Literal
+      | id='this' #Literal
     ;
 
