@@ -6,6 +6,7 @@ grammar Javamm;
 
 INTEGER : [0-9]+ ;
 ID : [a-zA-Z_][a-zA-Z_0-9]* ;
+//COMMENT : //.*|/\*(.|\n)*\*/ -> skip ;
 
 WS : [ \t\n\r\f]+ -> skip ;
 
@@ -23,6 +24,7 @@ classDeclaration
 
 varDeclaration
     : type ID ';'
+    | type statement ';'
     ;
 
 methodDeclaration
@@ -40,19 +42,28 @@ statement
     : '{' ( statement )* '}'
     | 'if' '(' expression ')' statement 'else' statement
     | 'while' '(' expression ')' statement
+    | 'for' '(' (varDeclaration | expression ';') expression ';' expression ')' statement
     | expression ';'
     | ID '=' expression ';'
     | ID '[' expression ']' '=' expression ';'
     ;
 
 expression
-    : '(' expression ')'
+    : ('(' expression ')' | '[' expression ']')
     | expression '[' expression ']'
-    | '!' expression
-    | expression ( '*' | '/' ) expression
+    | ('++' | '--' | '+' | '-' | '!' | '~' | '(' type ')') expression
+    | expression ('++' | '--')
+    | expression ( '*' | '/' | '%' ) expression
     | expression ('+' | '-' ) expression
-    | expression '<' expression
+    | expression ('<<' | '>>' | '>>>')
+    | expression ('<' | '>' | '<=' | '>=' | '!=' ) expression
+    | 'instanceof' ID
+    | expression '&' expression
+    | expression '^' expression
+    | expression '|' expression
     | expression '&&' expression
+    | expression '||' expression
+    | expression '?' expression ':' expression
     | expression '.' 'length'
     | expression '.' ID '(' ( expression ( ',' expression )* )? ')'
     | 'new' 'int' '[' expression ']'
