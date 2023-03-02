@@ -3,6 +3,7 @@ package pt.up.fe.comp2023;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import pt.up.fe.comp.TestUtils;
@@ -43,6 +44,24 @@ public class Launcher {
         TestUtils.noErrors(parserResult.getReports());
 
         // ... add remaining stages
+        ASTConverter gen = new ASTConverter();
+        gen.visit(parserResult.getRootNode(), "");
+
+        SymbolTable t = gen.getTable();
+        //System.out.println(t.getFields());
+        //System.out.println(t.getImports());
+        //System.out.println(t.getClassName());
+        //System.out.println(t.getSuper());
+        List<String> methods = t.getMethods();
+        //System.out.println(methods);
+
+        for (String method:methods) {
+            System.out.println(t.getLocalVariables(method));
+            System.out.println(t.getParameters(method));
+            System.out.println(t.getReturnType(method));
+        }
+
+
     }
 
     private static Map<String, String> parseArgs(String[] args) {

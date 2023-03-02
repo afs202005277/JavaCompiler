@@ -23,6 +23,7 @@ classDeclaration
 
 varDeclaration
     : type variableName = ID ';'
+    | type statement
     ;
 
 returnStmt
@@ -35,7 +36,7 @@ argument
 
 methodDeclaration
     : (accessModifier='public')? typeRet methodName = ID '(' ( argument ( ',' argument )* )? ')' '{' ( varDeclaration )* ( statement )* returnStmt ';' '}'
-    | (accessModifier='public')? isStatic='static' 'void' name='main' '(' 'String' '[' ']' argumentName=ID ')' '{' ( varDeclaration )* ( statement )* '}'
+    | (accessModifier='public')? isStatic='static' 'void' methodName='main' '(' 'String[]' argumentName=ID ')' '{' ( varDeclaration )* ( statement )* '}'
     ;
 
 typeRet
@@ -63,27 +64,34 @@ statement
     : '{' ( statement )* '}' #Body
     | 'if' '(' condition ')' statement elseStmt? #IfStatement
     | 'while' '(' expression ')' statement #WhileLoop
+    | 'for' '(' (varDeclaration | expression ';') expression ';' expression ')' statement #ForLoop
     | expression ';' #Stmt
     | variable = ID '=' expression ';' #Assignment
     | ID '[' expression ']' '=' expression ';' #Assignment
     ;
 
 expression
-    : '(' expression ')' #Parentheses
+    : ('(' expression ')' | '[' expression ']') #Parenthesis
     | expression '[' expression ']' #ArrayIndex
-    | '!' expression #UnaryOp
-    | value=expression op=( '*' | '/' ) value=expression #BinaryOp
+    | ('++' | '--' | '+' | '-' | '!' | '~' | '(' type ')') expression #UnaryOp
+    | value=expression op=('*' | '/' ) value=expression #BinaryOp
     | value=expression op=('+' | '-' ) value=expression #BinaryOp
-    | value=expression op='<' value=expression #BinaryOp
+    | expression ('<<' | '>>' | '>>>') #BinaryOp
+    | expression ('<' | '>' | '<=' | '>=' | '!=' ) expression #BinaryOp
+    | expression '&' expression #BinaryOp
+    | expression '^' expression #BinaryOp
+    | expression '|' expression #BinaryOp
     | value=expression op='&&' value=expression #BinaryOp
+    | expression '||' expression  #BinaryOp
+    | expression '?' expression ':' expression  #TernaryOp
     | expression '.' 'length' #Length
     | expression '.' method = ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
     | 'new' 'int' '[' expression ']' #IntArray
-      | 'new' objectName = ID '(' ')' #ObjectInstantiation
-      | integer=INTEGER #Literal
-      | bool='true' #Literal
-      | bool='false' #Literal
-      | id=ID #Literal
-      | id='this' #Literal
+    | 'new' objectName = ID '(' ')' #ObjectInstantiation
+    | integer=INTEGER #Literal
+    | bool='true' #Literal
+    | bool='false' #Literal
+    | id=ID #Literal
+    | id='this' #Literal
     ;
 

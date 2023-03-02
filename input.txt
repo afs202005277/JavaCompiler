@@ -1,6 +1,7 @@
 import io;
 
-class Fac {
+class Fac extends Pedro{
+    int andre;
     public int computeFac(int num, int tmp){
         int num_aux;
         if ( num < 1)
@@ -11,6 +12,7 @@ class Fac {
     }
 
     public static void main(String[] args){
+        int pedro = 10;
         io.println(new Fac().computeFac(10));
     }
 }
