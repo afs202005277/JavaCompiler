@@ -5,7 +5,7 @@ grammar Javamm;
 }
 
 INTEGER : [0-9]+ ;
-ID : [a-zA-Z_][a-zA-Z_0-9]* ;
+ID : [a-zA-Z_$][a-zA-Z_0-9$]* ;
 
 WS : [ \t\n\r\f]+ -> skip ;
 
@@ -73,17 +73,17 @@ statement
 expression
     : ('(' expression ')' | '[' expression ']') #Parenthesis
     | expression '[' expression ']' #ArrayIndex
-    | ('++' | '--' | '+' | '-' | '!' | '~' | '(' type ')') expression #UnaryOp
+    | op=('++' | '--' | '+' | '-' | '!' | '~' ) expression #UnaryOp
     | value=expression op=('*' | '/' ) value=expression #BinaryOp
     | value=expression op=('+' | '-' ) value=expression #BinaryOp
-    | expression ('<<' | '>>' | '>>>') #BinaryOp
-    | expression ('<' | '>' | '<=' | '>=' | '!=' ) expression #BinaryOp
-    | expression '&' expression #BinaryOp
-    | expression '^' expression #BinaryOp
-    | expression '|' expression #BinaryOp
+    | value=expression op=('<<' | '>>' | '>>>') #BinaryOp
+    | value=expression op=('<' | '>' | '<=' | '>=' | '!=' ) value=expression #BinaryOp
+    | value=expression op='&' value=expression #BinaryOp
+    | value=expression op='^' value=expression #BinaryOp
+    | value=expression op='|' value=expression #BinaryOp
     | value=expression op='&&' value=expression #BinaryOp
-    | expression '||' expression  #BinaryOp
-    | expression '?' expression ':' expression  #TernaryOp
+    | value=expression op='||' value=expression  #BinaryOp
+    | value=expression op='?' value=expression op=':' value=expression  #TernaryOp
     | expression '.' 'length' #Length
     | expression '.' method = ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
     | 'new' 'int' '[' expression ']' #IntArray

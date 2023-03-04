@@ -1,7 +1,7 @@
 import io;
 
 class Fac extends Pedro{
-    int andre;
+    int andre=10;
     public int computeFac(int num, int tmp){
         int num_aux;
         if ( num < 1)
