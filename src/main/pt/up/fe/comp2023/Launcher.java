@@ -48,20 +48,9 @@ public class Launcher {
         gen.visit(parserResult.getRootNode(), "");
 
         SymbolTable t = gen.getTable();
-        //System.out.println(t.getFields());
-        //System.out.println(t.getImports());
-        //System.out.println(t.getClassName());
-        //System.out.println(t.getSuper());
-        List<String> methods = t.getMethods();
-        //System.out.println(methods);
 
-        for (String method:methods) {
-            System.out.println(t.getLocalVariables(method));
-            System.out.println(t.getParameters(method));
-            System.out.println(t.getReturnType(method));
-        }
-
-
+        System.out.println("\nResulting symbol table\n");
+        t.printTable();
     }
 
     private static Map<String, String> parseArgs(String[] args) {

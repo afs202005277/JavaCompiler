@@ -1,4 +1,5 @@
 import io;
+import pedro;
 
 class Fac extends Pedro{
     int andre=10;

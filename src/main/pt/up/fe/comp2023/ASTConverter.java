@@ -33,7 +33,12 @@ public class ASTConverter extends AJmmVisitor<String, String> {
     }
 
     private String dealWithMethodArguments(JmmNode jmmNode, String s) {
-        Type type = new Type(jmmNode.getJmmChild(0).getJmmChild(0).getKind(), false);
+        String argumentType = jmmNode.getJmmChild(0).getJmmChild(0).getKind();
+        boolean isArray = argumentType.contains("[]");
+        if (isArray){
+            argumentType = argumentType.substring(0, argumentType.indexOf("[]"));
+        }
+        Type type = new Type(argumentType, isArray);
         Symbol symbol = new Symbol(type, jmmNode.get("argumentName"));
         ArrayList<Symbol> list = new ArrayList<>();
         list.add(symbol);
@@ -49,7 +54,7 @@ public class ASTConverter extends AJmmVisitor<String, String> {
             list.add(symbol);
             this.symbolTable.addEntry("methods", list);
 
-            type = new Type("String[]", false);
+            type = new Type("String", true);
             symbol = new Symbol(type, jmmNode.get("argumentName"));
             list = new ArrayList<>();
             list.add(symbol);

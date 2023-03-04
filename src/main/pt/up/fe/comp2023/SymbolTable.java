@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable {
 
@@ -83,5 +84,39 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
     @Override
     public List<Symbol> getLocalVariables(String s) {
         return table.get(s+ "_variables");
+    }
+
+    public static String typeToString(Type type){
+        return ", VarType: " + type.getName() + ", IsArray: " + type.isArray();
+    }
+
+    public static String symbolToString(Symbol symbol){
+        return "VarName: " + symbol.getName() + SymbolTable.typeToString(symbol.getType());
+    }
+
+    public static String listSymbolsString(List<Symbol> symbols){
+        StringBuilder s_symbols = new StringBuilder("[");
+        for (int i=0;i<symbols.size()-1;i++){
+
+            s_symbols.append("[").append(SymbolTable.symbolToString(symbols.get(i))).append("], ");
+        }
+        s_symbols.append("[").append(SymbolTable.symbolToString(symbols.get(symbols.size()-1))).append("]]");
+        return s_symbols.toString();
+    }
+
+    public void printTable(){
+        List<String> methods = this.getMethods();
+        System.out.println("Classes imported: " + this.getImports().toString());
+        System.out.println("Parent class: " + this.getSuper());
+        System.out.println("Class name: " + this.getClassName());
+        System.out.println("Class fields: " + listSymbolsString(this.getFields()));
+        System.out.println("Methods details:\n");
+
+        for (String method:methods) {
+            System.out.println("Method: " +  method);
+            System.out.println("Parameters: " + listSymbolsString(this.getParameters(method)));
+            System.out.println("Local variables: " + listSymbolsString(this.getLocalVariables(method)));
+            System.out.println("Return type: " + this.getReturnType(method) + "\n");
+        }
     }
 }
