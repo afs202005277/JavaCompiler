@@ -5,8 +5,7 @@ grammar Javamm;
 }
 
 INTEGER : [0-9]+ ;
-ID : [a-zA-Z_][a-zA-Z_0-9]* ;
-//COMMENT : //.*|/\*(.|\n)*\*/ -> skip ;
+ID : [a-zA-Z_$][a-zA-Z_0-9$]* ;
 
 WS : [ \t\n\r\f]+ -> skip ;
 
@@ -15,80 +14,84 @@ program
     ;
 
 importDeclaration
-    : 'import' ID ( '.' ID )* ';'
+    : 'import' importedClass = ID ( '.' ID )* ';'
     ;
 
 classDeclaration
-    : 'class' ID ('extends' ID)? '{' ( varDeclaration )* ( methodDeclaration )* '}'
+    : 'class' className = ID ('extends' extendedClassName = ID)? '{' ( varDeclaration )* ( methodDeclaration )* '}'
     ;
 
 varDeclaration
-    : type ID ';'
-    | type statement ';'
+    : type variableName = ID ';'
+    | type statement
+    ;
+
+returnStmt
+    : 'return' expression
+    ;
+
+argument
+    : typeDecl argumentName=ID #MethodArgument
     ;
 
 methodDeclaration
-    : ('public')? type ID '(' ( type ID ( ',' type ID )* )? ')' '{' ( varDeclaration )* ( statement )* 'return' expression ';' '}'
-    | ('public')? 'static' 'void' 'main' '(' 'String' '[' ']' ID ')' '{' ( varDeclaration )* ( statement )* '}'
+    : (accessModifier='public')? typeRet methodName = ID '(' ( argument ( ',' argument )* )? ')' '{' ( varDeclaration )* ( statement )* returnStmt ';' '}'
+    | (accessModifier='public')? isStatic='static' 'void' methodName='main' '(' 'String[]' argumentName=ID ')' '{' ( varDeclaration )* ( statement )* '}'
     ;
+
+typeRet
+    : type #ReturnType
+    ;
+
+typeDecl
+    : type #DeclarationType
+    ;
+
 type
-    : 'int' '[' ']'
-    | 'boolean'
-    | 'int'
-    | 'String' // extra
-    | ID
+    : 'int' '[' ']' #IntegerArray
+    | 'boolean' #Boolean
+    | 'int' #Integer
+    | 'String' #String// extra
+    | ID #VariableID
     ;
+
+elseStmt
+    : 'else' statement #elseStmtBody
+    ;
+
+condition : expression;
 statement
-    : '{' ( statement )* '}'
-    | 'if' '(' expression ')' statement 'else' statement
-    | 'while' '(' expression ')' statement
-    | 'for' '(' (varDeclaration | expression ';') expression ';' expression ')' statement
-    | expression ';'
-    | ID '=' expression ';'
-    | ID '[' expression ']' '=' expression ';'
+    : '{' ( statement )* '}' #Body
+    | 'if' '(' condition ')' statement elseStmt? #IfStatement
+    | 'while' '(' expression ')' statement #WhileLoop
+    | 'for' '(' (varDeclaration | expression ';') expression ';' expression ')' statement #ForLoop
+    | expression ';' #Stmt
+    | variable = ID '=' expression ';' #Assignment
+    | ID '[' expression ']' '=' expression ';' #Assignment
     ;
 
 expression
-    : ('(' expression ')' | '[' expression ']')
-    | expression '[' expression ']'
-    | ('++' | '--' | '+' | '-' | '!' | '~' | '(' type ')') expression
-    | expression ('++' | '--')
-    | expression ( '*' | '/' | '%' ) expression
-    | expression ('+' | '-' ) expression
-    | expression ('<<' | '>>' | '>>>')
-    | expression ('<' | '>' | '<=' | '>=' | '!=' ) expression
-    | 'instanceof' ID
-    | expression '&' expression
-    | expression '^' expression
-    | expression '|' expression
-    | expression '&&' expression
-    | expression '||' expression
-    | expression '?' expression ':' expression
-    | expression '.' 'length'
-    | expression '.' ID '(' ( expression ( ',' expression )* )? ')'
-    | 'new' 'int' '[' expression ']'
-    | 'new' ID '(' ')'
-    | INTEGER
-    | 'true'
-    | 'false'
-    | ID
-    | 'this'
+    : ('(' expression ')' | '[' expression ']') #Parenthesis
+    | expression '[' expression ']' #ArrayIndex
+    | op=('++' | '--' | '+' | '-' | '!' | '~' ) expression #UnaryOp
+    | value=expression op=('*' | '/' ) value=expression #BinaryOp
+    | value=expression op=('+' | '-' ) value=expression #BinaryOp
+    | value=expression op=('<<' | '>>' | '>>>') #BinaryOp
+    | value=expression op=('<' | '>' | '<=' | '>=' | '!=' ) value=expression #BinaryOp
+    | value=expression op='&' value=expression #BinaryOp
+    | value=expression op='^' value=expression #BinaryOp
+    | value=expression op='|' value=expression #BinaryOp
+    | value=expression op='&&' value=expression #BinaryOp
+    | value=expression op='||' value=expression  #BinaryOp
+    | value=expression op='?' value=expression op=':' value=expression  #TernaryOp
+    | expression '.' 'length' #Length
+    | expression '.' method = ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
+    | 'new' 'int' '[' expression ']' #IntArray
+    | 'new' objectName = ID '(' ')' #ObjectInstantiation
+    | integer=INTEGER #Literal
+    | bool='true' #Literal
+    | bool='false' #Literal
+    | id=ID #Literal
+    | id='this' #Literal
     ;
 
-/*
-Original
-expression
-    : expression ('&&' | '<' | '+' | '-' | '*' | '/' ) expression
-    | expression '[' expression ']'
-    | expression '.' 'length'
-    | expression '.' ID '(' ( expression ( ',' expression )* )? ')'
-    | 'new' 'int' '[' expression ']'
-    | 'new' ID '(' ')'
-    | '!' expression
-    | '(' expression ')'
-    | INTEGER
-    | 'true'
-    | 'false'
-    | ID
-    | 'this'
-    ;*/

@@ -3,6 +3,7 @@ package pt.up.fe.comp2023;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import pt.up.fe.comp.TestUtils;
@@ -46,6 +47,14 @@ public class Launcher {
             }
         }
 
+        // ... add remaining stages
+        ASTConverter gen = new ASTConverter();
+        gen.visit(parserResult.getRootNode(), "");
+
+        SymbolTable t = gen.getTable();
+
+        System.out.println("\nResulting symbol table\n");
+        t.printTable();
     }
 
     private static Map<String, String> parseArgs(String[] args) {
