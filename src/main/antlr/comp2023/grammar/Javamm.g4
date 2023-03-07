@@ -4,7 +4,7 @@ grammar Javamm;
     package pt.up.fe.comp2023;
 }
 
-INTEGER : [0-9]+ ;
+INT : [0-9]+ ;
 ID : [a-zA-Z_$][a-zA-Z_0-9$]* ;
 
 WS : [ \t\n\r\f]+ -> skip ;
@@ -50,7 +50,7 @@ typeDecl
 type
     : 'int' '[' ']' #IntegerArray
     | 'boolean' #Boolean
-    | 'int' #Integer
+    | 'int' #int // ele converte automaticamente a primeira letra para maiuscula
     | 'String' #String// extra
     | ID #VariableID
     ;
@@ -88,7 +88,7 @@ expression
     | expression '.' method = ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
     | 'new' 'int' '[' expression ']' #IntArray
     | 'new' objectName = ID '(' ')' #ObjectInstantiation
-    | integer=INTEGER #Literal
+    | integer=INT #Literal
     | bool='true' #Literal
     | bool='false' #Literal
     | id=ID #Literal

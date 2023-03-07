@@ -1,18 +1,17 @@
 package pt.up.fe.comp2023;
 
+import pt.up.fe.comp.jmm.analysis.JmmAnalysis;
+import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
+import pt.up.fe.comp.jmm.parser.JmmParserResult;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
-public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable {
+public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable, JmmAnalysis {
 
     Map<String, ArrayList<Symbol>> table;
 
@@ -34,8 +33,10 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
     public List<String> getImports() {
         ArrayList<Symbol> symbols = table.get("import");
         List<String> imports = new ArrayList<String>();
-        for (Symbol symbol : symbols) {
-            imports.add(symbol.getName());
+        if (symbols != null){
+            for (Symbol symbol : symbols) {
+                imports.add(symbol.getName());
+            }
         }
 
         return imports;
@@ -48,20 +49,26 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
     @Override
     public String getSuper() {
-        return table.get("extends").get(0).getName();
+        if (table.get("extends") != null)
+            return table.get("extends").get(0).getName();
+        else
+            return "";
     }
 
     @Override
     public List<Symbol> getFields() {
-        return table.get("fields");
+        List<Symbol> fields = table.get("fields");
+        return fields == null ? new ArrayList<>() : fields;
     }
 
     @Override
     public List<String> getMethods() {
         ArrayList<Symbol> symbols = table.get("methods");
         List<String> methods = new ArrayList<String>();
-        for (Symbol symbol : symbols) {
-            methods.add(symbol.getName());
+        if (symbols != null){
+            for (Symbol symbol : symbols) {
+                methods.add(symbol.getName());
+            }
         }
 
         return methods;
@@ -78,12 +85,14 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
     @Override
     public List<Symbol> getParameters(String s) {
         //assumindo que existe uma entrada no map com key igual ao nome do method e value igual a uma lista com local variables e parametros
-        return table.get(s+"_params");
+        List<Symbol> params = table.get(s+"_params");
+        return params == null ? new ArrayList<>() : params;
     }
 
     @Override
     public List<Symbol> getLocalVariables(String s) {
-        return table.get(s+ "_variables");
+        List<Symbol> locals = table.get(s+ "_variables");
+        return locals == null ? new ArrayList<>() : locals;
     }
 
     public static String typeToString(Type type){
@@ -95,16 +104,17 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
     }
 
     public static String listSymbolsString(List<Symbol> symbols){
+        if (symbols.size() == 0)
+            return "";
         StringBuilder s_symbols = new StringBuilder("[");
         for (int i=0;i<symbols.size()-1;i++){
-
             s_symbols.append("[").append(SymbolTable.symbolToString(symbols.get(i))).append("], ");
         }
         s_symbols.append("[").append(SymbolTable.symbolToString(symbols.get(symbols.size()-1))).append("]]");
         return s_symbols.toString();
     }
 
-    public void printTable(){
+    public String print(){
         List<String> methods = this.getMethods();
         System.out.println("Classes imported: " + this.getImports().toString());
         System.out.println("Parent class: " + this.getSuper());
@@ -118,5 +128,15 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
             System.out.println("Local variables: " + listSymbolsString(this.getLocalVariables(method)));
             System.out.println("Return type: " + this.getReturnType(method) + "\n");
         }
+        return null;
+    }
+
+    @Override
+    public JmmSemanticsResult semanticAnalysis(JmmParserResult jmmParserResult) {
+        ASTConverter gen = new ASTConverter();
+        gen.visit(jmmParserResult.getRootNode(), "");
+
+        SymbolTable symbolTable = gen.getTable();
+        return new JmmSemanticsResult(jmmParserResult, symbolTable, jmmParserResult.getReports());
     }
 }

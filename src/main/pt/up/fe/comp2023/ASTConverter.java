@@ -11,14 +11,16 @@ import java.util.Objects;
 public class ASTConverter extends AJmmVisitor<String, String> {
     private SymbolTable symbolTable;
 
-    public SymbolTable getTable(){
+    public SymbolTable getTable() {
         return this.symbolTable;
     }
+
     public ASTConverter() {
         this.symbolTable = new SymbolTable();
     }
 
     protected void buildVisitor() {
+        this.setDefaultVisit(this::visitDefault);
         addVisit("Program", this::dealWithProgram);
         addVisit("ImportDeclaration", this::dealWithImport);
         addVisit("ClassDeclaration", this::dealWithClass);
@@ -32,10 +34,14 @@ public class ASTConverter extends AJmmVisitor<String, String> {
         addVisit("MethodDeclaration", this::dealWithMethods);
     }
 
+    private String visitDefault(JmmNode jmmNode, String s){
+        return "";
+    }
+
     private String dealWithMethodArguments(JmmNode jmmNode, String s) {
         String argumentType = jmmNode.getJmmChild(0).getJmmChild(0).getKind();
         boolean isArray = argumentType.contains("[]");
-        if (isArray){
+        if (isArray) {
             argumentType = argumentType.substring(0, argumentType.indexOf("[]"));
         }
         Type type = new Type(argumentType, isArray);
@@ -59,20 +65,15 @@ public class ASTConverter extends AJmmVisitor<String, String> {
             list = new ArrayList<>();
             list.add(symbol);
             this.symbolTable.addEntry("main_params", list);
-        }
-        else {
+        } else {
             Type type = new Type(jmmNode.getJmmChild(0).getJmmChild(0).getKind(), false);
             Symbol symbol = new Symbol(type, jmmNode.get("methodName"));
             ArrayList<Symbol> list = new ArrayList<>();
             list.add(symbol);
             this.symbolTable.addEntry("methods", list);
         }
-        for (JmmNode child:jmmNode.getChildren()){
-            try{
-                visit(child);
-            } catch (NullPointerException e){
-                continue;
-            }
+        for (JmmNode child : jmmNode.getChildren()) {
+            visit(child);
         }
         return "";
     }
@@ -82,7 +83,7 @@ public class ASTConverter extends AJmmVisitor<String, String> {
             Type type = new Type(jmmNode.getJmmChild(0).getKind(), false);
             Symbol symbol;
             if (jmmNode.getNumChildren() > 1) {
-                symbol =  new Symbol(type, jmmNode.getJmmChild(1).get("variable"));
+                symbol = new Symbol(type, jmmNode.getJmmChild(1).get("variable"));
             } else {
                 symbol = new Symbol(type, jmmNode.get("variableName"));
             }
@@ -93,7 +94,7 @@ public class ASTConverter extends AJmmVisitor<String, String> {
             Type type = new Type(jmmNode.getJmmChild(0).getKind(), false);
             Symbol symbol;
             if (jmmNode.getNumChildren() > 1) {
-                symbol =  new Symbol(type, jmmNode.getJmmChild(1).get("variable"));
+                symbol = new Symbol(type, jmmNode.getJmmChild(1).get("variable"));
             } else {
                 symbol = new Symbol(type, jmmNode.get("variableName"));
             }
@@ -112,17 +113,16 @@ public class ASTConverter extends AJmmVisitor<String, String> {
 
         this.symbolTable.addEntry("class", list);
 
-        type = new Type("extends", false);
-        symbol = new Symbol(type, jmmNode.get("extendedClassName"));
-        list = new ArrayList<>();
-        list.add(symbol);
-        this.symbolTable.addEntry("extends", list);
-        for (JmmNode child:jmmNode.getChildren()){
-            try{
-                visit(child);
-            } catch (NullPointerException e){
-                continue;
-            }
+        if (jmmNode.hasAttribute("extendedClassName")){
+            type = new Type("extends", false);
+            symbol = new Symbol(type, jmmNode.get("extendedClassName"));
+            list = new ArrayList<>();
+            list.add(symbol);
+            this.symbolTable.addEntry("extends", list);
+        }
+
+        for (JmmNode child : jmmNode.getChildren()) {
+            visit(child);
         }
         return "";
     }
@@ -145,12 +145,8 @@ public class ASTConverter extends AJmmVisitor<String, String> {
     }
 
     private String dealWithProgram(JmmNode jmmNode, String s) {
-        for (JmmNode child : jmmNode.getChildren()){
-            try{
-                visit(child);
-            } catch (NullPointerException e){
-                continue;
-            }
+        for (JmmNode child : jmmNode.getChildren()) {
+            visit(child);
         }
         return "";
     }

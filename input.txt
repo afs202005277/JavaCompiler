@@ -1,19 +1,6 @@
-import io;
-import pedro;
+class Parameters{
 
-class Fac extends Pedro{
-    int andre=10;
-    public int computeFac(int num, int tmp){
-        int num_aux;
-        if ( num < 1)
-            num_aux = 1
-        else
-            num_aux = num * ( this.computeFac(num -1));
-        return num_aux;
-    }
-
-    public static void main(String[] args){
-        int pedro = 10;
-        io.println(new Fac().computeFac(10));
-    }
+	public int all(int a, boolean b, Parameters maf){
+		return 0;
+	}
 }

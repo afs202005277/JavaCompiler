@@ -3,10 +3,9 @@ package pt.up.fe.comp2023;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import pt.up.fe.comp.TestUtils;
+import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
 import pt.up.fe.specs.util.SpecsIo;
 import pt.up.fe.specs.util.SpecsLogs;
@@ -48,13 +47,9 @@ public class Launcher {
         }
 
         // ... add remaining stages
-        ASTConverter gen = new ASTConverter();
-        gen.visit(parserResult.getRootNode(), "");
-
-        SymbolTable t = gen.getTable();
-
-        System.out.println("\nResulting symbol table\n");
-        t.printTable();
+        SymbolTable symbolTable = new SymbolTable();
+        JmmSemanticsResult jmmSemanticsResult = symbolTable.semanticAnalysis(parserResult);
+        jmmSemanticsResult.getSymbolTable().print();
     }
 
     private static Map<String, String> parseArgs(String[] args) {
