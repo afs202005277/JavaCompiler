@@ -48,11 +48,11 @@ typeDecl
     ;
 
 type
-    : 'int' '[' ']' #IntegerArray
-    | 'boolean' #Boolean
-    | 'int' #int // ele converte automaticamente a primeira letra para maiuscula
-    | 'String' #String// extra
-    | ID #VariableID
+    : varType = 'int[]'
+    | varType='boolean'
+    | varType='int'
+    | varType='String'
+    | varType=ID
     ;
 
 elseStmt
