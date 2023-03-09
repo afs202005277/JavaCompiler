@@ -22,7 +22,7 @@ class MethodsAndFields{
 		return c;
 	}
 
-	public static void main(String[] args){
+	public staticvoid main(String[] args){
 
 	}
 }
