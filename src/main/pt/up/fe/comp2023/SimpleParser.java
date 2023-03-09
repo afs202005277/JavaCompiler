@@ -55,12 +55,15 @@ public class SimpleParser implements JmmParser {
                     // If there were no errors and a root node was generated, create a JmmParserResult with the node
                     .map(root2 -> new JmmParserResult(root2, Collections.emptyList(), config))
                     // If there were errors, create an error JmmParserResult without root node
-                    .orElseGet(() -> JmmParserResult.newError(new Report(ReportType.WARNING, Stage.SYNTATIC, -1,
-                            "There were syntax errors during parsing, terminating")));
+                    .orElseGet(() -> {
+                        if (parser.getNumberOfSyntaxErrors() > 0) {
+                            System.out.println(new Report(ReportType.ERROR, Stage.SYNTATIC, -1, -1, "[PARSING ERROR] " + parser.getNumberOfSyntaxErrors() + (parser.getNumberOfSyntaxErrors() == 1 ? " error " : " errors ") + "while parsing"));
+                        }
+                        return JmmParserResult.newError(new Report(ReportType.WARNING, Stage.SYNTATIC, -1,"There were syntax errors during parsing, terminating"));
+                    });
 
         } catch (Exception e) {
             if (parser.getNumberOfSyntaxErrors() > 0) {
-                JmmParserResult temp = new JmmParserResult(null, Collections.emptyList(), config);
                 System.out.println(new Report(ReportType.ERROR, Stage.SYNTATIC, -1, -1, "[PARSING ERROR] " + e.getMessage()));
                 return JmmParserResult.newError(new Report(ReportType.ERROR, Stage.SYNTATIC, -1, -1, "[PARSING ERROR] " + parser.getNumberOfSyntaxErrors() + (parser.getNumberOfSyntaxErrors() == 1 ? " error " : " errors ") + "while parsing"));
             }

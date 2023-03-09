@@ -37,20 +37,20 @@ public class Launcher {
         // Parse stage
         JmmParserResult parserResult = parser.parse(code, config);
 
-        if (parserResult.getRootNode() != null)
+        if (parserResult.getRootNode() != null) {
             System.out.println(parserResult.getRootNode().toTree());
-        else {
+
+            // ... add remaining stages
+            SymbolTable symbolTable = new SymbolTable();
+            JmmSemanticsResult jmmSemanticsResult = symbolTable.semanticAnalysis(parserResult);
+            jmmSemanticsResult.getSymbolTable().print();
+
+        } else {
             for (pt.up.fe.comp.jmm.report.Report temp : parserResult.getReports()) {
                 System.out.println(temp);
                 System.out.println('\n');
             }
-            return;
         }
-
-        // ... add remaining stages
-        SymbolTable symbolTable = new SymbolTable();
-        JmmSemanticsResult jmmSemanticsResult = symbolTable.semanticAnalysis(parserResult);
-        jmmSemanticsResult.getSymbolTable().print();
     }
 
     private static Map<String, String> parseArgs(String[] args) {
