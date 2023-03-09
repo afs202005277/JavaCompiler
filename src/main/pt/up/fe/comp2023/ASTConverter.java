@@ -140,9 +140,16 @@ public class ASTConverter extends AJmmVisitor<String, String> {
 
     private String dealWithImport(JmmNode jmmNode, String s) {
         Type type = new Type("library", false);
-        Symbol symbol = new Symbol(type, jmmNode.get("importedClass"));
+        StringBuilder importName = new StringBuilder();
+        for (JmmNode child : jmmNode.getChildren()){
+            importName.append(child.get("subImportName"));
+            importName.append(".");
+        }
+        importName.deleteCharAt(importName.length()-1);
+        Symbol symbol = new Symbol(type, importName.toString());
         ArrayList<Symbol> list = new ArrayList<>();
         list.add(symbol);
+
         this.symbolTable.addEntry("import", list);
         return "";
     }

@@ -44,6 +44,7 @@ public class Launcher {
                 System.out.println(temp);
                 System.out.println('\n');
             }
+            return;
         }
 
         // ... add remaining stages

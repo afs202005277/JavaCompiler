@@ -1,11 +1,12 @@
-
+import ola.a.a.a.a;
+import olaaaa;
 class MethodsAndFields{
 	int field1;
 	boolean field2;
 	MethodsAndFields field3;
 
 	public int getField1(){
-		return field1;
+		return field1; //ola
 	}
 
 	public boolean getField2(){

@@ -7,6 +7,8 @@ grammar Javamm;
 INT : [0-9]+ ;
 ID : [a-zA-Z_$][a-zA-Z_0-9$]* ;
 
+LINE_COMMENT : '//' (~[\n]*)'\n' -> skip;
+BLOCK_COMMENT : '/*' .*? '*/' -> skip;
 WS : [ \t\n\r\f]+ -> skip ;
 
 program
@@ -14,7 +16,11 @@ program
     ;
 
 importDeclaration
-    : 'import' importedClass = ID ( '.' ID )* ';'
+    : 'import' subImport ( '.' subImport )* ';'
+    ;
+
+subImport
+    : subImportName = ID
     ;
 
 classDeclaration
