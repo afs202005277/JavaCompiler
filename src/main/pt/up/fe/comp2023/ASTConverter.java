@@ -91,7 +91,12 @@ public class ASTConverter extends AJmmVisitor<String, String> {
 
     private String dealWithFields(JmmNode jmmNode, String s) {
         if (Objects.equals(jmmNode.getJmmParent().getKind(), "MethodDeclaration")) {
-            Type type = new Type(jmmNode.getJmmChild(0).get("varType"), false);
+            String argumentType = jmmNode.getJmmChild(0).get("varType");
+            boolean isArray = argumentType.contains("[]");
+            if (isArray) {
+                argumentType = argumentType.substring(0, argumentType.indexOf("[]"));
+            }
+            Type type = new Type(argumentType, isArray);
             Symbol symbol;
             if (jmmNode.getNumChildren() > 1) {
                 symbol = new Symbol(type, jmmNode.getJmmChild(1).get("variable"));
@@ -102,7 +107,12 @@ public class ASTConverter extends AJmmVisitor<String, String> {
             list.add(symbol);
             this.symbolTable.addEntry(jmmNode.getJmmParent().get("methodName") + "_variables", list);
         } else {
-            Type type = new Type(jmmNode.getJmmChild(0).get("varType"), false);
+            String argumentType = jmmNode.getJmmChild(0).get("varType");
+            boolean isArray = argumentType.contains("[]");
+            if (isArray) {
+                argumentType = argumentType.substring(0, argumentType.indexOf("[]"));
+            }
+            Type type = new Type(argumentType, isArray);
             Symbol symbol;
             if (jmmNode.getNumChildren() > 1) {
                 symbol = new Symbol(type, jmmNode.getJmmChild(1).get("variable"));
