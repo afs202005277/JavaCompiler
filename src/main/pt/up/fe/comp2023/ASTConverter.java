@@ -27,11 +27,6 @@ public class ASTConverter extends AJmmVisitor<String, String> {
         addVisit("ClassDeclaration", this::dealWithClass);
         addVisit("VarDeclaration", this::dealWithFields);
         addVisit("MethodArgument", this::dealWithMethodArguments);
-        addVisit("Assignment", this::dealWithAssignment);
-        addVisit("Integer", this::dealWithLiteral);
-        addVisit("Identifier", this::dealWithLiteral);
-        addVisit("ExprStmt", this::dealWithExprStmt);
-        addVisit("BinaryOp", this::dealWithBinaryOp);
         addVisit("MethodDeclaration", this::dealWithMethods);
     }
 
@@ -43,13 +38,16 @@ public class ASTConverter extends AJmmVisitor<String, String> {
         return "";
     }
 
-    private String dealWithMethodArguments(JmmNode jmmNode, String s) {
-        String argumentType = jmmNode.getJmmChild(0).getJmmChild(0).get("varType");
+    private Type getType(String argumentType) {
         boolean isArray = argumentType.contains("[]");
         if (isArray) {
             argumentType = argumentType.substring(0, argumentType.indexOf("[]"));
         }
-        Type type = new Type(argumentType, isArray);
+        return new Type(argumentType, isArray);
+    }
+
+    private String dealWithMethodArguments(JmmNode jmmNode, String s) {
+        Type type = getType(jmmNode.getJmmChild(0).getJmmChild(0).get("varType"));
         Symbol symbol = new Symbol(type, jmmNode.get("argumentName"));
         ArrayList<Symbol> list = new ArrayList<>();
         list.add(symbol);
@@ -72,12 +70,7 @@ public class ASTConverter extends AJmmVisitor<String, String> {
             list.add(symbol);
             this.symbolTable.addEntry("main_params", list);
         } else {
-            String argumentType = jmmNode.getJmmChild(0).getJmmChild(0).get("varType");
-            boolean isArray = argumentType.contains("[]");
-            if (isArray) {
-                argumentType = argumentType.substring(0, argumentType.indexOf("[]"));
-            }
-            Type type = new Type(argumentType, isArray);
+            Type type = getType(jmmNode.getJmmChild(0).getJmmChild(0).get("varType"));
             Symbol symbol = new Symbol(type, jmmNode.get("methodName"));
             ArrayList<Symbol> list = new ArrayList<>();
             list.add(symbol);
@@ -90,37 +83,19 @@ public class ASTConverter extends AJmmVisitor<String, String> {
     }
 
     private String dealWithFields(JmmNode jmmNode, String s) {
+        Type type = getType(jmmNode.getJmmChild(0).get("varType"));
+        Symbol symbol;
+        if (jmmNode.getNumChildren() > 1) {
+            symbol = new Symbol(type, jmmNode.getJmmChild(1).get("variable"));
+        } else {
+            symbol = new Symbol(type, jmmNode.get("variableName"));
+        }
+        ArrayList<Symbol> list = new ArrayList<>();
+        list.add(symbol);
+
         if (Objects.equals(jmmNode.getJmmParent().getKind(), "MethodDeclaration")) {
-            String argumentType = jmmNode.getJmmChild(0).get("varType");
-            boolean isArray = argumentType.contains("[]");
-            if (isArray) {
-                argumentType = argumentType.substring(0, argumentType.indexOf("[]"));
-            }
-            Type type = new Type(argumentType, isArray);
-            Symbol symbol;
-            if (jmmNode.getNumChildren() > 1) {
-                symbol = new Symbol(type, jmmNode.getJmmChild(1).get("variable"));
-            } else {
-                symbol = new Symbol(type, jmmNode.get("variableName"));
-            }
-            ArrayList<Symbol> list = new ArrayList<>();
-            list.add(symbol);
             this.symbolTable.addEntry(jmmNode.getJmmParent().get("methodName") + "_variables", list);
         } else {
-            String argumentType = jmmNode.getJmmChild(0).get("varType");
-            boolean isArray = argumentType.contains("[]");
-            if (isArray) {
-                argumentType = argumentType.substring(0, argumentType.indexOf("[]"));
-            }
-            Type type = new Type(argumentType, isArray);
-            Symbol symbol;
-            if (jmmNode.getNumChildren() > 1) {
-                symbol = new Symbol(type, jmmNode.getJmmChild(1).get("variable"));
-            } else {
-                symbol = new Symbol(type, jmmNode.get("variableName"));
-            }
-            ArrayList<Symbol> list = new ArrayList<>();
-            list.add(symbol);
             this.symbolTable.addEntry("fields", list);
         }
         return "";
@@ -151,11 +126,11 @@ public class ASTConverter extends AJmmVisitor<String, String> {
     private String dealWithImport(JmmNode jmmNode, String s) {
         Type type = new Type("library", false);
         StringBuilder importName = new StringBuilder();
-        for (JmmNode child : jmmNode.getChildren()){
+        for (JmmNode child : jmmNode.getChildren()) {
             importName.append(child.get("subImportName"));
             importName.append(".");
         }
-        importName.deleteCharAt(importName.length()-1);
+        importName.deleteCharAt(importName.length() - 1);
         Symbol symbol = new Symbol(type, importName.toString());
         ArrayList<Symbol> list = new ArrayList<>();
         list.add(symbol);
@@ -164,26 +139,10 @@ public class ASTConverter extends AJmmVisitor<String, String> {
         return "";
     }
 
-    private String dealWithBinaryOp(JmmNode jmmNode, String s) {
-        return "";
-    }
-
-    private String dealWithExprStmt(JmmNode jmmNode, String s) {
-        return "";
-    }
-
     private String dealWithProgram(JmmNode jmmNode, String s) {
         for (JmmNode child : jmmNode.getChildren()) {
             visit(child);
         }
-        return "";
-    }
-
-    private String dealWithAssignment(JmmNode jmmNode, String s) {
-        return "";
-    }
-
-    private String dealWithLiteral(JmmNode jmmNode, String s) {
         return "";
     }
 }
