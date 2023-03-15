@@ -47,6 +47,7 @@ methodDeclaration
 
 typeRet
     : type #ReturnType
+    | 'void' #ReturnType
     ;
 
 typeDecl
