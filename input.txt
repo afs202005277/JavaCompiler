@@ -2,7 +2,9 @@ import ola.a.a.a.a;
 import olaaaa;
 class MethodsAndFields{
 	public static void main(String[] args){
-        int[] arr = {1, 2, 3};
-        Arrays.sort(arr);
+        int[] arr1;
+        int[] arr2 = new int[10];
+        int[] arr3 = {1, 2, 3, 4, 5};
+        int[] a = new int[]{6, 7, 8, 9, 10};
 	}
 }

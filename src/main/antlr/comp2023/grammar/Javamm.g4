@@ -72,7 +72,7 @@ statement
     | 'while' '(' expression ')' statement #WhileLoop
     | 'for' '(' (varDeclaration | expression ';') expression ';' expression ')' statement #ForLoop
     | variable = ID '=' expression ';' #Assignment
-    | variable = ID '=' '{' (INT | INT',')* '}' ';' #Assignment
+    | variable = ID '=' ('new' type)? '{' (contents+=INT','?)* '}' ';' #Assignment
     | expression ';' #Stmt
     | ID '[' expression ']' '=' expression ';' #Assignment
     ;
@@ -93,7 +93,7 @@ expression
     | value=expression op='?' value=expression op=':' value=expression  #TernaryOp
     | expression '.' 'length' #Length
     | expression '.' method = ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
-    | 'new' 'int' '[' expression ']' #IntArray
+    | 'new' 'int' '[' (expression?) ']' ('{' (contents+=INT','?)* '}' ';')? #IntArray
     | 'new' objectName = ID '(' ')' #ObjectInstantiation
     | integer=INT #Literal
     | bool='true' #Literal
