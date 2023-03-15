@@ -84,7 +84,7 @@ expression
     | value=expression op=('*' | '/' ) value=expression #BinaryOp
     | value=expression op=('+' | '-' ) value=expression #BinaryOp
     | value=expression op=('<<' | '>>' | '>>>') #BinaryOp
-    | value=expression op=('<' | '>' | '<=' | '>=' | '!=' ) value=expression #BinaryOp
+    | value=expression op=('<' | '>' | '<=' | '>=' | '!=' | '==' ) value=expression #BinaryOp
     | value=expression op='&' value=expression #BinaryOp
     | value=expression op='^' value=expression #BinaryOp
     | value=expression op='|' value=expression #BinaryOp
