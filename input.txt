@@ -2,6 +2,6 @@ import ola.a.a.a.a;
 import olaaaa;
 class MethodsAndFields{
 	public static void main(String[] args){
-        if(a)ifStmt1;ifStmt2;}else{elseStmt1;elseStmt2;}
+        int a = 0123;
 	}
 }
