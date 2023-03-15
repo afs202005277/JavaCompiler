@@ -72,6 +72,7 @@ statement
     | 'while' '(' expression ')' statement #WhileLoop
     | 'for' '(' (varDeclaration | expression ';') expression ';' expression ')' statement #ForLoop
     | variable = ID '=' expression ';' #Assignment
+    | variable = ID '=' '{' (INT | INT',')* '}' ';' #Assignment
     | expression ';' #Stmt
     | ID '[' expression ']' '=' expression ';' #Assignment
     ;

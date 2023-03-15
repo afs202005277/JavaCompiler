@@ -2,6 +2,7 @@ import ola.a.a.a.a;
 import olaaaa;
 class MethodsAndFields{
 	public static void main(String[] args){
-        int a = 0123;
+        int[] arr = {1, 2, 3};
+        Arrays.sort(arr);
 	}
 }
