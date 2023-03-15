@@ -71,8 +71,8 @@ statement
     | 'if' '(' condition ')' statement elseStmt? #IfStatement
     | 'while' '(' expression ')' statement #WhileLoop
     | 'for' '(' (varDeclaration | expression ';') expression ';' expression ')' statement #ForLoop
-    | expression ';' #Stmt
     | variable = ID '=' expression ';' #Assignment
+    | expression ';' #Stmt
     | ID '[' expression ']' '=' expression ';' #Assignment
     ;
 

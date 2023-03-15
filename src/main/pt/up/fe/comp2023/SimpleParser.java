@@ -59,7 +59,7 @@ public class SimpleParser implements JmmParser {
                         if (parser.getNumberOfSyntaxErrors() > 0) {
                             System.out.println(new Report(ReportType.ERROR, Stage.SYNTATIC, -1, -1, "[PARSING ERROR] " + parser.getNumberOfSyntaxErrors() + (parser.getNumberOfSyntaxErrors() == 1 ? " error " : " errors ") + "while parsing"));
                         }
-                        return JmmParserResult.newError(new Report(ReportType.WARNING, Stage.SYNTATIC, -1,"There were syntax errors during parsing, terminating"));
+                        return JmmParserResult.newError(new Report(ReportType.ERROR, Stage.SYNTATIC, -1,"There were syntax errors during parsing, terminating"));
                     });
 
         } catch (Exception e) {
