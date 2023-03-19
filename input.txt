@@ -1,9 +1,15 @@
-class Teste{
-    // Driver Code
-        public static void main(String[] args)
-        {
-            int[] arr = {1, 2, 3};
-            int t = 123;
-            t = 0;
-        }
+import compilers.c2023.io;
+
+class Fac {
+    public int computeFac (int num ){
+        int num_aux;
+        if ( num < 1)
+            num_aux = 1;
+        else
+            num_aux = num * (this.computeFac(num -1));
+        return num_aux;
+    }
+    public static void main ( String[] args ){
+        io.println(new Fac().computeFac(10)); // assuming the existence of the classfile io. class
+    }
 }

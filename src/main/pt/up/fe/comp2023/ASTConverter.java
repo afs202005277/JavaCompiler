@@ -56,7 +56,6 @@ public class ASTConverter extends AJmmVisitor<String, String> {
     }
 
     private String dealWithMethods(JmmNode jmmNode, String s) {
-        // TODO: experimentar com main errado
         if (Objects.equals(jmmNode.get("methodName"), "main")) {
             Type type = new Type("void", false);
             Symbol symbol = new Symbol(type, "main");
@@ -145,4 +144,5 @@ public class ASTConverter extends AJmmVisitor<String, String> {
         }
         return "";
     }
+
 }

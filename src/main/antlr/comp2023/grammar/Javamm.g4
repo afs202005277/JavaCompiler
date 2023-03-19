@@ -42,7 +42,7 @@ argument
 
 methodDeclaration
     : (accessModifier='public')? typeRet methodName = ID '(' ( argument ( ',' argument )* )? ')' '{' ( varDeclaration )* ( statement )* returnStmt ';' '}'
-    | (accessModifier='public')? isStatic='static' 'void' methodName='main' '(' 'String[]' argumentName=ID ')' '{' ( varDeclaration )* ( statement )* '}'
+    | (accessModifier='public')? isStatic='static' 'void' methodName='main' '(' argumentType='String[]' argumentName=ID ')' '{' ( varDeclaration )* ( statement )* '}'
     ;
 
 typeRet
@@ -73,7 +73,7 @@ statement
     | 'while' '(' expression ')' statement #WhileLoop
     | 'for' '(' (varDeclaration | expression ';') expression ';' expression ')' statement #ForLoop
     | variable = ID '=' expression ';' #Assignment
-    | variable = ID '=' ('new' type)? '{' (contents+=INT',')*contents+=INT '}' ';' #Assignment
+    | variable = ID '=' ('new' type)? '{' (contents+=INT',')*contents+=INT '}' ';' #AssignmentArray
     | expression ';' #Stmt
     | ID '[' expression ']' '=' expression ';' #Assignment
     ;
@@ -82,17 +82,12 @@ expression
     : ('(' expression ')' | '[' expression ']') #Parenthesis
     | expression '[' expression ']' #ArrayIndex
     | op=('++' | '--' | '+' | '-' | '!' | '~' ) expression #UnaryOp
-    | value=expression op=('*' | '/' ) value=expression #BinaryOp
-    | value=expression op=('+' | '-' ) value=expression #BinaryOp
-    | value=expression op=('<<' | '>>' | '>>>') #BinaryOp
-    | value=expression op=('<' | '>' | '<=' | '>=' | '!=' | '==' ) value=expression #BinaryOp
-    | value=expression op='&' value=expression #BinaryOp
-    | value=expression op='^' value=expression #BinaryOp
-    | value=expression op='|' value=expression #BinaryOp
-    | value=expression op='&&' value=expression #BinaryOp
-    | value=expression op='||' value=expression  #BinaryOp
-    | value=expression op='?' value=expression op=':' value=expression  #TernaryOp
-    | expression '.' 'length' #Length
+    | expression op=('*' | '/' ) expression #BinaryOp
+    | expression op=('+' | '-' ) expression #BinaryOp
+    | expression op=('<' | '>' | '<=' | '>=' | '!=' | '==' ) expression #BinaryOp
+    | expression op='&&' expression #BinaryOp
+    | expression op='||' expression  #BinaryOp
+    | expression '.' method='length' #Length
     | expression '.' method = ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
     | 'new' 'int' '[' (expression?) ']' ('{' (contents+=INT','?)* '}' ';')? #IntArray
     | 'new' objectName = ID '(' ')' #ObjectInstantiation
@@ -100,6 +95,6 @@ expression
     | bool='true' #Literal
     | bool='false' #Literal
     | id=ID #Literal
-    | id='this' #Literal
+    | id='this' #Object
     ;
 
