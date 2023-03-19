@@ -87,6 +87,7 @@ expression
     | expression op=('<' | '>' | '<=' | '>=' | '!=' | '==' ) expression #BinaryOp
     | expression op='&&' expression #BinaryOp
     | expression op='||' expression  #BinaryOp
+    | value=expression op='?' value=expression op=':' value=expression  #TernaryOp
     | expression '.' method='length' #Length
     | expression '.' method = ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
     | 'new' 'int' '[' (expression?) ']' ('{' (contents+=INT','?)* '}' ';')? #IntArray
