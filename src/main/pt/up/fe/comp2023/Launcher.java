@@ -7,6 +7,9 @@ import java.util.Map;
 
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
+import pt.up.fe.comp.jmm.report.Report;
+import pt.up.fe.comp.jmm.report.ReportType;
+import pt.up.fe.comp.jmm.report.Stage;
 import pt.up.fe.specs.util.SpecsIo;
 import pt.up.fe.specs.util.SpecsLogs;
 import pt.up.fe.specs.util.SpecsSystem;
@@ -36,8 +39,10 @@ public class Launcher {
 
         // Parse stage
         JmmParserResult parserResult = parser.parse(code, config);
-
-        if (parserResult.getRootNode() != null) {
+        if (parserResult == null){
+            System.out.println(new Report(ReportType.ERROR, Stage.SYNTATIC,-1, -1, "[PARSING ERROR] Invalid characters detected, terminating."));
+        }
+        else if (parserResult.getRootNode() != null) {
             System.out.println(parserResult.getRootNode().toTree());
 
             // ... add remaining stages
