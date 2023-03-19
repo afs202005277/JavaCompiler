@@ -1,6 +1,0 @@
-completar gramatica
-precedencias
-Lidar com erros (nao crashar)
-implementar interfaces
-symbol table com maps
-boa symbol table -> chegar a input baseando na symbol table
