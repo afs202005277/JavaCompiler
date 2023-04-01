@@ -63,6 +63,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             }
             if (ollirClassUnit.getClassName().equals(method.getMethodName())){
                 jasminCode.append(".method public <init>");
+                method.addInstr(new ReturnInstruction());
             } else{
                 jasminCode.append(".method ").append(method.getMethodAccessModifier()).append(staticStr).append(method.getMethodName());
             }
@@ -97,7 +98,6 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                     case BINARYOPER -> jasminCode.append(processBinaryOp((BinaryOpInstruction) instruction));
                 }
             }
-            jasminCode.append(handleType(method.getReturnType())).append("\n");
             jasminCode.append(".end method").append("\n\n");
         }
         return new JasminResult(jasminCode.toString());
@@ -105,9 +105,13 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private String processCall(CallInstruction instruction, HashMap<String, Descriptor> varTable) {
         StringBuilder code = new StringBuilder();
+        String secondArg = instruction.getSecondArg().toString();
         if (! (instruction.getFirstArg().toString().equals("CLASS") || instruction.getFirstArg().toString().equals("VOID")))
             code.append(handleType("load_" + varTable.get(instruction.getFirstArg().getType().getTypeOfElement().name().toLowerCase()).getVirtualReg(), varTable.get(instruction.getFirstArg().getType().getTypeOfElement().name().toLowerCase()))).append("\n");
-        return code.append(instruction.getInvocationType().name()).append(" ").append(instruction.getSecondArg()).append("()V").append("\n").toString();
+        if (instruction.getSecondArg().isLiteral()) {
+            secondArg = ((LiteralElement) instruction.getSecondArg()).getLiteral();
+        }
+        return code.append(instruction.getInvocationType().name()).append(" ").append(secondArg.replace("\"", "")).append("()V").append("\n").toString();
     }
 
     private String processGoTo(GotoInstruction instruction) {
@@ -127,7 +131,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }
 
     private String processReturn(ReturnInstruction instruction) {
-        return null;
+        return "return\n";
     }
 
     private String processGetField(FieldInstruction instruction) {
