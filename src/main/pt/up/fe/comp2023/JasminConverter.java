@@ -46,7 +46,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return jasminCode.toString();
     }
 
-    private String dispatcher(Instruction instruction, HashMap<String, Descriptor> varTable){
+    private String dispatcher(Instruction instruction, HashMap<String, Descriptor> varTable) {
         StringBuilder jasminCode = new StringBuilder();
         switch (instruction.getInstType()) {
             case CALL -> jasminCode.append(processCall((CallInstruction) instruction, varTable));
@@ -54,7 +54,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             case NOPER -> jasminCode.append(processNoper(instruction));
             case ASSIGN -> jasminCode.append(processAssign((AssignInstruction) instruction, varTable));
             case BRANCH -> jasminCode.append(processBranch(instruction));
-            case RETURN -> jasminCode.append(processReturn((ReturnInstruction) instruction));
+            case RETURN -> jasminCode.append(processReturn((ReturnInstruction) instruction, varTable));
             case GETFIELD -> jasminCode.append(processGetField((FieldInstruction) instruction));
             case PUTFIELD -> jasminCode.append(processPutField((FieldInstruction) instruction));
             case UNARYOPER -> jasminCode.append(processUnaryOp((UnaryOpInstruction) instruction));
@@ -111,14 +111,14 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private String processCall(CallInstruction instruction, HashMap<String, Descriptor> varTable) {
         StringBuilder code = new StringBuilder();
-        if (instruction.getInvocationType().name().equals("NEW")){
+        if (instruction.getInvocationType().name().equals("NEW")) {
             return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").toString();
         }
         String secondArg = instruction.getSecondArg().toString();
         if (!(instruction.getFirstArg().toString().equals("CLASS") || instruction.getFirstArg().toString().equals("VOID"))) {
             Operand operand = (Operand) instruction.getFirstArg();
 
-            code.append(handleType("load_" + varTable.get(operand.getName()).getVirtualReg(), varTable.get(operand.getName()))).append("\n");
+            code.append(handleType("load " + varTable.get(operand.getName()).getVirtualReg(), varTable.get(operand.getName()))).append("\n");
         }
         if (instruction.getSecondArg().isLiteral()) {
             secondArg = ((LiteralElement) instruction.getSecondArg()).getLiteral();
@@ -137,6 +137,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     private String processAssign(AssignInstruction instruction, HashMap<String, Descriptor> varTable) {
         StringBuilder code = new StringBuilder();
         code.append(dispatcher(instruction.getRhs(), varTable));
+        Operand tmpVariable = ((Operand) instruction.getDest());
+        code.append(handleType("store " + varTable.get(tmpVariable.getName()).getVirtualReg(), varTable.get(tmpVariable.getName()))).append("\n");
         return code.toString();
     }
 
@@ -144,7 +146,11 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return null;
     }
 
-    private String processReturn(ReturnInstruction instruction) {
+    private String processReturn(ReturnInstruction instruction, HashMap<String, Descriptor> varTable) {
+        Operand returnVar = (Operand) instruction.getOperand();
+        if (returnVar != null){
+            return handleType("load " + varTable.get(returnVar.getName()).getVirtualReg(), varTable.get(returnVar.getName())) + "\n" + handleType(returnVar.getType(), "return\n");
+        }
         return "return\n";
     }
 
@@ -162,9 +168,9 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private String processBinaryOp(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
         StringBuilder code = new StringBuilder();
-        code.append(handleType("load_" + varTable.get(((Operand) instruction.getLeftOperand()).getName()).getVirtualReg(), varTable.get(((Operand) instruction.getLeftOperand()).getName()))).append("\n");
-        code.append(handleType("load_" + varTable.get(((Operand) instruction.getRightOperand()).getName()).getVirtualReg(), varTable.get(((Operand) instruction.getRightOperand()).getName()))).append("\n");
-        code.append(handleType(instruction.getOperation().getTypeInfo(),instruction.getOperation().getOpType().name().toLowerCase())).append("\n");
+        code.append(handleType("load " + varTable.get(((Operand) instruction.getLeftOperand()).getName()).getVirtualReg(), varTable.get(((Operand) instruction.getLeftOperand()).getName()))).append("\n");
+        code.append(handleType("load " + varTable.get(((Operand) instruction.getRightOperand()).getName()).getVirtualReg(), varTable.get(((Operand) instruction.getRightOperand()).getName()))).append("\n");
+        code.append(handleType(instruction.getOperation().getTypeInfo(), instruction.getOperation().getOpType().name().toLowerCase())).append("\n");
         return code.toString();
     }
 }
