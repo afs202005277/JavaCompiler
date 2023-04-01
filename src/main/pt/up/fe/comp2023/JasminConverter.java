@@ -1,4 +1,9 @@
 package pt.up.fe.comp2023;
+// iconst -> [-1, 5]
+// bipush -> [-128, 127]
+// criar funcao para guardar numeros na stack -> Done
+// criar funcao para variar entre iload_n e iload n (e o msm para os stores)
+// criar funcao para output dos metodos juntamente com os descriptors dos args
 
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
@@ -51,7 +56,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         switch (instruction.getInstType()) {
             case CALL -> jasminCode.append(processCall((CallInstruction) instruction, varTable));
             case GOTO -> jasminCode.append(processGoTo((GotoInstruction) instruction));
-            case NOPER -> jasminCode.append(processNoper(instruction));
+            case NOPER -> jasminCode.append(processNoper((SingleOpInstruction) instruction));
             case ASSIGN -> jasminCode.append(processAssign((AssignInstruction) instruction, varTable));
             case BRANCH -> jasminCode.append(processBranch(instruction));
             case RETURN -> jasminCode.append(processReturn((ReturnInstruction) instruction, varTable));
@@ -61,6 +66,16 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             case BINARYOPER -> jasminCode.append(processBinaryOp((BinaryOpInstruction) instruction, varTable));
         }
         return jasminCode.toString();
+    }
+
+    private String addToOperandStack(int value){
+        if (value >= -1 && value <= 5)
+            return "iconst_" + value + "\n";
+        if (value >= -128 && value <= 127)
+            return "bipush " + value + "\n";
+        if (value >= -32768 && value <= 32767)
+            return "sipush " +  value + "\n";
+        return "ldc " + value + "\n";
     }
 
     @Override
@@ -119,6 +134,11 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             Operand operand = (Operand) instruction.getFirstArg();
 
             code.append(handleType("load " + varTable.get(operand.getName()).getVirtualReg(), varTable.get(operand.getName()))).append("\n");
+
+            for (Element arg:instruction.getListOfOperands()){
+                Operand tmp = (Operand) arg;
+                code.append(handleType("load " + varTable.get(tmp.getName()).getVirtualReg(), varTable.get(tmp.getName()))).append("\n");
+            }
         }
         if (instruction.getSecondArg().isLiteral()) {
             secondArg = ((LiteralElement) instruction.getSecondArg()).getLiteral();
@@ -130,8 +150,10 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return null;
     }
 
-    private String processNoper(Instruction instruction) {
-        return null;
+    private String processNoper(SingleOpInstruction instruction) {
+        if (instruction.getSingleOperand().isLiteral())
+            return addToOperandStack(Integer.parseInt(((LiteralElement) instruction.getSingleOperand()).getLiteral()));
+        return "";
     }
 
     private String processAssign(AssignInstruction instruction, HashMap<String, Descriptor> varTable) {
