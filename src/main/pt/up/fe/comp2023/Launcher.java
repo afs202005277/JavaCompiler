@@ -38,7 +38,7 @@ public class Launcher {
         // Read contents of input file
         String code = SpecsIo.read(inputFile);
 
-        String content = new Scanner(new File("./test/pt/up/fe/comp/cp2/apps/example_ollir/HelloWorld.ollir")).useDelimiter("\\Z").next();
+        String content = new Scanner(new File("./test/pt/up/fe/comp/cp2/apps/example_ollir/Simple.ollir")).useDelimiter("\\Z").next();
         // System.out.println(content);
         JasminConverter jasminConverter = new JasminConverter();
         System.out.println(jasminConverter.toJasmin(new OllirResult(content, config)).getJasminCode());

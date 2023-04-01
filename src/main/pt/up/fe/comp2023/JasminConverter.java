@@ -106,8 +106,11 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     private String processCall(CallInstruction instruction, HashMap<String, Descriptor> varTable) {
         StringBuilder code = new StringBuilder();
         String secondArg = instruction.getSecondArg().toString();
-        if (! (instruction.getFirstArg().toString().equals("CLASS") || instruction.getFirstArg().toString().equals("VOID")))
-            code.append(handleType("load_" + varTable.get(instruction.getFirstArg().getType().getTypeOfElement().name().toLowerCase()).getVirtualReg(), varTable.get(instruction.getFirstArg().getType().getTypeOfElement().name().toLowerCase()))).append("\n");
+        if (!(instruction.getFirstArg().toString().equals("CLASS") || instruction.getFirstArg().toString().equals("VOID"))){
+            Operand operand = (Operand) instruction.getFirstArg();
+
+            code.append(handleType("load_" + varTable.get(operand.getName()).getVirtualReg(), varTable.get(operand.getName()))).append("\n");
+        }
         if (instruction.getSecondArg().isLiteral()) {
             secondArg = ((LiteralElement) instruction.getSecondArg()).getLiteral();
         }
