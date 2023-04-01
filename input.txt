@@ -1,7 +1,8 @@
 import compilers.c2023.io;
 
-class Fac {
+class Fac extends Teste{
     public int computeFac (int num ){
+        int[] a = {1, 2, 3};
         int num_aux;
         if ( num < 1)
             num_aux = 1;
