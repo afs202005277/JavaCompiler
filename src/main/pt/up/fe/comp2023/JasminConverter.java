@@ -21,7 +21,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         String variableType = variable.getVarType().getTypeOfElement().name();
         switch (variableType) {
             case "THIS" -> jasminCode.append("a").append(suffix);
-            case "INT32" -> jasminCode.append("l").append(suffix);
+            case "INT32" -> jasminCode.append("i").append(suffix);
             case "BOOLEAN" -> jasminCode.append("a").append(suffix);
             case "ARRAYREF" -> jasminCode.append("a").append(suffix);
             case "OBJECTREF" -> jasminCode.append("a").append(suffix);
@@ -31,17 +31,17 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return jasminCode.toString();
     }
 
-    private String handleType(Type type) {
+    private String handleType(Type type, String suffix) {
         StringBuilder jasminCode = new StringBuilder();
         // INT32, BOOLEAN, ARRAYREF, OBJECTREF, THIS,  STRING, VOID
         switch (type.getTypeOfElement().name()) {
-            case "THIS" -> jasminCode.append("a").append("return");
-            case "INT32" -> jasminCode.append("l").append("return");
-            case "BOOLEAN" -> jasminCode.append("a").append("return");
-            case "ARRAYREF" -> jasminCode.append("a").append("return");
-            case "OBJECTREF" -> jasminCode.append("a").append("return");
-            case "STRING" -> jasminCode.append("a").append("return");
-            case "VOID" -> jasminCode.append("return");
+            case "THIS" -> jasminCode.append("a").append(suffix);
+            case "INT32" -> jasminCode.append("i").append(suffix);
+            case "BOOLEAN" -> jasminCode.append("a").append(suffix);
+            case "ARRAYREF" -> jasminCode.append("a").append(suffix);
+            case "OBJECTREF" -> jasminCode.append("a").append(suffix);
+            case "STRING" -> jasminCode.append("a").append(suffix);
+            case "VOID" -> jasminCode.append(suffix);
         }
         return jasminCode.toString();
     }
@@ -58,7 +58,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             case GETFIELD -> jasminCode.append(processGetField((FieldInstruction) instruction));
             case PUTFIELD -> jasminCode.append(processPutField((FieldInstruction) instruction));
             case UNARYOPER -> jasminCode.append(processUnaryOp((UnaryOpInstruction) instruction));
-            case BINARYOPER -> jasminCode.append(processBinaryOp((BinaryOpInstruction) instruction));
+            case BINARYOPER -> jasminCode.append(processBinaryOp((BinaryOpInstruction) instruction, varTable));
         }
         return jasminCode.toString();
     }
@@ -160,7 +160,11 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return null;
     }
 
-    private String processBinaryOp(BinaryOpInstruction instruction) {
-        return null;
+    private String processBinaryOp(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
+        StringBuilder code = new StringBuilder();
+        code.append(handleType("load_" + varTable.get(((Operand) instruction.getLeftOperand()).getName()).getVirtualReg(), varTable.get(((Operand) instruction.getLeftOperand()).getName()))).append("\n");
+        code.append(handleType("load_" + varTable.get(((Operand) instruction.getRightOperand()).getName()).getVirtualReg(), varTable.get(((Operand) instruction.getRightOperand()).getName()))).append("\n");
+        code.append(handleType(instruction.getOperation().getTypeInfo(),instruction.getOperation().getOpType().name().toLowerCase())).append("\n");
+        return code.toString();
     }
 }
