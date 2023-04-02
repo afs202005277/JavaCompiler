@@ -1,9 +1,5 @@
 package pt.up.fe.comp2023;
-// iconst -> [-1, 5]
-// bipush -> [-128, 127]
-// criar funcao para guardar numeros na stack -> Done
 // criar funcao para variar entre iload_n e iload n (e o msm para os stores)
-// criar funcao para output dos metodos juntamente com os descriptors dos args
 
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
@@ -52,20 +48,35 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return jasminCode.toString();
     }
 
-    private String outputMethodId(Method method){
-        StringBuilder code = new StringBuilder("(");
+    private String outputMethodId(String methodName, List<Element> args, Type returnType) {
+        Method method = new Method(new ClassUnit());
+        method.setMethodName(methodName.replace("\"", ""));
+        for (Element arg : args) {
+            method.addParam(arg);
+        }
+        method.setReturnType(returnType);
+        return outputMethodId(method, false);
+    }
+
+    private String outputMethodId(Method method, boolean isInit) {
+        StringBuilder code = new StringBuilder();
+        if (isInit) {
+            code.append("<init> ");
+        } else {
+            code.append(method.getMethodName());
+        }
+        code.append("(");
         for (Element element : method.getParams()) {
             Type type = element.getType();
             if (type.getTypeOfElement().name().equals("ARRAYREF")) {
                 ArrayType tmp = (ArrayType) type;
-                code.append("[").append(typeToDescriptor.get(tmp.getElementClass()));
+                code.append("[").append(typeToDescriptor.get(tmp.getElementType().toString()));
             } else {
                 code.append(typeToDescriptor.get(element.getType().getTypeOfElement().name()));
             }
         }
         code.append(")");
         code.append(JasminConverter.typeToDescriptor.get(method.getReturnType().getTypeOfElement().name()));
-        code.append("\n");
         return code.toString();
     }
 
@@ -90,17 +101,18 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
         for (Method method : ollirClassUnit.getMethods()) {
             List<Instruction> instructions = method.getInstructions();
+            boolean isInit = method.getMethodName().equals(ollirClassUnit.getClassName());
             String staticStr = " static ";
             if (!method.isStaticMethod()) {
                 staticStr = " ";
             }
-            if (ollirClassUnit.getClassName().equals(method.getMethodName())) {
-                jasminCode.append(".method public <init>");
+            if (isInit) {
+                jasminCode.append(".method public ");
                 method.addInstr(new ReturnInstruction());
             } else {
-                jasminCode.append(".method ").append(method.getMethodAccessModifier()).append(staticStr).append(method.getMethodName());
+                jasminCode.append(".method ").append(method.getMethodAccessModifier()).append(staticStr);
             }
-            jasminCode.append(outputMethodId(method));
+            jasminCode.append(outputMethodId(method, isInit));
             jasminCode.append("\n");
             if (!method.getVarTable().isEmpty()) {
                 jasminCode.append(".limit stack 99\n");
@@ -133,7 +145,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         if (instruction.getSecondArg().isLiteral()) {
             secondArg = ((LiteralElement) instruction.getSecondArg()).getLiteral();
         }
-        return code.append(instruction.getInvocationType().name()).append(" ").append(secondArg.replace("\"", "")).append("()V").append("\n").toString();
+        return code.append(instruction.getInvocationType().name()).append(" ").append(outputMethodId(secondArg, instruction.getListOfOperands(), instruction.getReturnType())).append("\n").toString();
     }
 
     private String processGoTo(GotoInstruction instruction) {
