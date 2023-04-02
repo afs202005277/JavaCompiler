@@ -20,22 +20,6 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         put("VOID", "V");
     }};
 
-    private String handleType(String suffix, Descriptor variable) {
-        StringBuilder jasminCode = new StringBuilder();
-        // INT32, BOOLEAN, ARRAYREF, OBJECTREF, THIS,  STRING, VOID
-        String variableType = variable.getVarType().getTypeOfElement().name();
-        switch (variableType) {
-            case "THIS" -> jasminCode.append("a").append(suffix);
-            case "INT32" -> jasminCode.append("i").append(suffix);
-            case "BOOLEAN" -> jasminCode.append("a").append(suffix);
-            case "ARRAYREF" -> jasminCode.append("a").append(suffix);
-            case "OBJECTREF" -> jasminCode.append("a").append(suffix);
-            case "STRING" -> jasminCode.append("a").append(suffix);
-            case "VOID" -> jasminCode.append(suffix);
-        }
-        return jasminCode.toString();
-    }
-
     private String handleType(Type type, String suffix) {
         StringBuilder jasminCode = new StringBuilder();
         // INT32, BOOLEAN, ARRAYREF, OBJECTREF, THIS,  STRING, VOID
@@ -68,13 +52,30 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return jasminCode.toString();
     }
 
-    private String addToOperandStack(int value){
+    private String outputMethodId(Method method){
+        StringBuilder code = new StringBuilder("(");
+        for (Element element : method.getParams()) {
+            Type type = element.getType();
+            if (type.getTypeOfElement().name().equals("ARRAYREF")) {
+                ArrayType tmp = (ArrayType) type;
+                code.append("[").append(typeToDescriptor.get(tmp.getElementClass()));
+            } else {
+                code.append(typeToDescriptor.get(element.getType().getTypeOfElement().name()));
+            }
+        }
+        code.append(")");
+        code.append(JasminConverter.typeToDescriptor.get(method.getReturnType().getTypeOfElement().name()));
+        code.append("\n");
+        return code.toString();
+    }
+
+    private String addToOperandStack(int value) {
         if (value >= -1 && value <= 5)
             return "iconst_" + value + "\n";
         if (value >= -128 && value <= 127)
             return "bipush " + value + "\n";
         if (value >= -32768 && value <= 32767)
-            return "sipush " +  value + "\n";
+            return "sipush " + value + "\n";
         return "ldc " + value + "\n";
     }
 
@@ -99,18 +100,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             } else {
                 jasminCode.append(".method ").append(method.getMethodAccessModifier()).append(staticStr).append(method.getMethodName());
             }
-            jasminCode.append("(");
-            for (Element element : method.getParams()) {
-                Type type = element.getType();
-                if (type.getTypeOfElement().name().equals("ARRAYREF")) {
-                    ArrayType tmp = (ArrayType) type;
-                    jasminCode.append("[").append(typeToDescriptor.get(tmp.getElementClass()));
-                } else {
-                    jasminCode.append(typeToDescriptor.get(element.getType().getTypeOfElement().name()));
-                }
-            }
-            jasminCode.append(")");
-            jasminCode.append(JasminConverter.typeToDescriptor.get(method.getReturnType().getTypeOfElement().name()));
+            jasminCode.append(outputMethodId(method));
             jasminCode.append("\n");
             if (!method.getVarTable().isEmpty()) {
                 jasminCode.append(".limit stack 99\n");
@@ -133,11 +123,11 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         if (!(instruction.getFirstArg().toString().equals("CLASS") || instruction.getFirstArg().toString().equals("VOID"))) {
             Operand operand = (Operand) instruction.getFirstArg();
 
-            code.append(handleType("load " + varTable.get(operand.getName()).getVirtualReg(), varTable.get(operand.getName()))).append("\n");
+            code.append(handleType(varTable.get(operand.getName()).getVarType(), "load " + varTable.get(operand.getName()).getVirtualReg())).append("\n");
 
-            for (Element arg:instruction.getListOfOperands()){
+            for (Element arg : instruction.getListOfOperands()) {
                 Operand tmp = (Operand) arg;
-                code.append(handleType("load " + varTable.get(tmp.getName()).getVirtualReg(), varTable.get(tmp.getName()))).append("\n");
+                code.append(handleType(varTable.get(tmp.getName()).getVarType(), "load " + varTable.get(tmp.getName()).getVirtualReg())).append("\n");
             }
         }
         if (instruction.getSecondArg().isLiteral()) {
@@ -160,7 +150,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         StringBuilder code = new StringBuilder();
         code.append(dispatcher(instruction.getRhs(), varTable));
         Operand tmpVariable = ((Operand) instruction.getDest());
-        code.append(handleType("store " + varTable.get(tmpVariable.getName()).getVirtualReg(), varTable.get(tmpVariable.getName()))).append("\n");
+        code.append(handleType(varTable.get(tmpVariable.getName()).getVarType(), "store " + varTable.get(tmpVariable.getName()).getVirtualReg())).append("\n");
         return code.toString();
     }
 
@@ -170,8 +160,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private String processReturn(ReturnInstruction instruction, HashMap<String, Descriptor> varTable) {
         Operand returnVar = (Operand) instruction.getOperand();
-        if (returnVar != null){
-            return handleType("load " + varTable.get(returnVar.getName()).getVirtualReg(), varTable.get(returnVar.getName())) + "\n" + handleType(returnVar.getType(), "return\n");
+        if (returnVar != null) {
+            return handleType(varTable.get(returnVar.getName()).getVarType(), "load " + varTable.get(returnVar.getName()).getVirtualReg()) + "\n" + handleType(returnVar.getType(), "return\n");
         }
         return "return\n";
     }
@@ -190,8 +180,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private String processBinaryOp(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
         StringBuilder code = new StringBuilder();
-        code.append(handleType("load " + varTable.get(((Operand) instruction.getLeftOperand()).getName()).getVirtualReg(), varTable.get(((Operand) instruction.getLeftOperand()).getName()))).append("\n");
-        code.append(handleType("load " + varTable.get(((Operand) instruction.getRightOperand()).getName()).getVirtualReg(), varTable.get(((Operand) instruction.getRightOperand()).getName()))).append("\n");
+        code.append(handleType(varTable.get(((Operand) instruction.getLeftOperand()).getName()).getVarType(), "load " + varTable.get(((Operand) instruction.getLeftOperand()).getName()).getVirtualReg())).append("\n");
+        code.append(handleType(varTable.get(((Operand) instruction.getRightOperand()).getName()).getVarType(), "load " + varTable.get(((Operand) instruction.getRightOperand()).getName()).getVirtualReg())).append("\n");
         code.append(handleType(instruction.getOperation().getTypeInfo(), instruction.getOperation().getOpType().name().toLowerCase())).append("\n");
         return code.toString();
     }
