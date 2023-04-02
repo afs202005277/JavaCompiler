@@ -61,7 +61,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     private String outputMethodId(Method method, boolean isInit) {
         StringBuilder code = new StringBuilder();
         if (isInit) {
-            code.append("<init> ");
+            code.append("<init>");
         } else {
             code.append(method.getMethodName());
         }
@@ -145,7 +145,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         if (instruction.getSecondArg().isLiteral()) {
             secondArg = ((LiteralElement) instruction.getSecondArg()).getLiteral();
         }
-        return code.append(instruction.getInvocationType().name()).append(" ").append(outputMethodId(secondArg, instruction.getListOfOperands(), instruction.getReturnType())).append("\n").toString();
+        return code.append(instruction.getInvocationType().name()).append(" ").append(((ClassType) ((Operand) instruction.getFirstArg()).getType()).getName()).append("/").append(outputMethodId(secondArg, instruction.getListOfOperands(), instruction.getReturnType())).append("\n").toString();
     }
 
     private String processGoTo(GotoInstruction instruction) {
