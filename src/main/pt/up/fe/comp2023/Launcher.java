@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
+import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
 import pt.up.fe.comp.jmm.report.Report;
@@ -38,10 +39,12 @@ public class Launcher {
         // Read contents of input file
         String code = SpecsIo.read(inputFile);
 
-        String content = new Scanner(new File("./test/pt/up/fe/comp/cp2/apps/example_ollir/Simple.ollir")).useDelimiter("\\Z").next();
+        String content = new Scanner(new File("./test/pt/up/fe/comp/cp2/jasmin/OllirToJasminInvoke.ollir")).useDelimiter("\\Z").next();
         // System.out.println(content);
         JasminConverter jasminConverter = new JasminConverter();
-        System.out.println(jasminConverter.toJasmin(new OllirResult(content, config)).getJasminCode());
+        JasminResult jasminResult = jasminConverter.toJasmin(new OllirResult(content, config));
+        System.out.println(jasminResult.getJasminCode());
+
 
 
         // Instantiate JmmParser

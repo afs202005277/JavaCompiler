@@ -1,5 +1,6 @@
 package pt.up.fe.comp2023;
 // criar funcao para variar entre iload_n e iload n (e o msm para os stores)
+// ele n funciona se o access modifier da class for DEFAULT
 
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
@@ -22,7 +23,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         switch (type.getTypeOfElement().name()) {
             case "THIS" -> jasminCode.append("a").append(suffix);
             case "INT32" -> jasminCode.append("i").append(suffix);
-            case "BOOLEAN" -> jasminCode.append("a").append(suffix);
+            case "BOOLEAN" -> jasminCode.append("i").append(suffix);
             case "ARRAYREF" -> jasminCode.append("a").append(suffix);
             case "OBJECTREF" -> jasminCode.append("a").append(suffix);
             case "STRING" -> jasminCode.append("a").append(suffix);
@@ -40,8 +41,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             case ASSIGN -> jasminCode.append(processAssign((AssignInstruction) instruction, varTable));
             case BRANCH -> jasminCode.append(processBranch(instruction));
             case RETURN -> jasminCode.append(processReturn((ReturnInstruction) instruction, varTable));
-            case GETFIELD -> jasminCode.append(processGetField((FieldInstruction) instruction));
-            case PUTFIELD -> jasminCode.append(processPutField((FieldInstruction) instruction));
+            case GETFIELD -> jasminCode.append(processGetField((GetFieldInstruction) instruction, varTable));
+            case PUTFIELD -> jasminCode.append(processPutField((PutFieldInstruction) instruction, varTable));
             case UNARYOPER -> jasminCode.append(processUnaryOp((UnaryOpInstruction) instruction));
             case BINARYOPER -> jasminCode.append(processBinaryOp((BinaryOpInstruction) instruction, varTable));
         }
@@ -95,8 +96,12 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         StringBuilder jasminCode = new StringBuilder();
         ClassUnit ollirClassUnit = ollirResult.getOllirClass();
 
-        jasminCode.append(".class ").append(ollirClassUnit.getClassAccessModifier()).append(" ").append(ollirClassUnit.getClassName()).append("\n");
+        if (ollirClassUnit.getSuperClass() == null){
+            ollirClassUnit.setSuperClass("java/lang/Object");
+        }
 
+        // jasminCode.append(".class ").append(ollirClassUnit.getClassAccessModifier().toString().toLowerCase()).append(" ").append(ollirClassUnit.getClassName()).append("\n");
+        jasminCode.append(".class ").append("public").append(" ").append(ollirClassUnit.getClassName()).append("\n");
         jasminCode.append(".super ").append(ollirClassUnit.getSuperClass()).append("\n\n\n");
 
         for (Method method : ollirClassUnit.getMethods()) {
@@ -110,7 +115,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                 jasminCode.append(".method public ");
                 method.addInstr(new ReturnInstruction());
             } else {
-                jasminCode.append(".method ").append(method.getMethodAccessModifier()).append(staticStr);
+                jasminCode.append(".method ").append(method.getMethodAccessModifier().toString().toLowerCase()).append(staticStr);
             }
             jasminCode.append(outputMethodId(method, isInit));
             jasminCode.append("\n");
@@ -171,19 +176,36 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }
 
     private String processReturn(ReturnInstruction instruction, HashMap<String, Descriptor> varTable) {
-        Operand returnVar = (Operand) instruction.getOperand();
+        Element returnVar = instruction.getOperand();
         if (returnVar != null) {
-            return handleType(varTable.get(returnVar.getName()).getVarType(), "load " + varTable.get(returnVar.getName()).getVirtualReg()) + "\n" + handleType(returnVar.getType(), "return\n");
+            if (returnVar.isLiteral()){
+                return addToOperandStack(Integer.parseInt(((LiteralElement) returnVar).getLiteral())) + "\n" + "ireturn\n";
+            } else{
+                Operand tmp = (Operand) returnVar;
+                return handleType(varTable.get(tmp.getName()).getVarType(), "load " + varTable.get(tmp.getName()).getVirtualReg()) + "\n" + handleType(returnVar.getType(), "return\n");
+            }
         }
         return "return\n";
     }
 
-    private String processGetField(FieldInstruction instruction) {
-        return null;
+    private String processGetField(GetFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
+        StringBuilder code = new StringBuilder();
+        code.append(handleType(varTable.get(((Operand) instruction.getFirstOperand()).getName()).getVarType(), "load_" + varTable.get(((Operand) instruction.getFirstOperand()).getName()).getVirtualReg())).append("\n");
+        code.append("getfield ").append(((ClassType) instruction.getFirstOperand().getType()).getName()).append("/").append(((Operand) instruction.getSecondOperand()).getName()).append(" ").append(typeToDescriptor.get(instruction.getSecondOperand().getType().toString())).append("\n");
+        return code.toString();
     }
 
-    private String processPutField(FieldInstruction instruction) {
-        return null;
+    private String processPutField(PutFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
+        StringBuilder code = new StringBuilder();
+        code.append(handleType(varTable.get(((Operand) instruction.getFirstOperand()).getName()).getVarType(), "load_" + varTable.get(((Operand) instruction.getFirstOperand()).getName()).getVirtualReg())).append("\n");
+        if (instruction.getThirdOperand().isLiteral()){
+            // TO DO: only works for ints
+            code.append(addToOperandStack(Integer.parseInt(((LiteralElement) instruction.getThirdOperand()).getLiteral())));
+        } else{
+            code.append(handleType(instruction.getThirdOperand().getType(), "load_" + varTable.get(((Operand) instruction.getThirdOperand()).getName()).getVirtualReg()));
+        }
+        code.append("putfield ").append(((ClassType) instruction.getFirstOperand().getType()).getName()).append("/").append(((Operand) instruction.getSecondOperand()).getName()).append(" ").append(typeToDescriptor.get(instruction.getThirdOperand().getType().toString())).append("\n");
+        return code.toString();
     }
 
     private String processUnaryOp(UnaryOpInstruction instruction) {
