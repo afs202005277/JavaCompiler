@@ -151,7 +151,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             }
             jasminCode.append(outputMethodId(method, isInit));
             jasminCode.append("\n");
-            if (!method.getVarTable().isEmpty()) {
+            if (method.getVarTable().size() > 1) {
                 jasminCode.append(".limit stack 99\n");
                 jasminCode.append(".limit locals 99\n");
             }
