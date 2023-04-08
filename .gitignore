@@ -11,6 +11,7 @@ out/
 .DS_Store
 
 tmp/
+guidelines/
 
 # Class files
 **/*.class
