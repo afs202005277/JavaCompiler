@@ -2,9 +2,9 @@ import compilers.c2023.io;
 
 class Fac {
     public int computeFac (int num ){
-        int num_aux;
+        int num_aux = 1+2+3;
         if ( num < 1)
-            num_aux = 1;
+            num_aux = arr[2];
         else
             num_aux = num * (this.computeFac(num -1));
         return num_aux;
@@ -13,3 +13,6 @@ class Fac {
         io.println(new Fac().computeFac(10)); // assuming the existence of the classfile io. class
     }
 }
+
+// num_aux = arr[i++];
+// declaraçoes de int dentro dos if statement

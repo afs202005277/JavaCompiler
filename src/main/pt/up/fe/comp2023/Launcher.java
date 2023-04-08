@@ -3,6 +3,7 @@ package pt.up.fe.comp2023;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
@@ -36,6 +37,7 @@ public class Launcher {
 
         // Instantiate JmmParser
         SimpleParser parser = new SimpleParser();
+        SemanticAnalysis sa = new SemanticAnalysis();
 
         // Parse stage
         JmmParserResult parserResult = parser.parse(code, config);
@@ -49,6 +51,11 @@ public class Launcher {
             SymbolTable symbolTable = new SymbolTable();
             JmmSemanticsResult jmmSemanticsResult = symbolTable.semanticAnalysis(parserResult);
             jmmSemanticsResult.getSymbolTable().print();
+
+            System.out.println("\n==========================\n");
+            List<Report> reports = new SemanticAnalysis().visit(jmmSemanticsResult.getRootNode(), (SymbolTable) jmmSemanticsResult.getSymbolTable());
+            System.out.println("\n==========================\n");
+            //System.out.println(reports);
 
         } else {
             for (pt.up.fe.comp.jmm.report.Report temp : parserResult.getReports()) {

@@ -92,7 +92,7 @@ expression
     | expression '.' method = ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
     | 'new' 'int' '[' (expression?) ']' ('{' (contents+=INT','?)* '}' ';')? #IntArray
     | 'new' objectName = ID '(' ')' #ObjectInstantiation
-    | integer=INT #Literal
+    | integer=INT #LiteralArrayAccess
     | bool='true' #Literal
     | bool='false' #Literal
     | id=ID #Literal
