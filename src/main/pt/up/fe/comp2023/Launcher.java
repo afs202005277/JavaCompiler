@@ -44,6 +44,7 @@ public class Launcher {
         String content = code;
         JasminConverter jasminConverter = new JasminConverter();
         JasminResult jasminResult = jasminConverter.toJasmin(new OllirResult(content, config));
+        SpecsIo.write(new File("./tmp/tmp.j"), jasminResult.getJasminCode());
         System.out.println(jasminResult.getJasminCode());
 
 
