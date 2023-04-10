@@ -238,9 +238,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }
 
     private String processNoper(SingleOpInstruction instruction, HashMap<String, Descriptor> varTable) {
-        /*Element operand = instruction.getSingleOperand();
-        return handleLiteral(operand, varTable);*/
-        return null;
+        Element operand = instruction.getSingleOperand();
+        return handleLiteral(operand, varTable);
     }
 
     private String processAssign(AssignInstruction instruction, HashMap<String, Descriptor> varTable, List<String> methods, List<String> imports, String parentClass) {
@@ -313,10 +312,10 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }
 
     private String processUnaryOp(UnaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
-        /*String code = handleLiteral(instruction.getOperand(), varTable);
+        String code = handleLiteral(instruction.getOperand(), varTable);
         code += instruction.getOperation();
-        code += "\n";*/
-        return null;
+        code += "\n";
+        return code;
     }
 
     private String handleLiteral(Element element, HashMap<String, Descriptor> varTable) {
@@ -350,6 +349,3 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return code.toString();
     }
 }
-
-// comments -> 33%
-//35
