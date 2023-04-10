@@ -29,6 +29,10 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
         }
     }
 
+    public ArrayList<Symbol> getSomethingFromTable(String something) {
+        return table.getOrDefault(something, null);
+    }
+
     @Override
     public List<String> getImports() {
         ArrayList<Symbol> symbols = table.get("import");
