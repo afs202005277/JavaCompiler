@@ -19,6 +19,13 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }};
 
     private String handleType(Type type, String suffix) {
+        if (suffix.contains("load ") || suffix.contains("store ")){
+            String indexStr = suffix.substring(suffix.indexOf(' ')+1);
+            int index = Integer.parseInt(indexStr);
+            if (index <= 3)
+                suffix = suffix.replace(" ", "_");
+        }
+
         StringBuilder jasminCode = new StringBuilder();
         // INT32, BOOLEAN, ARRAYREF, OBJECTREF, THIS,  STRING, VOID
         switch (type.getTypeOfElement().name()) {
