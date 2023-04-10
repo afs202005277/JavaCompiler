@@ -209,8 +209,9 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").toString();
         }
         boolean hasSecondArg = instruction.getSecondArg() != null;
-        if (!(instruction.getFirstArg().toString().equals("CLASS") || instruction.getFirstArg().toString().equals("VOID") || instruction.getFirstArg().toString().equals("ARRAYREF"))) {
-            code.append(handleLiteral(instruction.getFirstArg(), varTable));
+        if (!(instruction.getFirstArg().toString().equals("VOID") || instruction.getFirstArg().toString().equals("ARRAYREF"))) {
+            if (!instruction.getInvocationType().name().contains("static"))
+                code.append(handleLiteral(instruction.getFirstArg(), varTable));
 
             if (!instruction.getFirstArg().isLiteral()) {
                 for (Element arg : instruction.getListOfOperands()) {
@@ -345,7 +346,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         String operation = instruction.getOperation().getOpType().toString().toLowerCase();
         if (operation.equals("add") || operation.equals("mul") || operation.equals("div") || operation.equals("sub"))
             code.append("i");
-        code.append(instruction.getOperation().getOpType().toString().toLowerCase()).append("\n");
+        code.append(operation).append("\n");
         return code.toString();
     }
 }
