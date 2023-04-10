@@ -42,7 +42,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         switch (instruction.getInstType()) {
             case CALL -> jasminCode.append(processCall((CallInstruction) instruction, varTable, methods, imports, parentClass));
             case GOTO -> jasminCode.append(processGoTo((GotoInstruction) instruction));
-            case NOPER -> jasminCode.append(processNoper((SingleOpInstruction) instruction));
+            case NOPER -> jasminCode.append(processNoper((SingleOpInstruction) instruction, varTable));
             case ASSIGN ->
                     jasminCode.append(processAssign((AssignInstruction) instruction, varTable, methods, imports, parentClass));
             case BRANCH -> jasminCode.append(processBranch((CondBranchInstruction) instruction, varTable, methods, imports, parentClass));
@@ -195,7 +195,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return "goto " + instruction.getLabel() + "\n";
     }
 
-    private String processNoper(SingleOpInstruction instruction) {
+    private String processNoper(SingleOpInstruction instruction, HashMap<String, Descriptor> varTable) {
         Element operand = instruction.getSingleOperand();
         return handleLiteral(operand, varTable);
     }
