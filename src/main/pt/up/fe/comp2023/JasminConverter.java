@@ -27,7 +27,6 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         }
 
         StringBuilder jasminCode = new StringBuilder();
-        // INT32, BOOLEAN, ARRAYREF, OBJECTREF, THIS,  STRING, VOID
         switch (type.getTypeOfElement().name()) {
             case "THIS" -> jasminCode.append("a").append(suffix);
             case "INT32" -> jasminCode.append("i").append(suffix);
@@ -73,6 +72,14 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return outputMethodId(method, false);
     }
 
+    private String outputType(Type type){
+        if (type.getTypeOfElement().name().equals("ARRAYREF"))
+            return "[" + JasminConverter.typeToDescriptor.get(((ArrayType) type).getElementType().toString());
+        else if (type.getTypeOfElement().name().equals("OBJECTREF"))
+            return "L" + ((ClassType) type).getName() + ";";
+        else
+            return JasminConverter.typeToDescriptor.get(type.getTypeOfElement().name());
+    }
     private String outputMethodId(Method method, boolean isInit) {
         StringBuilder code = new StringBuilder();
         if (isInit) {
@@ -83,22 +90,10 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         code.append("(");
         for (Element element : method.getParams()) {
             Type type = element.getType();
-            if (type.getTypeOfElement().name().equals("ARRAYREF")) {
-                ArrayType tmp = (ArrayType) type;
-                code.append("[").append(typeToDescriptor.get(tmp.getElementType().toString()));
-            } else if (element.getType().getTypeOfElement().name().equals("OBJECTREF")) {
-                code.append("L").append(((ClassType) element.getType()).getName()).append(";");
-            } else {
-                code.append(typeToDescriptor.get(element.getType().getTypeOfElement().name()));
-            }
+            code.append(outputType(type));
         }
         code.append(")");
-        if (method.getReturnType().getTypeOfElement().name().equals("ARRAYREF"))
-            code.append("[").append(JasminConverter.typeToDescriptor.get(((ArrayType) method.getReturnType()).getElementType().toString()));
-        else if (method.getReturnType().getTypeOfElement().name().equals("OBJECTREF"))
-            code.append("L").append(((ClassType) method.getReturnType()).getName()).append(";");
-        else
-            code.append(JasminConverter.typeToDescriptor.get(method.getReturnType().getTypeOfElement().name()));
+        code.append(outputType(method.getReturnType()));
         return code.toString();
     }
 
