@@ -55,8 +55,10 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     private String outputMethodId(String methodName, List<Element> args, Type returnType) {
         Method method = new Method(new ClassUnit());
         method.setMethodName(methodName.replace("\"", ""));
-        for (Element arg : args) {
-            method.addParam(arg);
+        if (args != null){
+            for (Element arg : args) {
+                method.addParam(arg);
+            }
         }
         method.setReturnType(returnType);
         return outputMethodId(method, false);
@@ -275,9 +277,9 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         code.append(handleType(varTable.get(((Operand) instruction.getFirstOperand()).getName()).getVarType(), "load_" + varTable.get(((Operand) instruction.getFirstOperand()).getName()).getVirtualReg())).append("\n");
         if (instruction.getThirdOperand().isLiteral()) {
             // TO DO: only works for ints
-            code.append(addToOperandStack(Integer.parseInt(((LiteralElement) instruction.getThirdOperand()).getLiteral())));
+            code.append(addToOperandStack(Integer.parseInt(((LiteralElement) instruction.getThirdOperand()).getLiteral()))).append("\n");
         } else {
-            code.append(handleType(instruction.getThirdOperand().getType(), "load_" + varTable.get(((Operand) instruction.getThirdOperand()).getName()).getVirtualReg()));
+            code.append(handleType(instruction.getThirdOperand().getType(), "load_" + varTable.get(((Operand) instruction.getThirdOperand()).getName()).getVirtualReg())).append("\n");
         }
         code.append("putfield ").append(((ClassType) instruction.getFirstOperand().getType()).getName()).append("/").append(((Operand) instruction.getSecondOperand()).getName()).append(" ").append(typeToDescriptor.get(instruction.getThirdOperand().getType().toString())).append("\n");
         return code.toString();
