@@ -37,7 +37,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         switch (instruction.getInstType()) {
             case CALL -> jasminCode.append(processCall((CallInstruction) instruction, varTable, methods, imports, parentClass));
             case GOTO -> jasminCode.append(processGoTo((GotoInstruction) instruction));
-            case NOPER -> jasminCode.append(processNoper((SingleOpInstruction) instruction, varTable));
+            case NOPER -> jasminCode.append(processNoper((SingleOpInstruction) instruction));
             case ASSIGN ->
                     jasminCode.append(processAssign((AssignInstruction) instruction, varTable, methods, imports, parentClass));
             case BRANCH -> jasminCode.append(processBranch(instruction));
