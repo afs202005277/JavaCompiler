@@ -1,5 +1,6 @@
 package pt.up.fe.comp2023;
-// tratar de meter as labels: como é q eu sei onde as coloco?
+// terminar o NOPER para os varios tipos de element
+// tratar de meter as labels
 // fazer o unary op
 
 
@@ -41,7 +42,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         switch (instruction.getInstType()) {
             case CALL -> jasminCode.append(processCall((CallInstruction) instruction, varTable, methods, imports, parentClass));
             case GOTO -> jasminCode.append(processGoTo((GotoInstruction) instruction));
-            case NOPER -> jasminCode.append(processNoper((SingleOpInstruction) instruction, varTable));
+            case NOPER -> jasminCode.append(processNoper((SingleOpInstruction) instruction));
             case ASSIGN ->
                     jasminCode.append(processAssign((AssignInstruction) instruction, varTable, methods, imports, parentClass));
             case BRANCH -> jasminCode.append(processBranch((CondBranchInstruction) instruction, varTable, methods, imports, parentClass));
@@ -90,13 +91,11 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }
 
     private String addToOperandStack(int value) {
-        if (value < 0)
-            return "ldc " + value + "\n";
-        if (value <= 5)
+        if (value >= -1 && value <= 5)
             return "iconst_" + value + "\n";
-        if (value <= 127)
+        if (value >= -128 && value <= 127)
             return "bipush " + value + "\n";
-        if (value <= 32767)
+        if (value >= -32768 && value <= 32767)
             return "sipush " + value + "\n";
         return "ldc " + value + "\n";
     }
@@ -189,8 +188,6 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             prefix = getMethodOrigin(instruction, methods, imports, parentClass) + "/";
         }
 
-        if (instruction.getInvocationType().toString().equals("arraylength"))
-            return code.append(instruction.getInvocationType().toString()).append("\n").toString();
         return code.append(instruction.getInvocationType().name()).append(" ").append(prefix).append(outputMethodId(secondArg, instruction.getListOfOperands(), instruction.getReturnType())).append("\n").toString();
     }
 
@@ -198,7 +195,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return "goto " + instruction.getLabel() + "\n";
     }
 
-    private String processNoper(SingleOpInstruction instruction, HashMap<String, Descriptor> varTable) {
+    private String processNoper(SingleOpInstruction instruction) {
         Element operand = instruction.getSingleOperand();
         return handleLiteral(operand, varTable);
     }
@@ -268,11 +265,6 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         if (element.isLiteral()){
             LiteralElement tmp = ((LiteralElement) element);
             return (addToOperandStack(Integer.parseInt(tmp.getLiteral())));
-        } else if(element instanceof ArrayOperand tmp){
-            String res = handleType(varTable.get(tmp.getName()).getVarType(), "load " + varTable.get(tmp.getName()).getVirtualReg()) + "\n";
-            res += handleLiteral(tmp.getIndexOperands().get(0), varTable) + "\n";
-            res += handleType(tmp.getType(), "aload") + "\n";
-            return res;
         } else{
             return (handleType(varTable.get(((Operand) element).getName()).getVarType(), "load " + varTable.get(((Operand) element).getName()).getVirtualReg())) + "\n";
         }
