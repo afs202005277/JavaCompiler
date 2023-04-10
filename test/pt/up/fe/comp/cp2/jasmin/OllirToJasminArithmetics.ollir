@@ -9,7 +9,7 @@ Test {
 	}
 
 	
-	.method public static final foo().i32 {
+	.method public foo().i32 {
 		a.i32 :=.i32 1.i32;
 		b.i32 :=.i32 2.i32;
 

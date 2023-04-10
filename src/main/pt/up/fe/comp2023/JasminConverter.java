@@ -103,7 +103,6 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         }
     }
 
-
     @Override
     public JasminResult toJasmin(OllirResult ollirResult) {
         StringBuilder jasminCode = new StringBuilder();
@@ -126,18 +125,15 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         for (Method method : ollirClassUnit.getMethods()) {
             List<Instruction> instructions = method.getInstructions();
             boolean isInit = method.getMethodName().equals(ollirClassUnit.getClassName());
-            String staticStr = " static ", finalStr = " final ";
+            String staticStr = " static ";
             if (!method.isStaticMethod()) {
                 staticStr = " ";
-            }
-            if (!method.isFinalMethod()){
-                finalStr = " ";
             }
             if (isInit) {
                 jasminCode.append(".method public ");
                 method.addInstr(new ReturnInstruction());
             } else {
-                jasminCode.append(".method ").append(method.getMethodAccessModifier().toString().toLowerCase()).append(staticStr).append(finalStr);
+                jasminCode.append(".method ").append(method.getMethodAccessModifier().toString().toLowerCase()).append(staticStr);
             }
             jasminCode.append(outputMethodId(method, isInit));
             jasminCode.append("\n");
