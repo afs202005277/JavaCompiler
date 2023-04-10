@@ -164,7 +164,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     private String processCall(CallInstruction instruction, HashMap<String, Descriptor> varTable, List<String> methods, List<String> imports, String parentClass) {
         StringBuilder code = new StringBuilder();
         if (instruction.getInvocationType().name().equals("NEW")) {
-            return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").toString();
+            return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").append("dup\n").toString();
         }
         String secondArg = instruction.getSecondArg().toString();
         if (!(instruction.getFirstArg().toString().equals("CLASS") || instruction.getFirstArg().toString().equals("VOID"))) {
