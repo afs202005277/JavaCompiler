@@ -8,6 +8,7 @@ import pt.up.fe.comp.jmm.ollir.OllirResult;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     private static final HashMap<String, String> typeToDescriptor = new HashMap<>() {{
@@ -79,7 +80,10 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             }
         }
         code.append(")");
-        code.append(JasminConverter.typeToDescriptor.get(method.getReturnType().getTypeOfElement().name()));
+        if (method.getReturnType().getTypeOfElement().name().equals("ARRAYREF"))
+            code.append("[").append(JasminConverter.typeToDescriptor.get(((ArrayType) method.getReturnType()).getElementType().toString()));
+        else
+            code.append(JasminConverter.typeToDescriptor.get(method.getReturnType().getTypeOfElement().name()));
         return code.toString();
     }
 
@@ -152,6 +156,14 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                 jasminCode.append(".limit locals 99\n");
             }
             for (Instruction instruction : instructions) {
+                for (Map.Entry<String, Instruction> entry : method.getLabels().entrySet()) {
+                    String key = entry.getKey();
+                    Instruction value = entry.getValue();
+                    if (instruction.equals(value)){
+                        jasminCode.append(key + ":\n");
+                        break;
+                    }
+                }
                 jasminCode.append(this.dispatcher(instruction, method.getVarTable(), methods, imports, ollirClassUnit.getSuperClass()));
             }
             if (isInit)
@@ -164,26 +176,31 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     private String processCall(CallInstruction instruction, HashMap<String, Descriptor> varTable, List<String> methods, List<String> imports, String parentClass) {
         StringBuilder code = new StringBuilder();
         if (instruction.getInvocationType().name().equals("NEW")) {
-            return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").append("dup\n").toString();
+            return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").toString();
         }
-        String secondArg = instruction.getSecondArg().toString();
-        if (!(instruction.getFirstArg().toString().equals("CLASS") || instruction.getFirstArg().toString().equals("VOID"))) {
-            Operand operand = (Operand) instruction.getFirstArg();
+        boolean hasSecondArg = instruction.getSecondArg() != null;
+        if (!(instruction.getFirstArg().toString().equals("CLASS") || instruction.getFirstArg().toString().equals("VOID") || instruction.getFirstArg().toString().equals("ARRAYREF"))) {
+            code.append(handleLiteral(instruction.getFirstArg(), varTable));
 
-            code.append(handleType(varTable.get(operand.getName()).getVarType(), "load " + varTable.get(operand.getName()).getVirtualReg())).append("\n");
-
-            for (Element arg : instruction.getListOfOperands()) {
-                Operand tmp = (Operand) arg;
-                code.append(handleType(varTable.get(tmp.getName()).getVarType(), "load " + varTable.get(tmp.getName()).getVirtualReg())).append("\n");
+            if (!instruction.getFirstArg().isLiteral()){
+                for (Element arg : instruction.getListOfOperands()) {
+                    code.append(handleLiteral(arg, varTable));
+                }
             }
+
         }
-        if (instruction.getSecondArg().isLiteral()) {
-            secondArg = ((LiteralElement) instruction.getSecondArg()).getLiteral();
+        String secondArg = "", prefix = "";
+        if (hasSecondArg){
+            secondArg = instruction.getSecondArg().toString();
+            if (instruction.getSecondArg().isLiteral()) {
+                secondArg = ((LiteralElement) instruction.getSecondArg()).getLiteral();
+            }
+            prefix = getMethodOrigin(instruction, methods, imports, parentClass) + "/";
         }
 
-        String prefix = getMethodOrigin(instruction, methods, imports, parentClass);
-
-        return code.append(instruction.getInvocationType().name()).append(" ").append(prefix).append("/").append(outputMethodId(secondArg, instruction.getListOfOperands(), instruction.getReturnType())).append("\n").toString();
+        if (instruction.getInvocationType().toString().equals("arraylength"))
+            return code.append(instruction.getInvocationType().toString()).append("\n").toString();
+        return code.append(instruction.getInvocationType().name()).append(" ").append(prefix).append(outputMethodId(secondArg, instruction.getListOfOperands(), instruction.getReturnType())).append("\n").toString();
     }
 
     private String processGoTo(GotoInstruction instruction) {
