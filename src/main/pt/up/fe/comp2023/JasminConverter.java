@@ -179,7 +179,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                     String key = entry.getKey();
                     Instruction value = entry.getValue();
                     if (instruction.equals(value)) {
-                        jasminCode.append(key + ":\n");
+                        jasminCode.append(key).append(":\n");
                         break;
                     }
                 }
@@ -201,7 +201,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         if (!field.isFinalField()) {
             finalStr = "";
         }
-        code.append(".field ").append(field.getFieldAccessModifier().toString().toLowerCase()).append(" ").append(staticStr).append(finalStr).append(field.getFieldName()).append(" ").append(JasminConverter.typeToDescriptor.get(field.getFieldType().getTypeOfElement().name()));
+        code.append(".field ").append(field.getFieldAccessModifier().toString().equals("DEFAULT") ? "" : field.getFieldAccessModifier().toString().toLowerCase()).append(" ").append(staticStr).append(finalStr).append(field.getFieldName()).append(" ").append(JasminConverter.typeToDescriptor.get(field.getFieldType().getTypeOfElement().name()));
         return code.append(";\n").toString();
     }
 
