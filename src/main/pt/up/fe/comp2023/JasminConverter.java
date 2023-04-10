@@ -1,9 +1,4 @@
 package pt.up.fe.comp2023;
-// terminar o NOPER para os varios tipos de element
-// tratar de meter as labels
-// fazer o unary op
-
-
 // ele n funciona se o access modifier da class for DEFAULT
 
 import org.specs.comp.ollir.*;
@@ -45,13 +40,12 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             case NOPER -> jasminCode.append(processNoper((SingleOpInstruction) instruction, varTable));
             case ASSIGN ->
                     jasminCode.append(processAssign((AssignInstruction) instruction, varTable, methods, imports, parentClass));
-            case BRANCH -> jasminCode.append(processBranch((CondBranchInstruction) instruction, varTable, methods, imports, parentClass));
+            case BRANCH -> jasminCode.append(processBranch(instruction));
             case RETURN -> jasminCode.append(processReturn((ReturnInstruction) instruction, varTable));
             case GETFIELD -> jasminCode.append(processGetField((GetFieldInstruction) instruction, varTable));
             case PUTFIELD -> jasminCode.append(processPutField((PutFieldInstruction) instruction, varTable));
             case UNARYOPER -> jasminCode.append(processUnaryOp((UnaryOpInstruction) instruction));
             case BINARYOPER -> jasminCode.append(processBinaryOp((BinaryOpInstruction) instruction, varTable));
-            default -> jasminCode.append("UNKNOWN INSTRUCTION");
         }
         return jasminCode.toString();
     }
@@ -59,10 +53,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     private String outputMethodId(String methodName, List<Element> args, Type returnType) {
         Method method = new Method(new ClassUnit());
         method.setMethodName(methodName.replace("\"", ""));
-        if (args != null){
-            for (Element arg : args) {
-                method.addParam(arg);
-            }
+        for (Element arg : args) {
+            method.addParam(arg);
         }
         method.setReturnType(returnType);
         return outputMethodId(method, false);
@@ -168,8 +160,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         if (instruction.getInvocationType().name().equals("NEW")) {
             return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").toString();
         }
-        boolean hasSecondArg = instruction.getSecondArg() != null;
-        if (!(instruction.getFirstArg().toString().equals("CLASS") || instruction.getFirstArg().toString().equals("VOID") || instruction.getFirstArg().toString().equals("ARRAYREF"))) {
+        String secondArg = instruction.getSecondArg().toString();
+        if (!(instruction.getFirstArg().toString().equals("CLASS") || instruction.getFirstArg().toString().equals("VOID"))) {
             Operand operand = (Operand) instruction.getFirstArg();
 
             code.append(handleType(varTable.get(operand.getName()).getVarType(), "load " + varTable.get(operand.getName()).getVirtualReg())).append("\n");
@@ -179,25 +171,23 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                 code.append(handleType(varTable.get(tmp.getName()).getVarType(), "load " + varTable.get(tmp.getName()).getVirtualReg())).append("\n");
             }
         }
-        String secondArg = "", prefix = "";
-        if (hasSecondArg){
-            secondArg = instruction.getSecondArg().toString();
-            if (instruction.getSecondArg().isLiteral()) {
-                secondArg = ((LiteralElement) instruction.getSecondArg()).getLiteral();
-            }
-            prefix = getMethodOrigin(instruction, methods, imports, parentClass) + "/";
+        if (instruction.getSecondArg().isLiteral()) {
+            secondArg = ((LiteralElement) instruction.getSecondArg()).getLiteral();
         }
 
-        return code.append(instruction.getInvocationType().name()).append(" ").append(prefix).append(outputMethodId(secondArg, instruction.getListOfOperands(), instruction.getReturnType())).append("\n").toString();
+        String prefix = getMethodOrigin(instruction, methods, imports, parentClass);
+
+        return code.append(instruction.getInvocationType().name()).append(" ").append(prefix).append("/").append(outputMethodId(secondArg, instruction.getListOfOperands(), instruction.getReturnType())).append("\n").toString();
     }
 
     private String processGoTo(GotoInstruction instruction) {
-        return "goto " + instruction.getLabel() + "\n";
+        return null;
     }
 
-    private String processNoper(SingleOpInstruction instruction, HashMap<String, Descriptor> varTable) {
-        Element operand = instruction.getSingleOperand();
-        return handleLiteral(operand, varTable);
+    private String processNoper(SingleOpInstruction instruction) {
+        if (instruction.getSingleOperand().isLiteral())
+            return addToOperandStack(Integer.parseInt(((LiteralElement) instruction.getSingleOperand()).getLiteral()));
+        return "";
     }
 
     private String processAssign(AssignInstruction instruction, HashMap<String, Descriptor> varTable, List<String> methods, List<String> imports, String parentClass) {
@@ -208,20 +198,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return code.toString();
     }
 
-    private String handleDifferentIfs(BinaryOpInstruction instruction, String label){
-        String res = switch (instruction.getOperation().getOpType().toString()) {
-            case "LTH" -> "if_icmplt";
-            case "GTH" -> "if_icmpgt";
-            case "EQ" -> "if_icmpeq";
-            case "NEQ" -> "if_icmpne";
-            case "LTE" -> "if_icmple";
-            case "GTE" -> "if_icmpge";
-            default -> "IF ERROR";
-        };
-        return res + " " + label + "\n";
-    }
-    private String processBranch(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable, List<String> methods, List<String> imports, String parentClass) {
-        return this.dispatcher(instruction.getCondition(), varTable, methods, imports, parentClass) + handleDifferentIfs((BinaryOpInstruction) instruction.getCondition(), instruction.getLabel());
+    private String processBranch(Instruction instruction) {
+        return null;
     }
 
     private String processReturn(ReturnInstruction instruction, HashMap<String, Descriptor> varTable) {
@@ -261,19 +239,11 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return null;
     }
 
-    private String handleLiteral(Element element, HashMap<String, Descriptor> varTable){
-        if (element.isLiteral()){
-            LiteralElement tmp = ((LiteralElement) element);
-            return (addToOperandStack(Integer.parseInt(tmp.getLiteral())));
-        } else{
-            return (handleType(varTable.get(((Operand) element).getName()).getVarType(), "load " + varTable.get(((Operand) element).getName()).getVirtualReg())) + "\n";
-        }
-    }
     private String processBinaryOp(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
         StringBuilder code = new StringBuilder();
-        Element leftOperand = instruction.getLeftOperand(), rightOperand = instruction.getRightOperand();
-        code.append(handleLiteral(leftOperand, varTable));
-        code.append(handleLiteral(rightOperand, varTable));
+        code.append(handleType(varTable.get(((Operand) instruction.getLeftOperand()).getName()).getVarType(), "load " + varTable.get(((Operand) instruction.getLeftOperand()).getName()).getVirtualReg())).append("\n");
+        code.append(handleType(varTable.get(((Operand) instruction.getRightOperand()).getName()).getVarType(), "load " + varTable.get(((Operand) instruction.getRightOperand()).getName()).getVirtualReg())).append("\n");
+        code.append(handleType(instruction.getOperation().getTypeInfo(), instruction.getOperation().getOpType().name().toLowerCase())).append("\n");
         return code.toString();
     }
 }

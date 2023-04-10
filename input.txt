@@ -1,7 +1,4 @@
-myClass {
-	.construct myClass().V {
-		invokespecial(this, "<init>").V;
-	}
+import compilers.c2023.io;
 
 	.method public sum(A.array.i32, B.array.i32).array.i32 {
 		t1.i32 :=.i32 arraylength($1.A.array.i32).i32;
@@ -28,4 +25,17 @@ myClass {
 		End:
 			ret.array.i32 C.array.i32;
 	}
+class Fac extends Teste{
+    public int computeFac (int num ){
+        int[] a = {1, 2, 3};
+        int num_aux;
+        if ( num < 1)
+            num_aux = 1;
+        else
+            num_aux = num * (this.computeFac(num -1));
+        return num_aux;
+    }
+    public static void main ( String[] args ){
+        io.println(new Fac().computeFac(10)); // assuming the existence of the classfile io. class
+    }
 }
