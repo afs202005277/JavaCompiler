@@ -177,13 +177,12 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }
 
     private String processGoTo(GotoInstruction instruction) {
-        return null;
+        return "goto " + instruction.getLabel() + "\n";
     }
 
-    private String processNoper(SingleOpInstruction instruction) {
-        if (instruction.getSingleOperand().isLiteral())
-            return addToOperandStack(Integer.parseInt(((LiteralElement) instruction.getSingleOperand()).getLiteral()));
-        return "";
+    private String processNoper(SingleOpInstruction instruction, HashMap<String, Descriptor> varTable) {
+        Element operand = instruction.getSingleOperand();
+        return handleLiteral(operand, varTable);
     }
 
     private String processAssign(AssignInstruction instruction, HashMap<String, Descriptor> varTable, List<String> methods, List<String> imports, String parentClass) {
@@ -194,8 +193,32 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return code.toString();
     }
 
-    private String processBranch(Instruction instruction) {
-        return null;
+    private String handleDifferentIfs(BinaryOpInstruction instruction, String label, HashMap<String, Descriptor> varTable){
+        String loaders = handleLiteral(instruction.getLeftOperand(), varTable) + handleLiteral(instruction.getRightOperand(), varTable);
+        String res = switch (instruction.getOperation().getOpType().toString()) {
+            case "LTH" -> "if_icmplt";
+            case "GTH" -> "if_icmpgt";
+            case "EQ" -> "if_icmpeq";
+            case "NEQ" -> "if_icmpne";
+            case "LTE" -> "if_icmple";
+            case "GTE" -> "if_icmpge";
+            case "ANDB" -> "andb\n" + "ifne";
+            default -> "IF ERROR";
+        };
+        return loaders + res + " " + label + "\n";
+    }
+
+    private String handleDifferentIfs(SingleOpInstruction instruction, String label){
+        return " " + label + "\n";
+    }
+
+    private String processBranch(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable, List<String> methods, List<String> imports, String parentClass) {
+        if (instruction.getCondition() instanceof BinaryOpInstruction op)
+            return handleDifferentIfs(op, instruction.getLabel(), varTable);
+        else if (instruction.getCondition() instanceof SingleOpInstruction op)
+            return handleDifferentIfs(op, instruction.getLabel());
+        else
+            return "PROCESS BRANCH\n";
     }
 
     private String processReturn(ReturnInstruction instruction, HashMap<String, Descriptor> varTable) {
@@ -231,15 +254,41 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return code.toString();
     }
 
-    private String processUnaryOp(UnaryOpInstruction instruction) {
-        return null;
+    private String processUnaryOp(UnaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
+        String code = handleLiteral(instruction.getOperand(), varTable);
+        code += instruction.getOperation();
+        code += "\n";
+        return code;
+    }
+
+    private String handleLiteral(Element element, HashMap<String, Descriptor> varTable){
+        if (element.isLiteral()){
+            LiteralElement tmp = ((LiteralElement) element);
+            if (element.getType().getTypeOfElement().name().equals("INT32") || element.getType().getTypeOfElement().name().equals("BOOLEAN"))
+                return addToOperandStack(Integer.parseInt(tmp.getLiteral()));
+            else if (element.getType().getTypeOfElement().name().equals("STRING"))
+                return addToOperandStack(tmp.getLiteral());
+            else
+                return "ERROR HANDLE LITERAL\n";
+        } else if(element instanceof ArrayOperand tmp){
+            String res = handleType(varTable.get(tmp.getName()).getVarType(), "load " + varTable.get(tmp.getName()).getVirtualReg()) + "\n";
+            res += handleLiteral(tmp.getIndexOperands().get(0), varTable) + "\n";
+            res += handleType(tmp.getType(), "aload") + "\n";
+            return res;
+        } else{
+            return (handleType(varTable.get(((Operand) element).getName()).getVarType(), "load " + varTable.get(((Operand) element).getName()).getVirtualReg())) + "\n";
+        }
     }
 
     private String processBinaryOp(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
         StringBuilder code = new StringBuilder();
-        code.append(handleType(varTable.get(((Operand) instruction.getLeftOperand()).getName()).getVarType(), "load " + varTable.get(((Operand) instruction.getLeftOperand()).getName()).getVirtualReg())).append("\n");
-        code.append(handleType(varTable.get(((Operand) instruction.getRightOperand()).getName()).getVarType(), "load " + varTable.get(((Operand) instruction.getRightOperand()).getName()).getVirtualReg())).append("\n");
-        code.append(handleType(instruction.getOperation().getTypeInfo(), instruction.getOperation().getOpType().name().toLowerCase())).append("\n");
+        Element leftOperand = instruction.getLeftOperand(), rightOperand = instruction.getRightOperand();
+        code.append(handleLiteral(leftOperand, varTable));
+        code.append(handleLiteral(rightOperand, varTable));
+        String operation = instruction.getOperation().getOpType().toString().toLowerCase();
+        if (operation.equals("add") || operation.equals("mul") || operation.equals("div") || operation.equals("sub"))
+            code.append("i");
+        code.append(instruction.getOperation().getOpType().toString().toLowerCase()).append("\n");
         return code.toString();
     }
 }
