@@ -4,9 +4,10 @@ Simple {
         invokespecial(this, "<init>").V;
     }
 
-    .method public add(a.i32, b.i32).i32 {
+    .method public add(a.i32, b.i32, cl.Simple).i32 {
         temp_0.i32 :=.i32 invokevirtual(this, "constInstr").i32;
         c.i32 :=.i32 $1.a.i32 +.i32 temp_0.i32;
+        invokestatic(io, "println", cl.Simple).V;
         ret.i32 c.i32;
     }
 
@@ -16,7 +17,7 @@ Simple {
         temp_2.Simple :=.Simple new(Simple).Simple;
         invokespecial(temp_2.Simple,"<init>").V;
         s.Simple :=.Simple temp_2.Simple;
-        temp_3.i32 :=.i32 invokevirtual(s.Simple, "add", a.i32, b.i32).i32;
+        temp_3.i32 :=.i32 invokevirtual(s.Simple, "add", a.i32, b.i32, s.Simple).i32;
         c.i32 :=.i32 temp_3.i32;
         invokestatic(io, "println", c.i32).V;
         ret.V;

@@ -86,6 +86,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             if (type.getTypeOfElement().name().equals("ARRAYREF")) {
                 ArrayType tmp = (ArrayType) type;
                 code.append("[").append(typeToDescriptor.get(tmp.getElementType().toString()));
+            } else if (element.getType().getTypeOfElement().name().equals("OBJECTREF")) {
+                code.append("L").append(((ClassType) element.getType()).getName()).append(";");
             } else {
                 code.append(typeToDescriptor.get(element.getType().getTypeOfElement().name()));
             }
