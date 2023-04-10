@@ -137,7 +137,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                 staticStr = " ";
             }
             if (!method.isFinalMethod()){
-                finalStr = " ";
+                finalStr = "";
             }
             if (isInit) {
                 jasminCode.append(".method public ");
