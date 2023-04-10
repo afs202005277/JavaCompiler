@@ -37,15 +37,16 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         switch (instruction.getInstType()) {
             case CALL -> jasminCode.append(processCall((CallInstruction) instruction, varTable, methods, imports, parentClass));
             case GOTO -> jasminCode.append(processGoTo((GotoInstruction) instruction));
-            case NOPER -> jasminCode.append(processNoper((SingleOpInstruction) instruction));
+            case NOPER -> jasminCode.append(processNoper((SingleOpInstruction) instruction, varTable));
             case ASSIGN ->
                     jasminCode.append(processAssign((AssignInstruction) instruction, varTable, methods, imports, parentClass));
-            case BRANCH -> jasminCode.append(processBranch(instruction));
+            case BRANCH -> jasminCode.append(processBranch((CondBranchInstruction) instruction, varTable, methods, imports, parentClass));
             case RETURN -> jasminCode.append(processReturn((ReturnInstruction) instruction, varTable));
             case GETFIELD -> jasminCode.append(processGetField((GetFieldInstruction) instruction, varTable));
             case PUTFIELD -> jasminCode.append(processPutField((PutFieldInstruction) instruction, varTable));
-            case UNARYOPER -> jasminCode.append(processUnaryOp((UnaryOpInstruction) instruction));
+            case UNARYOPER -> jasminCode.append(processUnaryOp((UnaryOpInstruction) instruction, varTable));
             case BINARYOPER -> jasminCode.append(processBinaryOp((BinaryOpInstruction) instruction, varTable));
+            default -> jasminCode.append("UNKNOWN INSTRUCTION");
         }
         return jasminCode.toString();
     }
@@ -83,12 +84,18 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }
 
     private String addToOperandStack(int value) {
-        if (value >= -1 && value <= 5)
+        if (value < 0)
+            return "ldc " + value + "\n";
+        if (value <= 5)
             return "iconst_" + value + "\n";
-        if (value >= -128 && value <= 127)
+        if (value <= 127)
             return "bipush " + value + "\n";
-        if (value >= -32768 && value <= 32767)
+        if (value <= 32767)
             return "sipush " + value + "\n";
+        return "ldc " + value + "\n";
+    }
+
+    private String addToOperandStack(String value){
         return "ldc " + value + "\n";
     }
 
