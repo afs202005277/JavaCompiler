@@ -27,7 +27,6 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         }
 
         StringBuilder jasminCode = new StringBuilder();
-        // INT32, BOOLEAN, ARRAYREF, OBJECTREF, THIS,  STRING, VOID
         switch (type.getTypeOfElement().name()) {
             case "THIS" -> jasminCode.append("a").append(suffix);
             case "INT32" -> jasminCode.append("i").append(suffix);
@@ -73,6 +72,14 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return outputMethodId(method, false);
     }
 
+    private String outputType(Type type){
+        if (type.getTypeOfElement().name().equals("ARRAYREF"))
+            return "[" + JasminConverter.typeToDescriptor.get(((ArrayType) type).getElementType().toString());
+        else if (type.getTypeOfElement().name().equals("OBJECTREF"))
+            return "L" + ((ClassType) type).getName() + ";";
+        else
+            return JasminConverter.typeToDescriptor.get(type.getTypeOfElement().name());
+    }
     private String outputMethodId(Method method, boolean isInit) {
         StringBuilder code = new StringBuilder();
         if (isInit) {
@@ -83,20 +90,10 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         code.append("(");
         for (Element element : method.getParams()) {
             Type type = element.getType();
-            if (type.getTypeOfElement().name().equals("ARRAYREF")) {
-                ArrayType tmp = (ArrayType) type;
-                code.append("[").append(typeToDescriptor.get(tmp.getElementType().toString()));
-            } else {
-                code.append(typeToDescriptor.get(element.getType().getTypeOfElement().name()));
-            }
+            code.append(outputType(type));
         }
         code.append(")");
-        if (method.getReturnType().getTypeOfElement().name().equals("ARRAYREF"))
-            code.append("[").append(JasminConverter.typeToDescriptor.get(((ArrayType) method.getReturnType()).getElementType().toString()));
-        else if (method.getReturnType().getTypeOfElement().name().equals("OBJECTREF"))
-            code.append("L").append(((ClassType) method.getReturnType()).getName()).append(";");
-        else
-            code.append(JasminConverter.typeToDescriptor.get(method.getReturnType().getTypeOfElement().name()));
+        code.append(outputType(method.getReturnType()));
         return code.toString();
     }
 
@@ -177,7 +174,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                     String key = entry.getKey();
                     Instruction value = entry.getValue();
                     if (instruction.equals(value)) {
-                        jasminCode.append(key + ":\n");
+                        jasminCode.append(key).append(":\n");
                         break;
                     }
                 }
@@ -199,7 +196,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         if (!field.isFinalField()) {
             finalStr = "";
         }
-        code.append(".field ").append(field.getFieldAccessModifier().toString().toLowerCase()).append(" ").append(staticStr).append(finalStr).append(field.getFieldName()).append(" ").append(JasminConverter.typeToDescriptor.get(field.getFieldType().getTypeOfElement().name()));
+        code.append(".field ").append(field.getFieldAccessModifier().toString().equals("DEFAULT") ? "" : field.getFieldAccessModifier().toString().toLowerCase()).append(" ").append(staticStr).append(finalStr).append(field.getFieldName()).append(" ").append(JasminConverter.typeToDescriptor.get(field.getFieldType().getTypeOfElement().name()));
         return code.append(";\n").toString();
     }
 
@@ -209,8 +206,9 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").toString();
         }
         boolean hasSecondArg = instruction.getSecondArg() != null;
-        if (!(instruction.getFirstArg().toString().equals("CLASS") || instruction.getFirstArg().toString().equals("VOID") || instruction.getFirstArg().toString().equals("ARRAYREF"))) {
-            code.append(handleLiteral(instruction.getFirstArg(), varTable));
+        if (!(instruction.getFirstArg().toString().equals("VOID") || instruction.getFirstArg().toString().equals("ARRAYREF"))) {
+            if (!instruction.getInvocationType().name().contains("static"))
+                code.append(handleLiteral(instruction.getFirstArg(), varTable));
 
             if (!instruction.getFirstArg().isLiteral()) {
                 for (Element arg : instruction.getListOfOperands()) {
@@ -238,9 +236,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }
 
     private String processNoper(SingleOpInstruction instruction, HashMap<String, Descriptor> varTable) {
-        /*Element operand = instruction.getSingleOperand();
-        return handleLiteral(operand, varTable);*/
-        return null;
+        Element operand = instruction.getSingleOperand();
+        return handleLiteral(operand, varTable);
     }
 
     private String processAssign(AssignInstruction instruction, HashMap<String, Descriptor> varTable, List<String> methods, List<String> imports, String parentClass) {
@@ -313,10 +310,10 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }
 
     private String processUnaryOp(UnaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
-        /*String code = handleLiteral(instruction.getOperand(), varTable);
+        String code = handleLiteral(instruction.getOperand(), varTable);
         code += instruction.getOperation();
-        code += "\n";*/
-        return null;
+        code += "\n";
+        return code;
     }
 
     private String handleLiteral(Element element, HashMap<String, Descriptor> varTable) {
@@ -346,10 +343,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         String operation = instruction.getOperation().getOpType().toString().toLowerCase();
         if (operation.equals("add") || operation.equals("mul") || operation.equals("div") || operation.equals("sub"))
             code.append("i");
-        code.append(instruction.getOperation().getOpType().toString().toLowerCase()).append("\n");
+        code.append(operation).append("\n");
         return code.toString();
     }
 }
-
-// comments -> 33%
-//35
