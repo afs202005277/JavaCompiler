@@ -202,8 +202,9 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private String processCall(CallInstruction instruction, HashMap<String, Descriptor> varTable, List<String> methods, List<String> imports, String parentClass) {
         StringBuilder code = new StringBuilder();
+        String pop = instruction.getReturnType().getTypeOfElement().name().equals("VOID") ? "" : "pop\n";
         if (instruction.getInvocationType().name().equals("NEW")) {
-            return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").toString();
+            return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").append(pop).toString();
         }
         boolean hasSecondArg = instruction.getSecondArg() != null;
         if (!(instruction.getFirstArg().toString().equals("VOID") || instruction.getFirstArg().toString().equals("ARRAYREF"))) {
@@ -215,7 +216,6 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                     code.append(handleLiteral(arg, varTable));
                 }
             }
-
         }
         String secondArg = "", prefix = "";
         if (hasSecondArg) {
@@ -227,8 +227,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         }
 
         if (instruction.getInvocationType().toString().equals("arraylength"))
-            return code.append(instruction.getInvocationType().toString()).append("\n").toString();
-        return code.append(instruction.getInvocationType().name()).append(" ").append(prefix).append(outputMethodId(secondArg, instruction.getListOfOperands(), instruction.getReturnType())).append("\n").toString();
+            return code.append(instruction.getInvocationType().toString()).append("\n").append(pop).toString();
+        return code.append(instruction.getInvocationType().name()).append(" ").append(prefix).append(outputMethodId(secondArg, instruction.getListOfOperands(), instruction.getReturnType())).append("\n").append(pop).toString();
     }
 
     private String processGoTo(GotoInstruction instruction) {
@@ -242,7 +242,12 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private String processAssign(AssignInstruction instruction, HashMap<String, Descriptor> varTable, List<String> methods, List<String> imports, String parentClass) {
         StringBuilder code = new StringBuilder();
-        code.append(dispatcher(instruction.getRhs(), varTable, methods, imports, parentClass));
+        // se for call instruction chamar com boolean de noPop a true; caso contrario chamar o dispacther. No call, se o noPop estiver a falso, fazer pop no final.
+        String res = dispatcher(instruction.getRhs(), varTable, methods, imports, parentClass);
+        if (instruction.getRhs() instanceof CallInstruction){
+            res = res.substring(0, res.lastIndexOf("pop\n"));
+        }
+        code.append(res);
         Operand tmpVariable = ((Operand) instruction.getDest());
         code.append(handleType(varTable.get(tmpVariable.getName()).getVarType(), "store " + varTable.get(tmpVariable.getName()).getVirtualReg())).append("\n");
         return code.toString();
@@ -290,10 +295,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }
 
     private String processGetField(GetFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
-        StringBuilder code = new StringBuilder();
-        code.append(handleType(varTable.get(((Operand) instruction.getFirstOperand()).getName()).getVarType(), "load_" + varTable.get(((Operand) instruction.getFirstOperand()).getName()).getVirtualReg())).append("\n");
-        code.append("getfield ").append(((ClassType) instruction.getFirstOperand().getType()).getName()).append("/").append(((Operand) instruction.getSecondOperand()).getName()).append(" ").append(typeToDescriptor.get(instruction.getSecondOperand().getType().toString())).append("\n");
-        return code.toString();
+        return handleType(varTable.get(((Operand) instruction.getFirstOperand()).getName()).getVarType(), "load_" + varTable.get(((Operand) instruction.getFirstOperand()).getName()).getVirtualReg()) + "\n" +
+                "getfield " + ((ClassType) instruction.getFirstOperand().getType()).getName() + "/" + ((Operand) instruction.getSecondOperand()).getName() + " " + typeToDescriptor.get(instruction.getSecondOperand().getType().toString()) + "\n";
     }
 
     private String processPutField(PutFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
