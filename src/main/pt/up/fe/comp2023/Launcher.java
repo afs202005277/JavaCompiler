@@ -1,15 +1,11 @@
 package pt.up.fe.comp2023;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
-import pt.up.fe.comp.jmm.jasmin.JasminResult;
-import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp.jmm.parser.JmmParserResult;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
@@ -17,11 +13,11 @@ import pt.up.fe.comp.jmm.report.Stage;
 import pt.up.fe.specs.util.SpecsIo;
 import pt.up.fe.specs.util.SpecsLogs;
 import pt.up.fe.specs.util.SpecsSystem;
-import pt.up.fe.comp2023.JasminConverter;
+import pt.up.fe.comp.jmm.ollir.OllirResult;
 
 public class Launcher {
 
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String[] args) {
         // Setups console logging and other things
         SpecsSystem.programStandardInit();
 
@@ -39,16 +35,8 @@ public class Launcher {
         // Read contents of input file
         String code = SpecsIo.read(inputFile);
 
-        // String content = new Scanner(new File("./test/pt/up/fe/comp/cp2/jasmin/OllirToJasminInvoke.ollir")).useDelimiter("\\Z").next();
-        // System.out.println(content);
-        JasminConverter jasminConverter = new JasminConverter();
-        JasminResult jasminResult = jasminConverter.toJasmin(new OllirResult(code, config));
-        System.out.println(jasminResult.getJasminCode());
-
-
-
         // Instantiate JmmParser
-        /*SimpleParser parser = new SimpleParser();
+        SimpleParser parser = new SimpleParser();
 
         // Parse stage
         JmmParserResult parserResult = parser.parse(code, config);
@@ -61,14 +49,19 @@ public class Launcher {
             // ... add remaining stages
             SymbolTable symbolTable = new SymbolTable();
             JmmSemanticsResult jmmSemanticsResult = symbolTable.semanticAnalysis(parserResult);
-            jmmSemanticsResult.getSymbolTable().print();
+            // jmmSemanticsResult.getSymbolTable().print();
+
+            OllirParser ollirParser = new OllirParser();
+            OllirResult tmp = ollirParser.toOllir(jmmSemanticsResult);
+
+            System.out.println(tmp.getOllirCode());
 
         } else {
             for (pt.up.fe.comp.jmm.report.Report temp : parserResult.getReports()) {
                 System.out.println(temp);
                 System.out.println('\n');
             }
-        }*/
+        }
     }
 
     private static Map<String, String> parseArgs(String[] args) {

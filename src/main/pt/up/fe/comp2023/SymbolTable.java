@@ -87,7 +87,9 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
     @Override
     public List<Symbol> getParameters(String s) {
-        List<Symbol> params = table.get(s + "_params");
+        String[] tmp = s.split(" ");
+        String method_name = tmp[tmp.length-1];
+        List<Symbol> params = table.get(method_name + "_params");
         return params == null ? new ArrayList<>() : params;
     }
 
