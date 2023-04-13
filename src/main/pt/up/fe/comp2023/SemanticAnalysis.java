@@ -77,8 +77,37 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
 
 
     private List<Report> dealWithArrayIndex(JmmNode jmmNode, SymbolTable symbolTable) {
-        // verificar se children[1] é do Tipo Int
-        return new ArrayList<>();
+        List<Report> reports = new ArrayList<>();
+
+        // verificar se children[0] existe, antes de proceder
+        if(jmmNode.getChildren().get(0).get("varType").equals("undefined")){
+            jmmNode.put("varType", "undefined");
+            return reports;
+        }
+
+        // verificar que a variavel é um array
+        if(!jmmNode.getChildren().get(0).get("isArray").equals("true")){
+            jmmNode.put("varType", "undefined");
+            Report rep = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable " + jmmNode.getChildren().get(0).get("id") + " is not of type array");
+            reports.add(rep);
+        }
+
+        // verificar que o acesso ao array é do tipo int
+        /*else if(!jmmNode.getChildren().get(1).get("varType").equals("int")){
+            jmmNode.put("varType", "undefined");
+            Report rep = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Array access must be of type Integer");
+            reports.add(rep);
+        }*/
+
+        else{
+            jmmNode.put("varType", jmmNode.getChildren().get(0).get("varType"));
+            jmmNode.put("isArray", "false");
+        }
+
+
+
+        System.out.println(reports);
+        return reports;
     }
 
     private List<Report> dealWithLiteralS(JmmNode jmmNode, SymbolTable symbolTable) {
@@ -108,6 +137,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             jmmNode.put("isArray", "false");
         }
 
+        System.out.println(reports);
         return reports;
 
     }
