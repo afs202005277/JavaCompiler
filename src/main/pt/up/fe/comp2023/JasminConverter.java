@@ -191,7 +191,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             finalStr = "";
         }
         code.append(".field ").append(field.getFieldAccessModifier().toString().equals("DEFAULT") ? "" : field.getFieldAccessModifier().toString().toLowerCase()).append(" ").append(staticStr).append(finalStr).append(field.getFieldName()).append(" ").append(JasminConverter.typeToDescriptor.get(field.getFieldType().getTypeOfElement().name()));
-        return code.append(";\n").toString();
+        return code.append("\n").toString();
     }
 
     private String processCall(CallInstruction instruction, HashMap<String, Descriptor> varTable, List<String> methods, List<String> imports, String parentClass) {
