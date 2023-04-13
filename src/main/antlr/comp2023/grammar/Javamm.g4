@@ -90,12 +90,13 @@ expression
     | value=expression op='?' value=expression op=':' value=expression  #TernaryOp
     | expression '.' method='length' #Length
     | expression '.' method = ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
+    | expression '.' method = ID #ClassVariable
     | 'new' 'int' '[' (expression?) ']' ('{' (contents+=INT','?)* '}' ';')? #IntArray
     | 'new' objectName = ID '(' ')' #ObjectInstantiation
     | integer=INT #LiteralArrayAccess
     | bool='true' #Literal
     | bool='false' #Literal
-    | id=ID #Literal
+    | id=ID #LiteralS
     | id='this' #Object
     ;
 

@@ -1,10 +1,11 @@
 import compilers.c2023.io;
 
 class Fac {
+    int bigBoy = 7;
     public int computeFac (int num ){
         int num_aux = 1+2+3;
         if ( num < 1)
-            num_aux = arr[2];
+            num_aux = arr[bigBoy+6];
         else
             num_aux = num * (this.computeFac(num -1));
         return num_aux;
