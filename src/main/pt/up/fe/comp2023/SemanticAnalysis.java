@@ -18,7 +18,6 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
 
     @Override
     protected void buildVisitor() {
-
         addVisit("LiteralS", this::dealWithLiteralS);
         addVisit("ArrayIndex", this::dealWithArrayIndex);
         this.setDefaultVisit(this::visitDefault);
@@ -34,6 +33,24 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         }
 
         return functionName;
+    }
+
+    /* Returns a list with all the variables accessible in the scope of a function (variables declared inside said function + function parameters) */
+    private List<Symbol> getFunctionVariables(String functionName, SymbolTable symbolTable){
+        List<Symbol> localVars = symbolTable.table.get(functionName + "_variables");
+        List<Symbol> functionParams = symbolTable.table.get(functionName + "_params");
+
+        List<Symbol> functionVars = new ArrayList<>();
+
+        if(functionParams != null){
+            functionVars.addAll(functionParams);
+        }
+
+        if(localVars != null){
+            functionVars.addAll(localVars);
+        }
+
+        return functionVars;
     }
 
     /* Receives a list of symbols and checks for the occurrence of string name ID */
@@ -71,18 +88,8 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         String name = jmmNode.get("id");
 
         String functionName = this.getCallerFunctionName(jmmNode);
-        List<Symbol> localVars = symbolTable.table.get(functionName + "_variables");
-        List<Symbol> functionParams = symbolTable.table.get(functionName + "_params");
 
-        List<Symbol> functionVars = new ArrayList<>();
-
-        if(functionParams != null){
-            functionVars.addAll(functionParams);
-        }
-
-        if(localVars != null){
-            functionVars.addAll(localVars);
-        }
+        List<Symbol> functionVars = getFunctionVariables(functionName, symbolTable);
 
         pt.up.fe.comp.jmm.analysis.table.Type varType = matchVariable(functionVars, name);
 
