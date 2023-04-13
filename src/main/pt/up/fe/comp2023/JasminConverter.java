@@ -190,7 +190,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         if (!field.isFinalField()) {
             finalStr = "";
         }
-        code.append(".field ").append(field.getFieldAccessModifier().toString().equals("DEFAULT") ? "" : field.getFieldAccessModifier().toString().toLowerCase()).append(" ").append(staticStr).append(finalStr).append(field.getFieldName()).append(" ").append(JasminConverter.typeToDescriptor.get(field.getFieldType().getTypeOfElement().name()));
+        code.append(".field ").append(field.getFieldAccessModifier().toString().equals("DEFAULT") ? "" : field.getFieldAccessModifier().toString().toLowerCase()).append(" ").append(staticStr).append(finalStr).append(field.getFieldName()).append(" ").append(outputType(field.getFieldType()));
         return code.append("\n").toString();
     }
 
@@ -289,7 +289,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private String processGetField(GetFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
         return handleType(varTable.get(((Operand) instruction.getFirstOperand()).getName()).getVarType(), "load_" + varTable.get(((Operand) instruction.getFirstOperand()).getName()).getVirtualReg()) + "\n" +
-                "getfield " + ((ClassType) instruction.getFirstOperand().getType()).getName() + "/" + ((Operand) instruction.getSecondOperand()).getName() + " " + typeToDescriptor.get(instruction.getSecondOperand().getType().toString()) + "\n";
+                "getfield " + ((ClassType) instruction.getFirstOperand().getType()).getName() + "/" + ((Operand) instruction.getSecondOperand()).getName() + " " + outputType(instruction.getSecondOperand().getType()) + "\n";
     }
 
     private String processPutField(PutFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
@@ -300,7 +300,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         } else {
             code.append(handleType(instruction.getThirdOperand().getType(), "load_" + varTable.get(((Operand) instruction.getThirdOperand()).getName()).getVirtualReg())).append("\n");
         }
-        code.append("putfield ").append(((ClassType) instruction.getFirstOperand().getType()).getName()).append("/").append(((Operand) instruction.getSecondOperand()).getName()).append(" ").append(typeToDescriptor.get(instruction.getThirdOperand().getType().toString())).append("\n");
+        code.append("putfield ").append(((ClassType) instruction.getFirstOperand().getType()).getName()).append("/").append(((Operand) instruction.getSecondOperand()).getName()).append(" ").append(outputType(instruction.getThirdOperand().getType())).append("\n");
         return code.toString();
     }
 

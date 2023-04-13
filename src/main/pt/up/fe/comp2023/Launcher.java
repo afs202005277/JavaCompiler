@@ -38,9 +38,9 @@ public class Launcher {
         JasminConverter jasminConverter = new JasminConverter();
         JasminResult jasminResult = jasminConverter.toJasmin(new OllirResult(code, config));
         System.out.println(jasminResult.getJasminCode());
-        //jasminResult.compile(new File("compiled.j"));
+        jasminResult.compile(new File("compiled.j"));
         System.out.println("Result");
-       System.out.println(jasminResult.run());
+        jasminResult.run();
         /*
         // Instantiate JmmParser
         SimpleParser parser = new SimpleParser();
