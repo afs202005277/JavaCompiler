@@ -295,11 +295,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     private String processPutField(PutFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
         StringBuilder code = new StringBuilder();
         code.append(handleType(varTable.get(((Operand) instruction.getFirstOperand()).getName()).getVarType(), "load_" + varTable.get(((Operand) instruction.getFirstOperand()).getName()).getVirtualReg())).append("\n");
-        if (instruction.getThirdOperand().isLiteral()) {
-            code.append(handleLiteral(instruction.getThirdOperand(), varTable)).append("\n");
-        } else {
-            code.append(handleType(instruction.getThirdOperand().getType(), "load_" + varTable.get(((Operand) instruction.getThirdOperand()).getName()).getVirtualReg())).append("\n");
-        }
+        code.append(handleLiteral(instruction.getThirdOperand(), varTable));
         code.append("putfield ").append(((ClassType) instruction.getFirstOperand().getType()).getName()).append("/").append(((Operand) instruction.getSecondOperand()).getName()).append(" ").append(outputType(instruction.getThirdOperand().getType())).append("\n");
         return code.toString();
     }
