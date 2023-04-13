@@ -70,7 +70,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private String outputType(Type type){
         if (type.getTypeOfElement().name().equals("ARRAYREF"))
-            return "[" + JasminConverter.typeToDescriptor.get(((ArrayType) type).getElementType().toString());
+            return "[" + outputType(((ArrayType) type).getElementType());
         else if (type.getTypeOfElement().name().equals("OBJECTREF"))
             return "L" + ((ClassType) type).getName() + ";";
         else
@@ -155,7 +155,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                 jasminCode.append(".method public ");
                 method.addInstr(new ReturnInstruction());
             } else {
-                jasminCode.append(".method ").append(method.getMethodAccessModifier().toString().toLowerCase()).append(staticStr).append(finalStr);
+                jasminCode.append(".method ").append(method.getMethodAccessModifier().toString().equalsIgnoreCase("default") ? "" : method.getMethodAccessModifier().toString().toLowerCase()).append(staticStr).append(finalStr);
             }
             jasminCode.append(outputMethodId(method));
             jasminCode.append("\n");
