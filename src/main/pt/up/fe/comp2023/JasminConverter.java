@@ -296,7 +296,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         StringBuilder code = new StringBuilder();
         code.append(handleType(varTable.get(((Operand) instruction.getFirstOperand()).getName()).getVarType(), "load_" + varTable.get(((Operand) instruction.getFirstOperand()).getName()).getVirtualReg())).append("\n");
         if (instruction.getThirdOperand().isLiteral()) {
-            code.append(addToOperandStack(Integer.parseInt(((LiteralElement) instruction.getThirdOperand()).getLiteral()))).append("\n");
+            code.append(handleLiteral(instruction.getThirdOperand(), varTable)).append("\n");
         } else {
             code.append(handleType(instruction.getThirdOperand().getType(), "load_" + varTable.get(((Operand) instruction.getThirdOperand()).getName()).getVirtualReg())).append("\n");
         }
@@ -305,10 +305,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }
 
     private String processUnaryOp(UnaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
-        String code = handleLiteral(instruction.getOperand(), varTable);
-        code += instruction.getOperation();
-        code += "\n";
-        return code;
+        return handleLiteral(instruction.getOperand(), varTable) + instruction.getOperation() + "\n";
     }
 
     private String handleLiteral(Element element, HashMap<String, Descriptor> varTable) {
