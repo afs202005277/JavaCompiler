@@ -1,5 +1,4 @@
 package pt.up.fe.comp2023;
-// ele n funciona se o access modifier da class for DEFAULT
 
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
@@ -9,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 
 public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     private static final HashMap<String, String> typeToDescriptor = new HashMap<>() {{
@@ -28,12 +28,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
         StringBuilder jasminCode = new StringBuilder();
         switch (type.getTypeOfElement().name()) {
-            case "THIS" -> jasminCode.append("a").append(suffix);
-            case "INT32" -> jasminCode.append("i").append(suffix);
-            case "BOOLEAN" -> jasminCode.append("i").append(suffix);
-            case "ARRAYREF" -> jasminCode.append("a").append(suffix);
-            case "OBJECTREF" -> jasminCode.append("a").append(suffix);
-            case "STRING" -> jasminCode.append("a").append(suffix);
+            case "THIS", "ARRAYREF", "STRING", "OBJECTREF" -> jasminCode.append("a").append(suffix);
+            case "INT32", "BOOLEAN" -> jasminCode.append("i").append(suffix);
             case "VOID" -> jasminCode.append(suffix);
         }
         return jasminCode.toString();
@@ -49,7 +45,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             case ASSIGN ->
                     jasminCode.append(processAssign((AssignInstruction) instruction, varTable, methods, imports, parentClass));
             case BRANCH ->
-                    jasminCode.append(processBranch((CondBranchInstruction) instruction, varTable, methods, imports, parentClass));
+                    jasminCode.append(processBranch((CondBranchInstruction) instruction, varTable));
             case RETURN -> jasminCode.append(processReturn((ReturnInstruction) instruction, varTable));
             case GETFIELD -> jasminCode.append(processGetField((GetFieldInstruction) instruction, varTable));
             case PUTFIELD -> jasminCode.append(processPutField((PutFieldInstruction) instruction, varTable));
@@ -69,7 +65,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             }
         }
         method.setReturnType(returnType);
-        return outputMethodId(method, false);
+        return outputMethodId(method);
     }
 
     private String outputType(Type type){
@@ -80,9 +76,9 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         else
             return JasminConverter.typeToDescriptor.get(type.getTypeOfElement().name());
     }
-    private String outputMethodId(Method method, boolean isInit) {
+    private String outputMethodId(Method method) {
         StringBuilder code = new StringBuilder();
-        if (isInit) {
+        if (method.isConstructMethod()) {
             code.append("<init>");
         } else {
             code.append(method.getMethodName());
@@ -139,7 +135,6 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         }
         List<String> imports = new ArrayList<>(ollirClassUnit.getImports());
 
-        // jasminCode.append(".class ").append(ollirClassUnit.getClassAccessModifier().toString().toLowerCase()).append(" ").append(ollirClassUnit.getClassName()).append("\n");
         jasminCode.append(".class ").append("public").append(" ").append(ollirClassUnit.getClassName()).append("\n");
         jasminCode.append(".super ").append(ollirClassUnit.getSuperClass()).append("\n\n\n");
 
@@ -149,7 +144,6 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
         for (Method method : ollirClassUnit.getMethods()) {
             List<Instruction> instructions = method.getInstructions();
-            boolean isInit = method.getMethodName().equals(ollirClassUnit.getClassName());
             String staticStr = " static ", finalStr = " final ";
             if (!method.isStaticMethod()) {
                 staticStr = " ";
@@ -157,13 +151,13 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             if (!method.isFinalMethod()) {
                 finalStr = "";
             }
-            if (isInit) {
+            if (method.isConstructMethod()) {
                 jasminCode.append(".method public ");
                 method.addInstr(new ReturnInstruction());
             } else {
                 jasminCode.append(".method ").append(method.getMethodAccessModifier().toString().toLowerCase()).append(staticStr).append(finalStr);
             }
-            jasminCode.append(outputMethodId(method, isInit));
+            jasminCode.append(outputMethodId(method));
             jasminCode.append("\n");
             if (!method.getVarTable().isEmpty()) {
                 jasminCode.append(".limit stack 99\n");
@@ -180,7 +174,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                 }
                 jasminCode.append(this.dispatcher(instruction, method.getVarTable(), methods, imports, ollirClassUnit.getSuperClass()));
             }
-            if (isInit)
+            if (method.isConstructMethod())
                 methods.add("<init>");
             jasminCode.append(".end method").append("\n\n");
         }
@@ -242,7 +236,6 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private String processAssign(AssignInstruction instruction, HashMap<String, Descriptor> varTable, List<String> methods, List<String> imports, String parentClass) {
         StringBuilder code = new StringBuilder();
-        // se for call instruction chamar com boolean de noPop a true; caso contrario chamar o dispacther. No call, se o noPop estiver a falso, fazer pop no final.
         String res = dispatcher(instruction.getRhs(), varTable, methods, imports, parentClass);
         if (instruction.getRhs() instanceof CallInstruction){
             res = res.substring(0, res.lastIndexOf("pop\n"));
@@ -268,15 +261,15 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return loaders + res + " " + label + "\n";
     }
 
-    private String handleDifferentIfs(SingleOpInstruction instruction, String label) {
+    private String handleDifferentIfs(String label) {
         return " " + label + "\n";
     }
 
-    private String processBranch(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable, List<String> methods, List<String> imports, String parentClass) {
+    private String processBranch(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
         if (instruction.getCondition() instanceof BinaryOpInstruction op)
             return handleDifferentIfs(op, instruction.getLabel(), varTable);
-        else if (instruction.getCondition() instanceof SingleOpInstruction op)
-            return handleDifferentIfs(op, instruction.getLabel());
+        else if (instruction.getCondition() instanceof SingleOpInstruction)
+            return handleDifferentIfs(instruction.getLabel());
         else
             return "PROCESS BRANCH\n";
     }
@@ -303,7 +296,6 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         StringBuilder code = new StringBuilder();
         code.append(handleType(varTable.get(((Operand) instruction.getFirstOperand()).getName()).getVarType(), "load_" + varTable.get(((Operand) instruction.getFirstOperand()).getName()).getVirtualReg())).append("\n");
         if (instruction.getThirdOperand().isLiteral()) {
-            // TO DO: only works for ints
             code.append(addToOperandStack(Integer.parseInt(((LiteralElement) instruction.getThirdOperand()).getLiteral()))).append("\n");
         } else {
             code.append(handleType(instruction.getThirdOperand().getType(), "load_" + varTable.get(((Operand) instruction.getThirdOperand()).getName()).getVirtualReg())).append("\n");
