@@ -1,28 +1,22 @@
-import io;
-Test {
+import compilers.c2023.io;
 
-	.field intField.i32;
+class Fac extends Teste {
 
-	.construct Test().V {
-		invokespecial(this, "<init>").V;
-		putfield(this, intField.i32, 30.i32).V;
-	}
+    int a;
 
-	.method public static main(args.array.String).V {
-	    temp_2.Test :=.Test new(Test).Test;
-        invokespecial(temp_2.Test,"<init>").V;
-        s.Test :=.Test temp_2.Test;
-	    invokevirtual(s.Test, "foo").V;
-		ret.V;
-	}
+    public int computeFac (int num ){
+        //a = 20;
+        int[] a = {1, 2, 3, 4, 5, 6};
+        if ( num == true && num > 3) {
+            num = 2 + 7;
+        }
+        else
+            num = num * (this.computeFac(num -1));
+        return num_aux;
+    }
 
 
-	.method public foo().V {
-	    a.i32 :=.i32 getfield(this, intField.i32).i32;
-        invokestatic(io, "println", a.i32).V;
-		putfield(this, intField.i32, 10.i32).V;
-		a.i32 :=.i32 getfield(this, intField.i32).i32;
-        invokestatic(io, "println", a.i32).V;
-		ret.V;
-	}
+    public static void main ( String[] args ){
+        io.println(new Fac().computeFac(10)); // assuming the existence of the classfile io. class
+    }
 }
