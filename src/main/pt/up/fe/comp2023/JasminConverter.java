@@ -301,7 +301,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }
 
     private String processUnaryOp(UnaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
-        return handleLiteral(instruction.getOperand(), varTable) + instruction.getOperation() + "\n";
+        return handleLiteral(instruction.getOperand(), varTable) + instruction.getOperation().getOpType().name().toLowerCase() + "\n";
     }
 
     private String handleLiteral(Element element, HashMap<String, Descriptor> varTable) {
