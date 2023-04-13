@@ -5,12 +5,13 @@ class Fac extends Teste {
     int a;
 
     public int computeFac (int num ){
-        int[] a = {1, 2, 3};
-        int num_aux;
-        if ( num < 1)
-            num_aux = 1;
+        //a = 20;
+        int[] a = {1, 2, 3, 4, 5, 6};
+        if ( num == true && num > 3) {
+            num = 2 + 7;
+        }
         else
-            num_aux = num * (this.computeFac(num -1));
+            num = num * (this.computeFac(num -1));
         return num_aux;
     }
 
