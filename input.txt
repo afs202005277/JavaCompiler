@@ -3,9 +3,9 @@ import compilers.c2023.io;
 class Fac {
     int bigBoy = 7;
     public int computeFac (int num ){
-        int num_aux = 1+2+3;
-        int[] arr;
-        if ( num < 1)
+        boolean num_aux = (true && (false));
+        int[] arr = new int[] {1,2,3,4,5};
+        if (!num)
             num_aux = arr[bigBoy+6];
         else
             num_aux = num * (this.computeFac(num -1));

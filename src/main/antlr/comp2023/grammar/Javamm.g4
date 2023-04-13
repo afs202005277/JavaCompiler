@@ -58,7 +58,6 @@ type
     : varType = 'int[]'
     | varType='boolean'
     | varType='int'
-    | varType='String'
     | varType=ID
     ;
 
@@ -81,7 +80,7 @@ statement
 expression
     : ('(' expression ')' | '[' expression ']') #Parenthesis
     | expression '[' expression ']' #ArrayIndex
-    | op=('++' | '--' | '+' | '-' | '!' | '~' ) expression #UnaryOp
+    | op='!' expression #UnaryOp
     | expression op=('*' | '/' ) expression #BinaryOp
     | expression op=('+' | '-' ) expression #BinaryOp
     | expression op=('<' | '>' | '<=' | '>=' | '!=' | '==' ) expression #BinaryOp
@@ -91,9 +90,8 @@ expression
     | expression '.' method='length' #Length
     | expression '.' method = ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
     | expression '.' method = ID #ClassVariable
-    | 'new' 'int' '[' (expression?) ']' ('{' (contents+=INT','?)* '}' ';')? #IntArray
     | 'new' objectName = ID '(' ')' #ObjectInstantiation
-    | integer=INT #LiteralArrayAccess
+    | integer=INT #Literal
     | bool='true' #Literal
     | bool='false' #Literal
     | id=ID #LiteralS
