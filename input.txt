@@ -6,11 +6,11 @@ class CompileBasic extends Quicksort {
     int intField;
     boolean boolField;
 
-    public int method1() {
-        int intLocal1;
-        boolean boolLocal1;
+    public Fac method1(int fuck) {
+        Fac hello = new Fac();
+        hello.getCheese(fuck, 5);
 
-        return 0;
+        return hello;
     }
 
     public boolean method2(int intParam1, boolean boolParam1) {

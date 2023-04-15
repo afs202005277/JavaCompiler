@@ -387,7 +387,7 @@ public class OllirParser implements JmmOptimization {
                     break;
                 case "VarDeclaration":
                     System.out.println("TBI");
-                    handle_variable_declaration(node);
+                    node.put("ollirhelper", handle_variable_declaration(node, local_variables, parameter_variables, classfield_variables));
                     break;
                 case "BinaryOp":
                     node.put("ollirhelper", handle_binary_ops(node));
@@ -475,6 +475,7 @@ public class OllirParser implements JmmOptimization {
     }
 
     private String handle_method_calls(JmmNode node, List<Symbol> local_variables, List<Symbol> parameter_variables, List<Symbol> classfield_variables) {
+        StringBuilder res = new StringBuilder();
         ArrayList<Integer> args_is_bin_ops = new ArrayList<>();
         if (node.getChildren().size() > 1) {
             List<JmmNode> arguments = node.getChildren();
@@ -490,7 +491,21 @@ public class OllirParser implements JmmOptimization {
         }
         if (!Objects.equals(node.getJmmParent().getKind(), "Stmt"))
             res.append("temp_").append(this.temp_n).append(".").append(get_return_type_of_method(node.get("method"))).append(" :=.").append(get_return_type_of_method(node.get("method"))).append(" ");
-        res.append((!Objects.equals(node.getJmmChild(0).get("id"), "this") && !node.getJmmChild(0).get("id").contains(".") ? "invokestatic(" : "invokevirtual(")).append(node.getJmmChild(0).get("id")).append(",\"").append(node.get("method")).append("\"");
+
+        boolean is_variable = false;
+        String variable;
+        if (exists_in_variable(local_variables, node.getJmmChild(0).get("id"))) {
+            // its a local variable
+            is_variable = true;
+            variable = get_local_variable(node.getJmmChild(0).get("id"), local_variables);
+        } else if (exists_in_variable(parameter_variables, node.getJmmChild(0).get("id"))) {
+            is_variable = true;
+            variable =  get_parameter_variable(node.getJmmChild(0).get("id"), parameter_variables);
+        } else {
+            is_variable = true;
+            variable = get_classfield_variable(node.getJmmChild(0).get("id"), classfield_variables);
+        }
+        res.append((!Objects.equals(node.getJmmChild(0).get("id"), "this") && !is_variable ? "invokestatic(" + node.getJmmChild(0).get("id") : "invokevirtual(" + node.getJmmChild(0).get("id") + "." + get_var_type_from_name(variable) )).append(",\"").append(node.get("method")).append("\"");
         if (node.getChildren().size() > 1) {
             List<JmmNode> arguments = node.getChildren();
             for (int j = 1; j < arguments.size(); j++) {
@@ -500,6 +515,11 @@ public class OllirParser implements JmmOptimization {
         }
         res.append(").").append(!Objects.equals(node.getJmmChild(0).get("id"), "this") && !node.getJmmChild(0).get("id").contains(".") ? "V" : get_return_type_of_method(node.get("method"))).append(";\n");
         this.temp_n++;
+        if (Objects.equals(node.getJmmParent().getKind(), "Stmt"))
+            node.getJmmParent().put("ollirhelper", res.toString());
+        else
+            this.res.append(res);
+
         return !Objects.equals(node.getJmmChild(0).get("id"), "this") && !node.getJmmChild(0).get("id").contains(".") ? "" : "temp_" + (this.temp_n-1) + "." + get_return_type_of_method(node.get("method"));
     }
 
@@ -561,10 +581,43 @@ public class OllirParser implements JmmOptimization {
         return var_type;
     }
 
-    private void handle_variable_declaration(JmmNode node) {
+    private String handle_variable_declaration(JmmNode node, List<Symbol> local_variables, List<Symbol> parameter_variables, List<Symbol> classfield_variables) {
         if (node.getNumChildren() > 1) {
+            List<JmmNode> stat_child = node.getChildren();
+            String var_name = "";
 
+            var_name = stat_child.get(1).get("variable");
+            String var_type;
+            if (exists_in_variable(local_variables, var_name))
+                var_type = get_local_variable(var_name, local_variables);
+            else if (exists_in_variable(local_variables, var_name))
+                var_type = get_parameter_variable(var_name, parameter_variables);
+            else
+                var_type = get_classfield_variable(var_name, classfield_variables);
+
+            if (var_type.contains("array")) {
+                StringBuilder res = new StringBuilder();
+                // Is an array
+                String c_string = stat_child.get(1).get("contents");
+                String[] contents = c_string.split(", ");
+                contents[0] = contents[0].substring(1);
+                contents[contents.length-1] = contents[contents.length-1].substring(0, contents[contents.length-1].length()-1);
+
+                res.append(var_name).append(var_type).append(" :=").append(var_type).append(" new(array, ").append(contents.length).append(".i32)").append(var_type).append(";\n");
+
+                String type_var_no_array = var_type.split("\\.")[2];
+                int i = 0;
+                for (String c : contents) {
+                    res.append("i.i32 :=.i32 ").append(i).append(".i32;\n");
+                    res.append(var_name).append("[").append("i").append(".i32].").append(type_var_no_array).append(" :=.").append(type_var_no_array).append(" ").append(c).append(".").append(type_var_no_array).append(";\n");
+                    i++;
+                }
+                return res.toString();
+            } else {
+                return node.getJmmChild(1).get("ollirhelper");
+            }
         }
+        return "";
     }
 
     private String handle_object_instantiation(JmmNode node) {
