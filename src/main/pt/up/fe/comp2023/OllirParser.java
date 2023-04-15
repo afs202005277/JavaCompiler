@@ -606,7 +606,7 @@ public class OllirParser implements JmmOptimization {
             case "int" -> {
                 return tmp + "i32";
             }
-            case "bool" -> {
+            case "bool", "boolean" -> {
                 return tmp + "bool";
             }
             case "void" -> {
