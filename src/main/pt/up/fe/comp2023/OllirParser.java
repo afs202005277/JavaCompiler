@@ -513,14 +513,14 @@ public class OllirParser implements JmmOptimization {
                 res.append(args_is_bin_ops.get(j-1) != -1 ? "temp_" + args_is_bin_ops.get(j-1) + "." + get_var_type_from_name(arguments.get(j).get("ollirhelper")) : arguments.get(j).get("ollirhelper"));
             }
         }
-        res.append(").").append(!Objects.equals(node.getJmmChild(0).get("id"), "this") && !node.getJmmChild(0).get("id").contains(".") ? "V" : get_return_type_of_method(node.get("method"))).append(";\n");
+        res.append(").").append(!Objects.equals(node.getJmmChild(0).get("id"), "this") && !is_variable ? "V" : get_return_type_of_method(node.get("method"))).append(";\n");
         this.temp_n++;
         if (Objects.equals(node.getJmmParent().getKind(), "Stmt"))
             node.getJmmParent().put("ollirhelper", res.toString());
         else
             this.res.append(res);
 
-        return !Objects.equals(node.getJmmChild(0).get("id"), "this") && !node.getJmmChild(0).get("id").contains(".") ? "" : "temp_" + (this.temp_n-1) + "." + get_return_type_of_method(node.get("method"));
+        return !Objects.equals(node.getJmmChild(0).get("id"), "this") && !is_variable ? "" : "temp_" + (this.temp_n-1) + "." + get_return_type_of_method(node.get("method"));
     }
 
     private String get_return_type_of_method(String method_name) {
