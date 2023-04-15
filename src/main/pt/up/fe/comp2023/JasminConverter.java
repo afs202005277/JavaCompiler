@@ -19,8 +19,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }};
 
     private String handleType(Type type, String suffix) {
-        if (suffix.contains("load ") || suffix.contains("store ")){
-            String indexStr = suffix.substring(suffix.indexOf(' ')+1);
+        if (suffix.contains("load ") || suffix.contains("store ")) {
+            String indexStr = suffix.substring(suffix.indexOf(' ') + 1);
             int index = Integer.parseInt(indexStr);
             if (index <= 3)
                 suffix = suffix.replace(" ", "_");
@@ -44,8 +44,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             case NOPER -> jasminCode.append(processNoper((SingleOpInstruction) instruction, varTable));
             case ASSIGN ->
                     jasminCode.append(processAssign((AssignInstruction) instruction, varTable, methods, imports, parentClass));
-            case BRANCH ->
-                    jasminCode.append(processBranch((CondBranchInstruction) instruction, varTable));
+            case BRANCH -> jasminCode.append(processBranch((CondBranchInstruction) instruction, varTable));
             case RETURN -> jasminCode.append(processReturn((ReturnInstruction) instruction, varTable));
             case GETFIELD -> jasminCode.append(processGetField((GetFieldInstruction) instruction, varTable));
             case PUTFIELD -> jasminCode.append(processPutField((PutFieldInstruction) instruction, varTable));
@@ -68,7 +67,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return outputMethodId(method);
     }
 
-    private String outputType(Type type){
+    private String outputType(Type type) {
         if (type.getTypeOfElement().name().equals("ARRAYREF"))
             return "[" + outputType(((ArrayType) type).getElementType());
         else if (type.getTypeOfElement().name().equals("OBJECTREF"))
@@ -76,6 +75,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         else
             return JasminConverter.typeToDescriptor.get(type.getTypeOfElement().name());
     }
+
     private String outputMethodId(Method method) {
         StringBuilder code = new StringBuilder();
         if (method.isConstructMethod()) {
@@ -206,16 +206,15 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         if (instruction.getInvocationType().toString().equals("arraylength"))
             return code.append(handleLiteral(instruction.getFirstArg(), varTable)).append(instruction.getInvocationType().toString()).append("\n").append(pop).toString();
         boolean hasSecondArg = instruction.getSecondArg() != null;
-        if (!(instruction.getFirstArg().toString().equals("VOID"))) {
-            if (!instruction.getInvocationType().name().contains("static"))
-                code.append(handleLiteral(instruction.getFirstArg(), varTable));
+        if (!instruction.getInvocationType().name().contains("static"))
+            code.append(handleLiteral(instruction.getFirstArg(), varTable));
 
-            if (!instruction.getFirstArg().isLiteral()) {
-                for (Element arg : instruction.getListOfOperands()) {
-                    code.append(handleLiteral(arg, varTable));
-                }
+        if (!instruction.getFirstArg().isLiteral()) {
+            for (Element arg : instruction.getListOfOperands()) {
+                code.append(handleLiteral(arg, varTable));
             }
         }
+
         String secondArg = "", prefix = "";
         if (hasSecondArg) {
             secondArg = instruction.getSecondArg().toString();
@@ -239,7 +238,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     private String processAssign(AssignInstruction instruction, HashMap<String, Descriptor> varTable, List<String> methods, List<String> imports, String parentClass) {
         StringBuilder code = new StringBuilder();
         String res = dispatcher(instruction.getRhs(), varTable, methods, imports, parentClass);
-        if (instruction.getRhs() instanceof CallInstruction){
+        if (instruction.getRhs() instanceof CallInstruction) {
             res = res.substring(0, res.lastIndexOf("pop\n"));
         }
         code.append(res);
