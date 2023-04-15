@@ -198,6 +198,9 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         StringBuilder code = new StringBuilder();
         String pop = instruction.getReturnType().getTypeOfElement().name().equals("VOID") ? "" : "pop\n";
         if (instruction.getInvocationType().name().equals("NEW")) {
+            for (Element arg : instruction.getListOfOperands()) {
+                code.append(handleLiteral(arg, varTable));
+            }
             return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").append(pop).toString();
         }
         boolean hasSecondArg = instruction.getSecondArg() != null;
