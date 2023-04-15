@@ -8,7 +8,7 @@ class CompileBasic extends Quicksort {
 
     public Fac method1(int fuck) {
         Fac hello = new Fac();
-        hello.getCheese(fuck, 5);
+        io.getCheese(fuck, 5);
 
         return hello;
     }

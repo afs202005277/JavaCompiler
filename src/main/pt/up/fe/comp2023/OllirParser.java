@@ -493,7 +493,7 @@ public class OllirParser implements JmmOptimization {
             res.append("temp_").append(this.temp_n).append(".").append(get_return_type_of_method(node.get("method"))).append(" :=.").append(get_return_type_of_method(node.get("method"))).append(" ");
 
         boolean is_variable = false;
-        String variable;
+        String variable = "";
         if (exists_in_variable(local_variables, node.getJmmChild(0).get("id"))) {
             // its a local variable
             is_variable = true;
@@ -501,7 +501,7 @@ public class OllirParser implements JmmOptimization {
         } else if (exists_in_variable(parameter_variables, node.getJmmChild(0).get("id"))) {
             is_variable = true;
             variable =  get_parameter_variable(node.getJmmChild(0).get("id"), parameter_variables);
-        } else {
+        } else if (exists_in_variable(classfield_variables, node.getJmmChild(0).get("id"))) {
             is_variable = true;
             variable = get_classfield_variable(node.getJmmChild(0).get("id"), classfield_variables);
         }
