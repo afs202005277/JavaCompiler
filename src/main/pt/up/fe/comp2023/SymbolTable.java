@@ -80,7 +80,13 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
     @Override
     public Type getReturnType(String s) {
-        List<String> methods = getMethods();
+        s = s.split(" ")[s.split(" ").length-1];
+        List<String> methods_tmp = getMethods();
+        ArrayList<String> methods = new ArrayList<>();
+        for (String m : methods_tmp) {
+            String[] m_tmp = m.split(" ");
+            methods.add(m_tmp[m_tmp.length-1]);
+        }
         int index = methods.indexOf(s);
         return table.get("methods").get(index).getType();
     }

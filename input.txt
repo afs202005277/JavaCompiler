@@ -1,22 +1,22 @@
-import compilers.c2023.io;
+import io;
 
-class Fac extends Teste {
+class Fac {
 
-    int a;
+    public int compFac(int num) {
 
-    public int computeFac (int num ){
-        //a = 20;
-        int[] a = {1, 2, 3, 4, 5, 6};
-        if ( num == true && num > 3) {
-            num = 2 + 7;
+        int num_aux;
+        int aux1;
+
+        if (num < 1) {
+            num_aux = 1;
+        } else {
+            num_aux = num * (this.compFac(num - 1));
         }
-        else
-            num = num * (this.computeFac(num -1));
         return num_aux;
     }
 
 
-    public static void main ( String[] args ){
-        io.println(new Fac().computeFac(10)); // assuming the existence of the classfile io. class
+    public static void main ( String[] args ) {
+        io.println(new Fac().compFac(10)); // assuming the existence of the classfile io. class
     }
 }

@@ -35,13 +35,13 @@ public class Launcher {
 
         // Read contents of input file
         String code = SpecsIo.read(inputFile);
-        JasminConverter jasminConverter = new JasminConverter();
+        /*JasminConverter jasminConverter = new JasminConverter();
         JasminResult jasminResult = jasminConverter.toJasmin(new OllirResult(code, config));
         System.out.println(jasminResult.getJasminCode());
         //jasminResult.compile(new File("compiled.j"));
         System.out.println("Result");
-       System.out.println(jasminResult.run());
-        /*
+       System.out.println(jasminResult.run());*/
+
         // Instantiate JmmParser
         SimpleParser parser = new SimpleParser();
 
@@ -68,7 +68,7 @@ public class Launcher {
                 System.out.println(temp);
                 System.out.println('\n');
             }
-        }*/
+        }
     }
 
     private static Map<String, String> parseArgs(String[] args) {
