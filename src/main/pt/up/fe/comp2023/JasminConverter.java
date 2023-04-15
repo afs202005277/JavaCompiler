@@ -206,7 +206,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         if (instruction.getInvocationType().toString().equals("arraylength"))
             return code.append(handleLiteral(instruction.getFirstArg(), varTable)).append(instruction.getInvocationType().toString()).append("\n").append(pop).toString();
         boolean hasSecondArg = instruction.getSecondArg() != null;
-        if (!(instruction.getFirstArg().toString().equals("VOID") || instruction.getFirstArg().toString().equals("ARRAYREF"))) {
+        if (!(instruction.getFirstArg().toString().equals("VOID"))) {
             if (!instruction.getInvocationType().name().contains("static"))
                 code.append(handleLiteral(instruction.getFirstArg(), varTable));
 
