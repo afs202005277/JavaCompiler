@@ -1,22 +1,23 @@
 import io;
+import Quicksort;
 
-class Fac {
+class CompileBasic extends Quicksort {
 
-    public int compFac(int num) {
+    int intField;
+    boolean boolField;
 
-        int num_aux;
-        int aux1;
+    public int method1() {
+        int intLocal1;
+        boolean boolLocal1;
 
-        if (num < 1) {
-            num_aux = 1;
-        } else {
-            num_aux = num * (this.compFac(num - 1));
-        }
-        return num_aux;
+        return 0;
+    }
+
+    public boolean method2(int intParam1, boolean boolParam1) {
+        return boolParam1;
     }
 
 
-    public static void main ( String[] args ) {
-        io.println(new Fac().compFac(10)); // assuming the existence of the classfile io. class
+    public static void main(String[] args) {
     }
 }

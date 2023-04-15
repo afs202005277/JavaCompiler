@@ -15,13 +15,13 @@ import java.util.Objects;
 
 public class OllirParser implements JmmOptimization {
 
-    private String write_import(ArrayList<Symbol> imports) {
-        for (Symbol i : imports) {
-            if (Objects.equals(i.getType().getName(), "library")) {
-                res.append("import ").append(i.getName()).append(";\n");
+    private void write_import(ArrayList<Symbol> imports) {
+        if (imports != null)
+            for (Symbol i : imports) {
+                if (Objects.equals(i.getType().getName(), "library")) {
+                    res.append("import ").append(i.getName()).append(";\n");
+                }
             }
-        }
-        return res.toString();
     }
 
     private void write_class(Symbol single_class, List<String> class_methods) {
@@ -46,7 +46,7 @@ public class OllirParser implements JmmOptimization {
     }
 
     private JmmNode get_method_from_ast(String method_name) {
-        List<JmmNode> methods = this.root_node.getJmmChild(1).getChildren();
+        List<JmmNode> methods = this.root_node.getJmmChild(this.root_node.getNumChildren()-1).getChildren();
         for (JmmNode m : methods) {
             if (Objects.equals(m.getKind(), "MethodDeclaration")) {
                 if (Objects.equals(m.get("methodName"), method_name)) {
@@ -335,7 +335,6 @@ public class OllirParser implements JmmOptimization {
         res.append("\n");
         write_class(this.symbol_table.getSomethingFromTable("class").get(0), this.symbol_table.getMethods());
 
-        System.out.println(this.res);
         return new OllirResult(this.res.toString(), jmmSemanticsResult.getConfig());
     }
 
@@ -346,7 +345,7 @@ public class OllirParser implements JmmOptimization {
 
     StringBuilder res;
 
-    OllirParser() {
+    public OllirParser() {
         this.symbol_table = null;
         this.root_node = null;
         this.temp_n = 0;
@@ -429,7 +428,14 @@ public class OllirParser implements JmmOptimization {
 
     private String handle_return_statement(JmmNode node) {
         StringBuilder res = new StringBuilder();
-        res.append("ret").append(".").append(get_var_type_from_name(node.getJmmChild(0).get("ollirhelper"))).append(" ").append(node.getJmmChild(0).get("ollirhelper")).append(";\n");
+        JmmNode argument = node.getJmmChild(0);
+        if (Objects.equals(argument.getKind(), "Literal")) {
+            res.append("ret").append(".").append(get_var_type_from_name(node.getJmmChild(0).get("ollirhelper"))).append(" ").append(node.getJmmChild(0).get("ollirhelper")).append(";\n");
+        } else {
+            res.append("temp_").append(this.temp_n).append(".").append(get_var_type_from_name(argument.get("ollirhelper"))).append(" :=.").append(get_var_type_from_name(argument.get("ollirhelper"))).append(" ").append(argument.get("ollirhelper")).append(";\n");
+            this.temp_n++;
+            res.append("ret").append(".").append(get_var_type_from_name(node.getJmmChild(0).get("ollirhelper"))).append(" ").append("temp_").append(this.temp_n-1).append(".").append(get_var_type_from_name(argument.get("ollirhelper"))).append(";\n");
+        }
         return res.toString();
     }
 
@@ -512,7 +518,7 @@ public class OllirParser implements JmmOptimization {
             variable =  get_classfield_variable(node.get("variable"), classfield_variables);
         }
 
-        return variable + " :=." + get_var_type_from_name(variable) + " " + node.getJmmChild(0).get("ollirhelper");
+        return variable + " :=." + get_var_type_from_name(variable) + " " + node.getJmmChild(0).get("ollirhelper") + ";";
     }
 
     private String handle_binary_ops(JmmNode condition) {
