@@ -4,11 +4,9 @@ import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
-import pt.up.fe.comp.jmm.ast.JmmNodeImpl;
 import pt.up.fe.comp.jmm.ollir.JmmOptimization;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 
-import javax.swing.text.html.HTMLDocument;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -57,232 +55,6 @@ public class OllirParser implements JmmOptimization {
         return null;
     }
 
-    private String method_insides(String class_method) {
-
-        //this.symbol_table.get
-        String[] tmp = class_method.split(" ");
-        String method_name = tmp[tmp.length-1];
-
-        JmmNode method_node = this.get_method_from_ast(method_name);
-        List<Symbol> local_variables = this.symbol_table.getLocalVariables(method_name);
-        List<Symbol> parameter_variables = this.symbol_table.getParameters(method_name);
-        List<Symbol> classfield_variables = this.symbol_table.getFields();
-
-        assert method_node != null;
-
-        return write_method_insides_from_node(method_node, local_variables, parameter_variables, classfield_variables);
-    }
-
-    private String write_method_insides_from_node(JmmNode method_node, List<Symbol> local_variables, List<Symbol> parameter_variables, List<Symbol> classfield_variables) {
-        assert method_node != null;
-        for (JmmNode statement : method_node.getChildren()) {
-            switch (statement.getKind()) {
-                case "Stmt" -> {
-                    res.append(binary_ops_handler(local_variables, parameter_variables, classfield_variables, statement.getJmmChild(0))).append(";\n");
-                }
-                case "Assignment" -> {
-                    if (statement.getChildren().size() > 1) {
-                        String var_type = get_only_type_variable(statement.get("id"), local_variables, parameter_variables, classfield_variables);
-                        res.append(statement.get("id")).append("[").append(get_value_from_terminal_literal(statement.getJmmChild(0))).append("]").append(var_type).append(" :=").append(var_type).append(" ").append(binary_ops_handler(local_variables, parameter_variables, classfield_variables, statement.getJmmChild(1))).append(";\n");
-                    } else {
-                        if (exists_in_variable(classfield_variables, statement.get("variable"))) {
-                            res.append(get_variable(statement.get("variable"), local_variables, parameter_variables, classfield_variables, get_value_from_terminal_literal(statement.getJmmChild(0)), false)).append(";\n");
-                        } else {
-                            String var = get_variable(statement.get("variable"), local_variables, parameter_variables, classfield_variables, get_value_from_terminal_literal(statement.getJmmChild(0)), false);
-                            String var_type = get_only_type_variable(statement.get("variable"), local_variables, parameter_variables, classfield_variables);
-                            res.append(var).append(" :=").append(var_type).append(" ");
-                            if (Objects.equals(statement.getJmmChild(0).getKind(), "BinaryOp")) {
-                                res.append(binary_ops_handler(local_variables, parameter_variables, classfield_variables, statement.getJmmChild(0))).append(";\n");
-                            } else {
-                                res.append(get_value_from_terminal_literal(statement.getJmmChild(0))).append(";\n");
-                            }
-                        }
-                    }
-                }
-                case "VarDeclaration" -> {
-                    List<JmmNode> stat_child = statement.getChildren();
-                    String var_name = "";
-                    if (stat_child.size() > 1) {
-                        var_name = stat_child.get(1).get("variable");
-                    } else {
-                        var_name = statement.get("variableName");
-                    }
-                    String type_var = get_only_type_variable(var_name, local_variables, parameter_variables, classfield_variables);
-                    if (stat_child.size() > 1) {
-                        // Has Assignment
-                        if (type_var.contains("array")) {
-                            // Is an array
-                            String c_string = stat_child.get(1).get("contents");
-                            String[] contents = c_string.split(", ");
-                            contents[0] = contents[0].substring(1);
-                            contents[contents.length-1] = contents[contents.length-1].substring(0, contents[contents.length-1].length()-1);
-
-                            res.append(var_name).append(type_var).append(" :=").append(type_var).append(" new(array, ").append(contents.length).append(".i32)").append(type_var).append(";\n");
-
-                            String type_var_no_array = type_var.split("\\.")[2];
-                            int i = 0;
-                            for (String c : contents) {
-                                res.append("i.i32 :=.i32 ").append(i).append(".i32;\n");
-                                res.append(var_name).append("[").append("i").append(".i32].").append(type_var_no_array).append(" :=.").append(type_var_no_array).append(" ").append(c).append(".").append(type_var_no_array).append(";\n");
-                                i++;
-                            }
-                        }
-                    }
-                }
-                case "IfStatement" -> {
-                    System.out.println("Hello!");
-                    res.append("if (");
-                    List<JmmNode> if_children = statement.getChildren();
-                    JmmNode condition = if_children.get(0);
-                    res.append(binary_ops_handler(local_variables, parameter_variables, classfield_variables, condition.getJmmChild(0)));
-                    if (statement.getChildren().size() == 3)
-                        res.append(") goto else;\n");
-                    else
-                        res.append(") goto end;\n");
-
-
-                    JmmNode if_body = if_children.get(1);
-                    if (!Objects.equals(if_children.get(1).getKind(), "Body")) {
-                        if_body = new JmmNodeImpl("Body");
-                        if_body.add(if_children.get(1));
-                    }
-                    res.append(write_method_insides_from_node(if_body, local_variables, parameter_variables, classfield_variables));
-                    System.out.println("aa");
-                    if (statement.getChildren().size() == 3) {
-                        res.append("else:\n");
-                        res.append(write_method_insides_from_node(statement.getJmmChild(2), local_variables, parameter_variables, classfield_variables));
-                    } else {
-                        res.append("end:\n");
-                    }
-                }
-                case "ReturnStmt" -> {
-                    String var = binary_ops_handler(local_variables, parameter_variables, classfield_variables, statement.getJmmChild(0));
-                    String[] tmp = var.split("\\.");
-                    String var_type = ".";
-                    if (var.contains("array"))
-                        var_type += tmp[tmp.length-2] + "." + tmp[tmp.length-1];
-                    else
-                        var_type += tmp[tmp.length-1];
-                    res.append("ret").append(var_type).append(" ").append(var).append(";\n");
-                }
-            }
-        }
-        return res.toString();
-    }
-
-    private String get_only_type_variable(String id, List<Symbol> localVariables, List<Symbol> parameterVariables, List<Symbol> classFieldVariables) {
-        if (exists_in_variable(localVariables, id)) {
-            return get_variable_type(localVariables, id);
-        } else if (exists_in_variable(parameterVariables, id)) {
-            return get_variable_type(parameterVariables, id);
-        } else {
-            return get_variable_type(classFieldVariables, id);
-        }
-    }
-
-    private String get_variable(String id, List<Symbol> localVariables, List<Symbol> parameterVariables, List<Symbol> classFieldVariables, String value_assignment, boolean get) {
-        String var_type = "";
-        if (exists_in_variable(localVariables, id)) {
-            var_type = get_variable_type(localVariables, id);
-            return id + var_type;
-        } else if (exists_in_variable(parameterVariables, id)) {
-            return get_parameter_variable(parameterVariables, id);
-        } else {
-            var_type = get_variable_type(classFieldVariables, id);
-            if (get)
-                return "getfield(this, " + id + var_type + ")" + var_type;
-            else
-                return "putfield(this, " + id + var_type + ", " + value_assignment + ").V";
-        }
-    }
-
-    private String binary_ops_handler(List<Symbol> local_variables, List<Symbol> parameter_variables, List<Symbol> classfield_variables, JmmNode condition) {
-        ArrayList<JmmNode> condition_builder = new ArrayList<>();
-        condition_builder.add(condition);
-        for (int i = 0; i < condition_builder.size(); i++) {
-            if (Objects.equals(condition_builder.get(i).getKind(), "BinaryOp")) {
-                if (!condition_builder.contains(condition_builder.get(i).getJmmChild(0))) {
-                    condition_builder.add(i, condition_builder.get(i).getJmmChild(0));
-                    condition_builder.add(i + 2, condition_builder.get(i + 1).getJmmChild(1));
-                    i = -1;
-                }
-            }
-        }
-        for (int i = 0; i < condition_builder.size(); i++) {
-            JmmNode anal = condition_builder.get(i);
-            if (Objects.equals(anal.getKind(), "Literal")) {
-                if (anal.hasAttribute("id")) {
-                    res.append(get_variable(anal.get("id"), local_variables, parameter_variables, classfield_variables, "", true));
-                } else {
-                    res.append(get_value_from_terminal_literal(anal));
-                }
-            } else if (Objects.equals(anal.getKind(), "Parenthesis")) {
-                res.append("( ").append(binary_ops_handler(local_variables, parameter_variables, classfield_variables, anal.getJmmChild(0))).append(" )");
-            } else if (Objects.equals(anal.getKind(), "MethodCall")) {
-                JmmNode oi = find_node_kind_child_in_node(anal, "ObjectInstantiation");
-                if (oi != null) {
-                    res.append("temp_").append(this.temp_n).append(".").append(oi.get("objectName")).append(" :=.").append(oi.get("objectName")).append(" new(").append(oi.get("objectName")).append(").").append(oi.get("objectName")).append(";\n");
-                    this.temp_n++;
-                    res.append("invokespecial(temp_").append(this.temp_n-1).append(".").append(oi.get("objectName")).append(", \"<init>\").V;\n");
-                    res.append("temp_").append(this.temp_n).append(".").append("unknown").append(" :=.").append(binary_ops_handler(local_variables, parameter_variables, classfield_variables, anal.getJmmChild(1))).append(" invokevirtual(temp_").append(this.temp_n-1).append(".").append(oi.get("objectName")).append(",\"").append(anal.get("method")).append("\"");
-                    if (oi.getJmmParent().getChildren().size() > 1) {
-                        List<JmmNode> arguments = oi.getJmmParent().getChildren();
-                        for (int j = 1; j < arguments.size(); j++) {
-                            res.append(",").append(binary_ops_handler(local_variables, parameter_variables, classfield_variables, arguments.get(j)));
-                        }
-                    }
-                    res.append(");\n");
-                } else {
-                    System.out.println("PRECISA DE COISAS");
-                    if (anal.getChildren().size() > 1) {
-                        List<JmmNode> arguments = anal.getChildren();
-                        for (int j = 1; j < arguments.size(); j++) {
-                            res.append(", ").append(binary_ops_handler(local_variables, parameter_variables, classfield_variables, arguments.get(j)));
-                        }
-                    }
-                }
-                res.append("invokevirtual(").append(anal.getJmmChild(0).get("id")).append(",\"").append(anal.get("method")).append("\", temp_").append(this.temp_n).append(");\n");
-            } else {
-                res.append(" ").append(anal.get("op")).append(get_type_of_op(anal.get("op"), condition_builder.get(i-1), local_variables, parameter_variables, classfield_variables)).append(" ");
-            }
-        }
-        return res.toString();
-    }
-    
-    private JmmNode find_node_kind_child_in_node(JmmNode node, String kind_look) {
-        ArrayList<JmmNode> tmp = new ArrayList<>();
-        tmp.add(node);
-        while (tmp.size() > 0) {
-            if (Objects.equals(tmp.get(0).getKind(), kind_look))
-                return tmp.get(0);
-            JmmNode removed = tmp.remove(0);
-            tmp.addAll(0, removed.getChildren());
-        }
-        return null;
-    }
-
-    private String get_type_of_op(String op, JmmNode prev_node, List<Symbol> local_variables, List<Symbol> parameter_variables, List<Symbol> classfield_variables) {
-        switch (op) {
-            case "+", "-", "*", "/" -> {
-                return "." + get_value_from_terminal_literal(prev_node).split("\\.", 2)[1];
-            }
-        }
-        return ".bool";
-    }
-
-    private String get_parameter_variable(List<Symbol> parameterVariables, String var_name) {
-        StringBuilder type_var = new StringBuilder(".");
-        int i = 1;
-        for (Symbol lv : parameterVariables) {
-            if (Objects.equals(lv.getName(), var_name)) {
-                type_var.append(convert_type(lv.getType()));
-                break;
-            }
-            i++;
-        }
-        return "$" + i + "." + var_name + type_var;
-    }
-
     private boolean exists_in_variable(List<Symbol> local_variables, String var_name) {
         for (Symbol lv : local_variables) {
             if (Objects.equals(lv.getName(), var_name)) {
@@ -290,17 +62,6 @@ public class OllirParser implements JmmOptimization {
             }
         }
         return false;
-    }
-
-    private String get_variable_type(List<Symbol> variables_list, String var_name) {
-        StringBuilder type_var = new StringBuilder(".");
-        for (Symbol lv : variables_list) {
-            if (Objects.equals(lv.getName(), var_name)) {
-                type_var.append(convert_type(lv.getType()));
-                break;
-            }
-        }
-        return type_var.toString();
     }
 
     private String write_parameters(List<Symbol> fields_method) {
@@ -386,7 +147,6 @@ public class OllirParser implements JmmOptimization {
                     node.put("ollirhelper", handle_return_statement(node));
                     break;
                 case "VarDeclaration":
-                    System.out.println("TBI");
                     node.put("ollirhelper", handle_variable_declaration(node, local_variables, parameter_variables, classfield_variables));
                     break;
                 case "BinaryOp":
