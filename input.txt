@@ -1,20 +1,14 @@
-import compilers.c2023.io;
+class AssignIntToBool {
 
-class Fac {
-    int bigBoy = 7;
-    public int computeFac (int num ){
-        boolean num_aux = (true && (false));
-        int[] arr = new int[] {1,2,3,4,5};
-        if (!num)
-            num_aux = arr[bigBoy+6];
-        else
-            num_aux = num * (this.computeFac(num -1));
-        return num_aux;
+    public static void main(String[] args) {
+
     }
-    public static void main ( String[] args ){
-        io.println(new Fac().computeFac(10)); // assuming the existence of the classfile io. class
+
+    public boolean foo() {
+        int[] a;
+
+        a[true] = 10;
+
+        return a;
     }
 }
-
-// num_aux = arr[i++];
-// declaraçoes de int dentro dos if statement

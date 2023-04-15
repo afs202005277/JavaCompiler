@@ -74,8 +74,8 @@ statement
     | variable = ID '=' expression ';' #Assignment
     | variable = ID '=' ('new' type)? '{' (contents+=INT',')*contents+=INT '}' ';' #AssignmentArray
     | variable = ID '=' ('new' 'int' '[' INT ']') ';' #ArrayDeclaration // FIXME nao interpreta como array
+    | variable = ID '[' expression ']' '=' expression ';' #Assignment
     | expression ';' #Stmt
-    | ID '[' expression ']' '=' expression ';' #Assignment
     ;
 
 expression
