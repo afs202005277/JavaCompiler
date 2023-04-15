@@ -52,8 +52,7 @@ public class Launcher {
             System.out.println("\n==========================\n");
             List<Report> reports = new SemanticAnalysis().visit(jmmSemanticsResult.getRootNode(), (SymbolTable) jmmSemanticsResult.getSymbolTable());
             System.out.println("\n==========================\n");
-            //System.out.println(reports);
-
+            System.out.println(reports);
         } else {
             for (pt.up.fe.comp.jmm.report.Report temp : parserResult.getReports()) {
                 System.out.println(temp);

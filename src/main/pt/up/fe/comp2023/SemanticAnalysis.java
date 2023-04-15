@@ -8,8 +8,11 @@ import pt.up.fe.comp.jmm.ast.PostorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
+import pt.up.fe.specs.util.SpecsCollections;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static pt.up.fe.comp.jmm.report.ReportType.ERROR;
@@ -25,7 +28,16 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         addVisit("LiteralS", this::dealWithLiteralS);
         addVisit("ArrayIndex", this::dealWithArrayIndex);
         addVisit("Literal", this::dealWithLiteral);
+    }
+
+    SemanticAnalysis(){
+        this.setDefaultValue(Collections::emptyList);
+        this.setReduceSimple(this::joinReports);
         this.setDefaultVisit(this::visitDefault);
+    }
+
+    private List<Report> joinReports(List<Report> reps1, List<Report> reps2) {
+        return SpecsCollections.concatList(reps1, reps2);
     }
 
 
@@ -71,12 +83,6 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
 
     private List<Report> visitDefault(JmmNode jmmNode, SymbolTable symbolTable) {
         System.out.println(jmmNode.getKind());
-        List<Symbol> sm = symbolTable.getLocalVariables("computeFac");
-        java.util.Optional<JmmNode> ancestor = jmmNode.getAncestor("MethodDeclaration");
-        String functionName = "";
-        if(ancestor.isPresent()){
-            functionName = ancestor.get().getKind();
-        }
         return new ArrayList<>();
     }
 
@@ -213,18 +219,29 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
     }
 
     private List<Report> dealWithMethodCall(JmmNode jmmNode, SymbolTable symbolTable) {
-        try{
-            Type tp = symbolTable.getReturnType(jmmNode.get("method"));
-            jmmNode.put("varType", tp.getName().equals("int")? "integer" : tp.getName());
-            jmmNode.put("isArray", String.valueOf(tp.isArray()));
+        List<Report> reports = new ArrayList<>();
+        if(jmmNode.getChildren().get(0).hasAttribute("id") && jmmNode.getChildren().get(0).get("id").equals("this")){
+            try{
+                Type tp = symbolTable.getReturnType(jmmNode.get("method"));
+                int num_of_params = symbolTable.getParameters(jmmNode.get("method")).size();
+                if(num_of_params != (jmmNode.getNumChildren()-1)){ throw new Exception(); }
+                jmmNode.put("varType", tp.getName().equals("int")? "integer" : tp.getName());
+                jmmNode.put("isArray", String.valueOf(tp.isArray()));
+            }
+            catch (Exception e){
+                jmmNode.put("varType","undefined");
+                Report rep = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Method " + jmmNode.get("method") + "("+ (jmmNode.getNumChildren()-1) + ") does not exist.");
+                reports.add(rep);
+            }
         }
-        catch (Exception e){
-            jmmNode.put("varType","libraryMethodInvocation");
+
+        else {
+            jmmNode.put("varType", "libraryMethodInvocation");
             jmmNode.put("isArray", "false");
         }
 
-
-        return new ArrayList<>();
+        System.out.println(reports);
+        return reports;
     }
 
     private List<Report> dealWithUnaryOp(JmmNode jmmNode, SymbolTable symbolTable) {
