@@ -616,7 +616,7 @@ public class OllirParser implements JmmOptimization {
                 return tmp + "String";
             }
         }
-        return "unknown";
+        return name;
     }
 
     private String get_local_variable(String var_name, List<Symbol> local_variables) {
