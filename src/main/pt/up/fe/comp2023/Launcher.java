@@ -1,9 +1,11 @@
 package pt.up.fe.comp2023;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
@@ -18,7 +20,7 @@ import pt.up.fe.comp.jmm.ollir.OllirResult;
 
 public class Launcher {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws FileNotFoundException {
         // Setups console logging and other things
         SpecsSystem.programStandardInit();
 
@@ -35,13 +37,14 @@ public class Launcher {
 
         // Read contents of input file
         String code = SpecsIo.read(inputFile);
-        /*JasminConverter jasminConverter = new JasminConverter();
-        JasminResult jasminResult = jasminConverter.toJasmin(new OllirResult(code, config));
-        System.out.println(jasminResult.getJasminCode());
+        String content = new Scanner(new File("./input.txt")).useDelimiter("\\Z").next();
+        JasminConverter jasminConverter = new JasminConverter();
+        JasminResult jasminResult = jasminConverter.toJasmin(new OllirResult(content, config));
         //jasminResult.compile(new File("compiled.j"));
+        System.out.println(jasminResult.getJasminCode());
         System.out.println("Result");
-       System.out.println(jasminResult.run());*/
-
+        jasminResult.run();
+        /*
         // Instantiate JmmParser
         SimpleParser parser = new SimpleParser();
 
@@ -68,7 +71,7 @@ public class Launcher {
                 System.out.println(temp);
                 System.out.println('\n');
             }
-        }
+        }*/
     }
 
     private static Map<String, String> parseArgs(String[] args) {

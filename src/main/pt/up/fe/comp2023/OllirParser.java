@@ -346,7 +346,7 @@ public class OllirParser implements JmmOptimization {
 
     StringBuilder res;
 
-    OllirParser() {
+    public OllirParser() {
         this.symbol_table = null;
         this.root_node = null;
         this.temp_n = 0;

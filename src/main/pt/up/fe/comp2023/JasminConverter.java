@@ -115,6 +115,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             return ((ClassType) instruction.getFirstArg().getType()).getName();
         } else if (imports.contains(((Operand) instruction.getFirstArg()).getName())) {
             return ((Operand) instruction.getFirstArg()).getName();
+        } else if (instruction.getFirstArg().toString().equals("OBJECTREF") && imports.contains(((ClassType) instruction.getFirstArg().getType()).getName())){
+            return ((ClassType) instruction.getFirstArg().getType()).getName();
         } else {
             return parentClass;
         }
@@ -205,7 +207,6 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         }
         if (instruction.getInvocationType().toString().equals("arraylength"))
             return code.append(handleLiteral(instruction.getFirstArg(), varTable)).append(instruction.getInvocationType().toString()).append("\n").append(pop).toString();
-        boolean hasSecondArg = instruction.getSecondArg() != null;
         if (!instruction.getInvocationType().name().contains("static"))
             code.append(handleLiteral(instruction.getFirstArg(), varTable));
 
@@ -215,6 +216,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             }
         }
 
+        boolean hasSecondArg = instruction.getSecondArg() != null;
         String secondArg = "", prefix = "";
         if (hasSecondArg) {
             secondArg = instruction.getSecondArg().toString();
