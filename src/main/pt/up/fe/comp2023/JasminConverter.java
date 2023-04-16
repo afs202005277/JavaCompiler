@@ -167,7 +167,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                 jasminCode.append(".method public ");
                 method.addInstr(new ReturnInstruction());
             } else {
-                jasminCode.append(".method ").append(method.getMethodAccessModifier().toString().equalsIgnoreCase("default") ? "" : method.getMethodAccessModifier().toString().toLowerCase()).append(staticStr).append(finalStr);
+                jasminCode.append(".method ").append(method.getMethodAccessModifier().toString().equalsIgnoreCase("default") ? "public" : method.getMethodAccessModifier().toString().toLowerCase()).append(staticStr).append(finalStr);
             }
             jasminCode.append(outputMethodId(method));
             jasminCode.append("\n");
@@ -202,7 +202,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         if (!field.isFinalField()) {
             finalStr = "";
         }
-        code.append(".field ").append(field.getFieldAccessModifier().toString().equals("DEFAULT") ? "" : field.getFieldAccessModifier().toString().toLowerCase()).append(" ").append(staticStr).append(finalStr).append(field.getFieldName()).append(" ").append(outputType(field.getFieldType()));
+        code.append(".field ").append(field.getFieldAccessModifier().toString().equals("DEFAULT") ? "public" : field.getFieldAccessModifier().toString().toLowerCase()).append(" ").append(staticStr).append(finalStr).append(field.getFieldName()).append(" ").append(outputType(field.getFieldType()));
         return code.append("\n").toString();
     }
 
@@ -213,7 +213,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             for (Element arg : instruction.getListOfOperands()) {
                 code.append(handleLiteral(arg, varTable));
             }
-            return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").append("dup\n").append(pop).toString();
+            return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").append(pop).toString();
         }
         if (instruction.getInvocationType().toString().equals("arraylength"))
             return code.append(handleLiteral(instruction.getFirstArg(), varTable)).append(instruction.getInvocationType().toString()).append("\n").append(pop).toString();
