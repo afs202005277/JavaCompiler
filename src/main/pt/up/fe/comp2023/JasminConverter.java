@@ -109,14 +109,21 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return "ldc " + value + "\n";
     }
 
+    private String checkImport(String importName, List<String> imports){
+        for (String fullImport : imports){
+            if (fullImport.contains(importName))
+                return fullImport;
+        }
+        return "";
+    }
     private String getMethodOrigin(CallInstruction instruction, List<String> methods, List<String> imports, String parentClass) {
         String methodName = ((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", "");
         if (methods.contains(methodName)) {
             return ((ClassType) instruction.getFirstArg().getType()).getName();
-        } else if (imports.contains(((Operand) instruction.getFirstArg()).getName())) {
-            return ((Operand) instruction.getFirstArg()).getName();
-        } else if (instruction.getFirstArg().toString().equals("OBJECTREF") && imports.contains(((ClassType) instruction.getFirstArg().getType()).getName())){
-            return ((ClassType) instruction.getFirstArg().getType()).getName();
+        } else if (!checkImport(((Operand) instruction.getFirstArg()).getName(), imports).equals("")) {
+            return checkImport(((Operand) instruction.getFirstArg()).getName(), imports);
+        } else if (instruction.getFirstArg().toString().equals("OBJECTREF") && !checkImport(((ClassType) instruction.getFirstArg().getType()).getName(), imports).equals("")){
+            return checkImport(((ClassType) instruction.getFirstArg().getType()).getName(), imports);
         } else {
             return parentClass;
         }
@@ -135,7 +142,10 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         for (Method m : ollirClassUnit.getMethods()) {
             methods.add(m.getMethodName());
         }
-        List<String> imports = new ArrayList<>(ollirClassUnit.getImports());
+        List<String> imports = new ArrayList<>();
+        for (String importString : ollirClassUnit.getImports()){
+            imports.add(importString.replace('.', '/'));
+        }
 
         jasminCode.append(".class ").append("public").append(" ").append(ollirClassUnit.getClassName()).append("\n");
         jasminCode.append(".super ").append(ollirClassUnit.getSuperClass()).append("\n\n\n");
