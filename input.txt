@@ -1,23 +1,21 @@
 import io;
-import Quicksort;
+import Cheese;
 
-class CompileBasic extends Quicksort {
+class setInlineAndPrintOtherClassFromParam {
 
-    int intField;
-    boolean boolField;
+      public int method1(Cheese a) {
 
-    public Fac method1(int fuck) {
-        Fac hello = new Fac();
-        int a = hello.method2(fuck, 5);
+        Cheese b = a;
 
-        return hello;
+        io.println(b.calcStuff(7));
+
+        return b.calcStuff(7);
+
     }
-
-    public boolean method2(int intParam1, boolean boolParam1) {
-        return boolParam1;
-    }
-
 
     public static void main(String[] args) {
+
     }
+
+
 }

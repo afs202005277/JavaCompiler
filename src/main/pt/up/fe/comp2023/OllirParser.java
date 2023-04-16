@@ -284,7 +284,12 @@ public class OllirParser implements JmmOptimization {
     }
 
     private String get_return_type_of_method(String method_name) {
-        return this.convert_type(this.symbol_table.getReturnType(method_name));
+        String res = "unknown";
+        try {
+            res = this.convert_type(this.symbol_table.getReturnType(method_name));
+        } catch (Exception ignored) {
+        }
+        return res;
     }
 
     private String handle_assignments(JmmNode node, List<Symbol> local_variables, List<Symbol> parameter_variables, List<Symbol> classfield_variables) {
