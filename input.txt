@@ -1,14 +1,22 @@
-class AssignIntToBool {
+import B;
+
+class CallToMethodAssumedInImport extends A {
 
     public static void main(String[] args) {
 
     }
 
-    public boolean foo() {
-        int[] a;
+    public int foo() {
+        B a;
+        a = new A();
 
-        a[true] = 10;
+        c = this.foo;
 
-        return a;
+        io.println();
+
+        // Assume bar() is in A
+        a.bar();
+
+        return 0;
     }
 }
