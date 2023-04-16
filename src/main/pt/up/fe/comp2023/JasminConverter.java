@@ -213,7 +213,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             for (Element arg : instruction.getListOfOperands()) {
                 code.append(handleLiteral(arg, varTable));
             }
-            return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").append(pop).toString();
+            return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").append("dup\n").append(pop).toString();
         }
         if (instruction.getInvocationType().toString().equals("arraylength"))
             return code.append(handleLiteral(instruction.getFirstArg(), varTable)).append(instruction.getInvocationType().toString()).append("\n").append(pop).toString();
