@@ -7,9 +7,10 @@ class setInlineAndPrintOtherClassFromParam {
 
         Cheese b = a;
 
-        io.println(b.calcStuff(7));
+        int c = b.calcStuff(7 + 3);
+        io.println(c);
 
-        return b.calcStuff(7);
+        return c;
 
     }
 

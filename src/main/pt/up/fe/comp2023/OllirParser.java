@@ -96,6 +96,7 @@ public class OllirParser implements JmmOptimization {
         res.append("\n");
         write_class(this.symbol_table.getSomethingFromTable("class").get(0), this.symbol_table.getMethods());
 
+        System.out.println(res.toString());
         return new OllirResult(this.res.toString(), jmmSemanticsResult.getConfig());
     }
 
@@ -132,12 +133,14 @@ public class OllirParser implements JmmOptimization {
         res.append("\n");
         for (JmmNode statement : method_node.getChildren()) {
             if (!Objects.equals(statement.getKind(), "ReturnType") && !Objects.equals(statement.getKind(), "MethodArgument") && statement.hasAttribute("ollirhelper")) {
+                res.append(statement.get("beforehand")).append("\n");
                 res.append(statement.get("ollirhelper")).append("\n");
             }
         }
     }
 
     private void method_insides_handler(JmmNode node, List<Symbol> local_variables, List<Symbol> parameter_variables, List<Symbol> classfield_variables) {
+        node.put("beforehand", "");
         if (node.getNumChildren() != 0) {
             for (JmmNode statement : node.getChildren()) {
                 method_insides_handler(statement, local_variables, parameter_variables, classfield_variables);
@@ -156,7 +159,7 @@ public class OllirParser implements JmmOptimization {
                     node.put("ollirhelper", node.getJmmChild(0).get("ollirhelper"));
                     break;
                 case "Body", "ElseStmtBody":
-                    node.put("ollirhelper", handle_bodies(node, local_variables, parameter_variables, classfield_variables));
+                    node.put("ollirhelper", handle_bodies(node));
                     break;
                 case "Assignment":
                     node.put("ollirhelper", handle_assignments(node, local_variables, parameter_variables, classfield_variables));
@@ -165,23 +168,21 @@ public class OllirParser implements JmmOptimization {
                     node.put("ollirhelper", handle_method_calls(node, local_variables, parameter_variables, classfield_variables));
                     break;
                 case "Parenthesis":
-                    node.put("ollirhelper", handle_parenthesis(node, local_variables, parameter_variables, classfield_variables));
+                    node.put("ollirhelper", handle_parenthesis(node));
                     break;
                 case "IfStatement":
-                    node.put("ollirhelper", handle_ifs(node, local_variables, parameter_variables, classfield_variables));
+                    node.put("ollirhelper", handle_ifs(node));
                     break;
             }
         } else {
-            switch(node.getKind()) {
-                case "Type", "Object":
-                    break;
-                case "Literal":
-                    node.put("ollirhelper", handle_literals(node, local_variables, parameter_variables, classfield_variables));
-                    break;
-                case "ObjectInstantiation":
+            switch (node.getKind()) {
+                case "Type", "Object" -> handle_before_hand(node, new StringBuilder(""));
+                case "Literal" ->
+                        node.put("ollirhelper", handle_literals(node, local_variables, parameter_variables, classfield_variables));
+                case "ObjectInstantiation" -> {
                     node.put("ollirhelper", handle_object_instantiation(node));
                     node.put("id", node.get("ollirhelper"));
-                    break;
+                }
             }
         }
     }
@@ -196,10 +197,11 @@ public class OllirParser implements JmmOptimization {
             this.temp_n++;
             res.append("ret").append(".").append(get_var_type_from_name(node.getJmmChild(0).get("ollirhelper"))).append(" ").append("temp_").append(this.temp_n-1).append(".").append(get_var_type_from_name(argument.get("ollirhelper"))).append(";\n");
         }
+        handle_before_hand(node, new StringBuilder(""));
         return res.toString();
     }
 
-    private String handle_bodies(JmmNode node, List<Symbol> localVariables, List<Symbol> parameterVariables, List<Symbol> classfieldVariables) {
+    private String handle_bodies(JmmNode node) {
         StringBuilder res = new StringBuilder();
         if (Objects.equals(node.getJmmChild(0).getKind(), "Body") || Objects.equals(node.getJmmChild(0).getKind(), "ElseStmtBody")) {
             res.append(node.getJmmChild(0).get("ollirhelper")).append("\n");
@@ -208,10 +210,11 @@ public class OllirParser implements JmmOptimization {
                 res.append(c.get("ollirhelper")).append(";\n");
             }
         }
+        handle_before_hand(node, new StringBuilder(""));
         return res.toString();
     }
 
-    private String handle_ifs(JmmNode node, List<Symbol> localVariables, List<Symbol> parameterVariables, List<Symbol> classfieldVariables) {
+    private String handle_ifs(JmmNode node) {
         StringBuilder res = new StringBuilder();
         res.append("if (").append(node.getJmmChild(0).get("ollirhelper")).append(") goto ");
         if (node.getNumChildren() == 3) {
@@ -225,12 +228,15 @@ public class OllirParser implements JmmOptimization {
             res.append(node.getJmmChild(2).get("ollirhelper"));
         }
         res.append("endif:\n");
+        handle_before_hand(node, new StringBuilder(""));
         return res.toString();
     }
 
-    private String handle_parenthesis(JmmNode node, List<Symbol> localVariables, List<Symbol> parameterVariables, List<Symbol> classfieldVariables) {
+    private String handle_parenthesis(JmmNode node) {
+        StringBuilder res = new StringBuilder();
         res.append("temp_").append(this.temp_n).append(".").append(get_var_type_from_name(node.getJmmChild(0).get("ollirhelper"))).append(" :=.").append(get_var_type_from_name(node.getJmmChild(0).get("ollirhelper"))).append(" ").append(node.getJmmChild(0).get("ollirhelper")).append(";\n");
         this.temp_n++;
+        handle_before_hand(node, res);
         return "temp_" + (this.temp_n-1) + "." + get_var_type_from_name(node.getJmmChild(0).get("ollirhelper"));
     }
 
@@ -249,8 +255,27 @@ public class OllirParser implements JmmOptimization {
                 }
             }
         }
-        if (!Objects.equals(node.getJmmParent().getKind(), "Stmt"))
-            res.append("temp_").append(this.temp_n).append(".").append(get_return_type_of_method(node.get("method"))).append(" :=.").append(get_return_type_of_method(node.get("method"))).append(" ");
+        String tmp_var = node.getJmmParent().hasAttribute("variable") ? node.getJmmParent().get("variable") : "V";
+        if (!Objects.equals(node.getJmmParent().getKind(), "Stmt")) {
+            res.append("temp_").append(this.temp_n).append(".");
+            if (Objects.equals(get_return_type_of_method(node.get("method")), "unknown")) {
+                if (exists_in_variable(local_variables, tmp_var)) {
+                    // its a local variable
+                    tmp_var = get_local_variable(tmp_var, local_variables);
+                } else if (exists_in_variable(parameter_variables, tmp_var)) {
+                    tmp_var =  get_parameter_variable(tmp_var, parameter_variables);
+                } else if (exists_in_variable(classfield_variables, tmp_var)) {
+                    tmp_var = get_classfield_variable(tmp_var, classfield_variables);
+                } else {
+                    tmp_var = "V";
+                }
+                res.append(get_var_type_from_name(tmp_var));
+                res.append(" :=.").append(get_var_type_from_name(tmp_var)).append(" ");
+            } else {
+                res.append(get_return_type_of_method(node.get("method")));
+                res.append(" :=.").append(get_return_type_of_method(node.get("method"))).append(" ");
+            }
+        }
 
         boolean is_variable = false;
         String variable = "";
@@ -273,14 +298,23 @@ public class OllirParser implements JmmOptimization {
                 res.append(args_is_bin_ops.get(j-1) != -1 ? "temp_" + args_is_bin_ops.get(j-1) + "." + get_var_type_from_name(arguments.get(j).get("ollirhelper")) : arguments.get(j).get("ollirhelper"));
             }
         }
-        res.append(").").append(!Objects.equals(node.getJmmChild(0).get("id"), "this") && !is_variable ? "V" : get_return_type_of_method(node.get("method"))).append(";\n");
+        res.append(").").append(!Objects.equals(node.getJmmChild(0).get("id"), "this") && !is_variable ? "V" : (get_return_type_of_method(node.get("method")) == "unknown" ? get_var_type_from_name(tmp_var) : get_return_type_of_method(node.get("method")))).append(";\n");
         this.temp_n++;
         if (Objects.equals(node.getJmmParent().getKind(), "Stmt"))
             node.getJmmParent().put("ollirhelper", res.toString());
         else
-            this.res.append(res);
+            handle_before_hand(node, res);
 
-        return !Objects.equals(node.getJmmChild(0).get("id"), "this") && !is_variable ? "" : "temp_" + (this.temp_n-1) + "." + get_return_type_of_method(node.get("method"));
+        return !Objects.equals(node.getJmmChild(0).get("id"), "this") && !is_variable ? "" : "temp_" + (this.temp_n-1) + "." + (get_return_type_of_method(node.get("method")) == "unknown" ? get_var_type_from_name(tmp_var) : get_return_type_of_method(node.get("method")));
+    }
+
+    private void handle_before_hand(JmmNode node, StringBuilder append) {
+        StringBuilder res = new StringBuilder(append);
+        res.append((append.toString().equals("") ? "" : "\n"));
+        for (JmmNode c : node.getChildren())
+            if (!Objects.equals(c.get("beforehand"), ""))
+                res.append(c.get("beforehand")).append("\n");
+        node.put("beforehand", res.toString());
     }
 
     private String get_return_type_of_method(String method_name) {
@@ -302,7 +336,7 @@ public class OllirParser implements JmmOptimization {
         } else {
             variable =  get_classfield_variable(node.get("variable"), classfield_variables);
         }
-
+        handle_before_hand(node, new StringBuilder(""));
         return variable + " :=." + get_var_type_from_name(variable) + " " + node.getJmmChild(0).get("ollirhelper") + ";";
     }
 
@@ -333,6 +367,7 @@ public class OllirParser implements JmmOptimization {
                 res.append(" ").append(n.get("op")).append(".").append(get_var_type_from_name(variable)).append(" ");
             }
         }
+        handle_before_hand(condition, new StringBuilder(""));
         return res.toString();
     }
 
@@ -377,17 +412,22 @@ public class OllirParser implements JmmOptimization {
                     res.append(var_name).append("[").append("i").append(".i32].").append(type_var_no_array).append(" :=.").append(type_var_no_array).append(" ").append(c).append(".").append(type_var_no_array).append(";\n");
                     i++;
                 }
+                handle_before_hand(node, new StringBuilder(""));
                 return res.toString();
             } else {
+                handle_before_hand(node, new StringBuilder(""));
                 return node.getJmmChild(1).get("ollirhelper");
             }
         }
+        handle_before_hand(node, new StringBuilder(""));
         return "";
     }
 
     private String handle_object_instantiation(JmmNode node) {
+        StringBuilder res = new StringBuilder();
         res.append("temp_").append(this.temp_n).append(".").append(node.get("objectName")).append(" :=.").append(node.get("objectName")).append(" new(").append(node.get("objectName")).append(").").append(node.get("objectName")).append(";\n");
         this.temp_n++;
+        handle_before_hand(node, res);
         return "temp_" + (this.temp_n-1) + "." + node.get("objectName");
     }
 
@@ -403,6 +443,7 @@ public class OllirParser implements JmmOptimization {
                 return get_classfield_variable(variable_name, classfield_variables);
             }
         }
+        handle_before_hand(node, new StringBuilder(""));
         return get_value_from_terminal_literal(node);
     }
 
