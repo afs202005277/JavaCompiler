@@ -112,7 +112,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
     private boolean equalTypes(Type tp1, Type tp2, SymbolTable symbolTable){
         String superClass = symbolTable.getSuper();
 
-        if(getImports(symbolTable).contains(tp1.getName()) && getImports(symbolTable).contains(tp2.getName())){
+        if((getImports(symbolTable).contains(tp1.getName()) && getImports(symbolTable).contains(tp2.getName())) || tp1.getName().equals("unknown") || tp2.getName().equals("unknown")){
             return true;
         }
 

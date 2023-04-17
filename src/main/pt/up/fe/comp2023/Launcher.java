@@ -79,12 +79,11 @@ public class Launcher {
         // Analise semantica -- matilde
         /*SimpleParser parser = new SimpleParser();
         JmmParserResult parserResult = parser.parse(code, config);
-        SymbolTable symbolTable = new SymbolTable();
-        JmmSemanticsResult jmmSemanticsResult = symbolTable.semanticAnalysis(parserResult);
-        System.out.println("\n==========================\n");
-        List<Report> reports = new SemanticAnalysis().visit(jmmSemanticsResult.getRootNode(), (SymbolTable) jmmSemanticsResult.getSymbolTable());
-        System.out.println("\n==========================\n");
-        System.out.println(reports);*/
+
+        Analyser analyser = new Analyser();
+
+        analyser.semanticAnalysis(parserResult);*/
+
     }
 
     private static Map<String, String> parseArgs(String[] args) {

@@ -1,35 +1,21 @@
-<<<<<<< HEAD
-class VarNotDeclared {
+import B;
+
+class ObjectAssignmentFail {
 
     public static void main(String[] args) {
 
     }
 
-    public int foo() {
-        return x;
+    public ObjectAssignmentFail foo() {
+        ObjectAssignmentFail a;
+        B b;
+
+        a = new ObjectAssignmentFail();
+        b = new B();
+
+        // ObjectAssignmentFail does not extend B
+        b = a;
+
+        return a;
     }
 }
-=======
-import io;
-import Cheese;
-
-class setInlineAndPrintOtherClassFromParam {
-
-      public int method1(Cheese a) {
-
-        Cheese b = a;
-
-        int c = b.calcStuff(7 + 3);
-        io.println(c);
-
-        return c;
-
-    }
-
-    public static void main(String[] args) {
-
-    }
-
-
-}
->>>>>>> master
