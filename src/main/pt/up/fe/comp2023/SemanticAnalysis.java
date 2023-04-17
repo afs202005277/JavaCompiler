@@ -42,24 +42,24 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         return SpecsCollections.concatList(reps1, reps2);
     }
 
-    private List<String> possibleVarTypes(SymbolTable symbolTable){
+    private List<String> possibleVarTypes(SymbolTable symbolTable, Boolean includePrimitives){
         List<String> imports = symbolTable.getImports();
         imports.add(symbolTable.getClassName());
-        imports.add("int");
-        imports.add("int[]");
-        imports.add("boolean");
+        if(includePrimitives){
+            imports.add("int");
+            imports.add("int[]");
+            imports.add("boolean");
+        }
+
         return imports;
     }
 
-    private boolean isValidType(String nameType, SymbolTable symbolTable){
-        List<String> types = possibleVarTypes(symbolTable);
-        for(String type: types){
-            if(type.equals(nameType)){ return true; }
-        }
-        return false;
+    private boolean isValidType(String nameType, SymbolTable symbolTable, Boolean includePrimitives){
+        List<String> types = possibleVarTypes(symbolTable, includePrimitives);
+        return types.contains(nameType);
     }
 
-    private Type matchVarType(JmmNode jmmNode){
+    private Type getVarType(JmmNode jmmNode){
         if(jmmNode.get("varType").equals("int")){
             return new Type("integer", false);
         }
@@ -87,7 +87,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         return functionName;
     }
 
-    /** Returns a list with all the variables accessible in the scope of a function (variables declared inside said function + function parameters) */
+    /** Returns a list with all the variables accessible in the scope of a function (variables declared inside said function + function parameters + class fields) */
     private List<Symbol> getAccessibleVariables(String functionName, SymbolTable symbolTable){
         List<Symbol> localVars = symbolTable.table.get(functionName + "_variables");
         List<Symbol> functionParams = symbolTable.table.get(functionName + "_params");
@@ -125,7 +125,6 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         System.out.println(jmmNode.getKind());
         return new ArrayList<>();
     }
-
 
     private List<Report> dealWithArrayIndex(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
@@ -262,70 +261,105 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         return reports;
     }
 
-    // fixme
     private List<Report> dealWithMethodCall(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
-        if(jmmNode.getJmmChild(0).hasAttribute("id") && jmmNode.getJmmChild(0).get("id").equals("this")){
-            try{
+        JmmNode child = jmmNode.getJmmChild(0);
+        boolean methodExists = symbolTable.getMethods().contains(jmmNode.get("method"));
+
+
+        // If function caller is a 'this' object or an object with the class type
+        if(child.getKind().equals("Object") || (child.hasAttribute("varType") && child.get("varType").equals(symbolTable.getClassName()))){
+            if(methodExists){
                 Type tp = symbolTable.getReturnType(jmmNode.get("method"));
-                int num_of_params = symbolTable.getParameters(jmmNode.get("method")).size();
-                if(num_of_params != (jmmNode.getNumChildren()-1)){ throw new Exception(); }
-                jmmNode.put("varType", tp.getName());
-                jmmNode.put("isArray", String.valueOf(tp.isArray()));
+                putType(jmmNode, tp);
             }
-            catch (Exception e){
-                jmmNode.put("varType","undefined");
-                Report rep = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Method " + jmmNode.get("method") + "("+ (jmmNode.getNumChildren()-1) + ") does not exist.");
-                reports.add(rep);
+
+            // If class extends another Class
+            else if(!symbolTable.getSuper().equals("")){
+                putType(jmmNode, new Type("unknown", false));
+            }
+
+            // If class does not extend any other class and method isn't declared
+            else{
+                putType(jmmNode, new Type("undefined", false));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Method "+jmmNode.get("method")+" couldn't be found."));
             }
         }
 
         else {
-            jmmNode.put("varType", "libraryMethodInvocation");
-            jmmNode.put("isArray", "false");
+            boolean isValidType = isValidType(child.get("varType"), symbolTable, false);
+            if(isValidType){
+                putType(jmmNode, new Type("unknown", false));
+            }
+            else{
+                putType(jmmNode, new Type("undefined", false));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Method "+jmmNode.get("method")+" couldn't be found."));
+            }
         }
+
 
         System.out.println(reports);
         return reports;
+
     }
 
-    //fixme
     private List<Report> dealWithAssignment(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
+        JmmNode child1 = jmmNode.getJmmChild(0);
 
-        if(jmmNode.getJmmChild(0).get("varType").equals("libraryMethodInvocation")){return reports;}
+        // If it is a class field being declared and assigned outside a method
+        if(getCallerFunctionName(jmmNode).equals("")){
+            Type tp = matchVariable(symbolTable.getFields(), jmmNode.get("variable"));
 
-        boolean ancestorExists = jmmNode.getAncestor("MethodDeclaration").isPresent();
-        Type tp;
-
-        if(ancestorExists){
-            String functionName = jmmNode.getAncestor("MethodDeclaration").get().get("methodName");
-            tp = matchVariable(getAccessibleVariables(functionName, symbolTable), jmmNode.get("variable"));
+            // If the assignment matches the variable type
+            if(getVarType(child1).equals(tp)){
+                putType(jmmNode, getVarType(child1));
+            }
+            else{
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+jmmNode.get("variable")+" is of type "+tp.getName()+"."));
+                putType(jmmNode, new Type("undefined", false));
+            }
         }
 
         else{
-            tp = matchVariable(symbolTable.getFields(), jmmNode.get("variable"));
-        }
-
-
-        if((jmmNode.getNumChildren() == 1 && !tp.getName().equals(jmmNode.getJmmChild(0).get("varType"))) || (jmmNode.getNumChildren() != 1 && (!tp.isArray()))){
-            Report rep = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+jmmNode.get("variable")+" is of type "+ tp.getName());
-            reports.add(rep);
-        }
-
-        else if(jmmNode.getNumChildren() == 1 && tp.isArray()){
-            Report rep = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+jmmNode.get("variable")+" is an array.");
-            reports.add(rep);
-        }
-
-        else if(jmmNode.getNumChildren() != 1 && !jmmNode.getJmmChild(0).get("varType").equals("integer")){
-            Report rep = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Error in array access.");
-            reports.add(rep);
-        }
-
-        else if(jmmNode.getNumChildren() != 1 && !jmmNode.getJmmChild(1).get("varType").equals("integer")) {
-            Report rep = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Assignment of array element must be an integer.");
-            reports.add(rep);
+            List<Symbol> accessibleVars = getAccessibleVariables(getCallerFunctionName(jmmNode),symbolTable);
+            Type tp = matchVariable(accessibleVars, jmmNode.get("variable"));
+            // If variable does not exist:
+            if(tp == null){
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+jmmNode.get("variable")+" couldn't be found."));
+                putType(jmmNode, new Type("undefined", false));
+            }
+            // If variable does exist, it can be an array element assignment (2 children nodes) or a regular variable assignment (1 child node).
+            else{
+                // If it is a regular variable assignment, check if assigned value matches variable's varType.
+                if(jmmNode.getNumChildren() == 1){
+                    if(getVarType(child1).equals(tp)){
+                        putType(jmmNode, tp);
+                    }
+                    else{
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+jmmNode.get("variable")+" is of type "+tp.getName()+"."));
+                        putType(jmmNode, new Type("undefined", false));
+                    }
+                }
+                // If it's an array element assignment, check if variable is of type int[], if array access is integer and if assigned value is integer.
+                else{
+                    if(!tp.isArray()){
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+jmmNode.get("variable")+" is of type "+tp.getName()+"."));
+                        putType(jmmNode, new Type("undefined", false));
+                    }
+                    else if(!getVarType(child1).equals(new Type("integer", false))){
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Array access must be of type integer."));
+                        putType(jmmNode, new Type("undefined", false));
+                    }
+                    else if(!getVarType(jmmNode.getJmmChild(1)).equals(new Type("integer", false))){
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Array element must be of type integer."));
+                        putType(jmmNode, new Type("undefined", false));
+                    }
+                    else{
+                        putType(jmmNode, new Type("integer", false));
+                    }
+                }
+            }
         }
 
         System.out.println(reports);
@@ -349,13 +383,13 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
     private List<Report> dealWithVarDeclaration(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
 
-        boolean isValidType = isValidType(jmmNode.getJmmChild(0).get("varType"), symbolTable);
+        boolean isValidType = isValidType(jmmNode.getJmmChild(0).get("varType"), symbolTable, true);
         if(!isValidType){
             Report rep = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Type "+jmmNode.getJmmChild(0).get("varType")+" does not exist.");
             reports.add(rep);
         }
         else{
-            Type tp = matchVarType(jmmNode.getJmmChild(0));
+            Type tp = getVarType(jmmNode.getJmmChild(0));
             jmmNode.put("varType", tp.getName());
             jmmNode.put("varType", Boolean.toString(tp.isArray()));
         }

@@ -2,20 +2,19 @@ import A;
 
 class CallToMethodAssumedInImport extends A {
 
-    int bigBoy;
-
+    int bigBoy = 10;
     public static void main(String[] args) {
 
     }
 
     public int foo() {
-        A a;
-        a = new A();
+        boolean badBitch;
 
-        bigBoy = 7;
 
-        // Assume bar() is in A
-        a.bar();
+        arr[true] = 12;
+        badBitch[1] = true;
+
+
 
         return 0;
     }
