@@ -12,7 +12,7 @@ import java.util.Map;
 
 public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
-    private String myClass = "";
+    private String myClass;
     private static final HashMap<String, String> typeToDescriptor = new HashMap<>() {{
         put("BOOLEAN", "Z");
         put("INT32", "I");
@@ -125,7 +125,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             return ((ClassType) instruction.getFirstArg().getType()).getName();
         } else if (!checkImport(((Operand) instruction.getFirstArg()).getName(), imports).equals("")) {
             return checkImport(((Operand) instruction.getFirstArg()).getName(), imports);
-        } else if (instruction.getFirstArg().toString().equals("OBJECTREF") && !checkImport(((ClassType) instruction.getFirstArg().getType()).getName(), imports).equals("")) {
+        } else if ((instruction.getFirstArg().toString().equals("OBJECTREF") || (instruction.getFirstArg().toString().equals("CLASS"))) && !checkImport(((ClassType) instruction.getFirstArg().getType()).getName(), imports).equals("")) {
             return checkImport(((ClassType) instruction.getFirstArg().getType()).getName(), imports);
         } else {
             return parentClass;
@@ -151,9 +151,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         }
 
         jasminCode.append(".class ").append("public").append(" ").append(ollirClassUnit.getClassName()).append("\n");
-        this.myClass = ollirClassUnit.getClassName();
         jasminCode.append(".super ").append(ollirClassUnit.getSuperClass()).append("\n\n\n");
-
+        this.myClass = ollirClassUnit.getClassName();
         for (Field field : ollirClassUnit.getFields()) {
             jasminCode.append(processField(field));
         }
