@@ -108,6 +108,28 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         return functionName;
     }
 
+    /** Returns whether two variables have equivalent type. Child class equivalent to parent class  */
+    private boolean equalTypes(Type tp1, Type tp2, SymbolTable symbolTable){
+        String superClass = symbolTable.getSuper();
+
+        if(getImports(symbolTable).contains(tp1.getName()) && getImports(symbolTable).contains(tp2.getName())){
+            return true;
+        }
+
+        else if(superClass.equals("")){
+            return tp1.equals(tp2);
+        }
+
+        else{
+            if((tp1.getName().equals(symbolTable.getClassName()) && tp2.getName().equals(superClass)) || (tp2.getName().equals(symbolTable.getClassName()) && tp1.getName().equals(superClass))){
+                return tp2.isArray() == tp1.isArray();
+            }
+            else{
+                return tp1.equals(tp2);
+            }
+        }
+    }
+
     /** Returns a list with all the variables accessible in the scope of a function (variables declared inside said function + function parameters + class fields) */
     private List<Symbol> getAccessibleVariables(String functionName, SymbolTable symbolTable){
         List<Symbol> localVars = symbolTable.table.get(functionName + "_variables");
@@ -219,26 +241,28 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         String child1_type = children.get(0).get("varType"), child2_type = children.get(1).get("varType");
         boolean child1_isArray = getVarType(children.get(0)).isArray(), child2_isArray = getVarType(children.get(1)).isArray();
 
+        Type child1Type = new Type(child1_type, child1_isArray), child2Type = new Type(child2_type, child2_isArray);
+
         boolean everythingOk;
 
 
         switch (jmmNode.get("op")){
             case "&&", "||":
-                everythingOk = child1_type.equals(child2_type) && !((child1_type.equals("undefined")) || child1_type.equals("integer")) && !(child1_isArray || child2_isArray);
+                everythingOk = equalTypes(child1Type, child2Type, symbolTable) && !((child1_type.equals("undefined")) || child1_type.equals("integer")) && !(child1_isArray || child2_isArray);
                 if(!everythingOk){
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Binary operator " +jmmNode.get("op") +" not defined for given type."));
                 }
                 break;
 
             case "!=", "==":
-                everythingOk = child1_type.equals(child2_type) && !(child1_type.equals("undefined")) && !(child1_isArray || child2_isArray);
+                everythingOk = equalTypes(child1Type, child2Type, symbolTable) && !(child1_type.equals("undefined")) && !(child1_isArray || child2_isArray);
                 if(!everythingOk){
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Binary operator " +jmmNode.get("op") +" expects two non-null variables of the same type."));
                 }
                 break;
 
             case "*", "/", "+", "-", "<" , ">" , "<=" , ">=":
-                everythingOk = child1_type.equals(child2_type) && !(child1_type.equals("undefined") || child1_type.equals("boolean")) && !(child1_isArray || child2_isArray);
+                everythingOk = equalTypes(child1Type, child2Type, symbolTable) && !(child1_type.equals("undefined") || child1_type.equals("boolean")) && !(child1_isArray || child2_isArray);
                 if(!everythingOk){
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Binary operator " +jmmNode.get("op") +" not defined for given type."));
                 }
@@ -355,7 +379,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             Type tp = matchVariable(symbolTable.getFields(), jmmNode.get("variable"));
 
             // If the assignment matches the variable type
-            if(getVarType(child1).equals(tp)){
+            if(/*getVarType(child1).equals(tp) && */ equalTypes(getVarType(child1), tp, symbolTable)){
                 putType(jmmNode, getVarType(child1));
             }
             else{
@@ -376,7 +400,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             else{
                 // If it is a regular variable assignment, check if assigned value matches variable's varType.
                 if(jmmNode.getNumChildren() == 1){
-                    if(getVarType(child1).equals(tp)){
+                    if(/*getVarType(child1).equals(tp) && */ equalTypes(getVarType(child1), tp, symbolTable)){
                         putType(jmmNode, tp);
                     }
                     else{
@@ -505,7 +529,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
 
         Type statementType = getVarType(jmmNode.getJmmChild(0)), functionType = symbolTable.getReturnType(jmmNode.getJmmParent().get("methodName"));
         Type functionTypeSanitized = new Type(functionType.getName().equals("int")? "integer" : functionType.getName(), functionType.isArray());
-        boolean returnCorrect = functionTypeSanitized.equals(statementType);
+        boolean returnCorrect = equalTypes(statementType, functionTypeSanitized, symbolTable);
         if(!returnCorrect){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Method "+jmmNode.getJmmParent().get("methodName")+" returns type "+functionTypeSanitized.getName()+" ."));
             putType(jmmNode, new Type("undefined", false));

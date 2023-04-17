@@ -1,21 +1,10 @@
-import B;
-
-class ObjectAssignmentFail {
+class VarNotDeclared {
 
     public static void main(String[] args) {
 
     }
 
-    public ObjectAssignmentFail foo() {
-        ObjectAssignmentFail a;
-        B b;
-
-        a = new ObjectAssignmentFail();
-        b = new B();
-
-        // ObjectAssignmentFail does not extend B
-        a = b;
-
-        return a;
+    public int foo() {
+        return x;
     }
 }
