@@ -294,6 +294,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                 return handleLiteral(returnVar, varTable) + "\n" + handleType(returnVar.getType(), "return\n");
             } else {
                 Operand tmp = (Operand) returnVar;
+                if (tmp.getName().equals("this"))
+                    return "aload_0" + "\n" + handleType(returnVar.getType(), "return\n");
                 return handleType(varTable.get(tmp.getName()).getVarType(), "load " + varTable.get(tmp.getName()).getVirtualReg()) + "\n" + handleType(returnVar.getType(), "return\n");
             }
         }
@@ -320,20 +322,24 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     private String handleLiteral(Element element, HashMap<String, Descriptor> varTable) {
         if (element.isLiteral()) {
             LiteralElement tmp = ((LiteralElement) element);
+
             if (element.getType().getTypeOfElement().name().equals("INT32") || element.getType().getTypeOfElement().name().equals("BOOLEAN"))
                 return addToOperandStack(Integer.parseInt(tmp.getLiteral()));
-            else if (element.getType().getTypeOfElement().name().equals("STRING"))
+
+            if (element.getType().getTypeOfElement().name().equals("STRING"))
                 return addToOperandStack(tmp.getLiteral());
-            else
-                return "ERROR HANDLE LITERAL\n";
-        } else if (element instanceof ArrayOperand tmp) {
+
+            return "ERROR HANDLE LITERAL\n";
+        }
+
+        if (element instanceof ArrayOperand tmp) {
             String res = handleType(varTable.get(tmp.getName()).getVarType(), "load " + varTable.get(tmp.getName()).getVirtualReg()) + "\n";
             res += handleLiteral(tmp.getIndexOperands().get(0), varTable) + "\n";
             res += handleType(tmp.getType(), "aload") + "\n";
             return res;
-        } else {
-            return (handleType(varTable.get(((Operand) element).getName()).getVarType(), "load " + varTable.get(((Operand) element).getName()).getVirtualReg())) + "\n";
         }
+
+        return (handleType(varTable.get(((Operand) element).getName()).getVarType(), "load " + varTable.get(((Operand) element).getName()).getVirtualReg())) + "\n";
     }
 
     private String processBinaryOp(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
