@@ -11,6 +11,8 @@ import java.util.Map;
 
 
 public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
+
+    private String myClass = "";
     private static final HashMap<String, String> typeToDescriptor = new HashMap<>() {{
         put("BOOLEAN", "Z");
         put("INT32", "I");
@@ -119,7 +121,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private String getMethodOrigin(CallInstruction instruction, List<String> methods, List<String> imports, String parentClass) {
         String methodName = ((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", "");
-        if (methods.contains(methodName)) {
+        if (methods.contains(methodName) && ((Operand) instruction.getFirstArg()).getName().equals(this.myClass)) {
             return ((ClassType) instruction.getFirstArg().getType()).getName();
         } else if (!checkImport(((Operand) instruction.getFirstArg()).getName(), imports).equals("")) {
             return checkImport(((Operand) instruction.getFirstArg()).getName(), imports);
@@ -149,6 +151,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         }
 
         jasminCode.append(".class ").append("public").append(" ").append(ollirClassUnit.getClassName()).append("\n");
+        this.myClass = ollirClassUnit.getClassName();
         jasminCode.append(".super ").append(ollirClassUnit.getSuperClass()).append("\n\n\n");
 
         for (Field field : ollirClassUnit.getFields()) {
