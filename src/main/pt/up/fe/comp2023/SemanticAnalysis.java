@@ -42,12 +42,25 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         return SpecsCollections.concatList(reps1, reps2);
     }
 
+    private List<String> getImports(SymbolTable symbolTable){
+        List<String> imports = symbolTable.getImports(), result = new ArrayList<>();
+        for (String importClass: imports){
+            result.add(importClass);
+            if(importClass.contains(".")){
+                String[] modules = importClass.split("\\.");
+                result.add(modules[modules.length-1]);
+            }
+
+        }
+        return result;
+    }
     private List<String> possibleVarTypes(SymbolTable symbolTable, Boolean includePrimitives){
-        List<String> imports = symbolTable.getImports();
+        List<String> imports = getImports(symbolTable);
         imports.add(symbolTable.getClassName());
         if(includePrimitives){
             imports.add("int");
             imports.add("int[]");
+            imports.add("integer");
             imports.add("boolean");
         }
 
@@ -113,8 +126,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
     private Type matchVariable(List<Symbol> list, String id){
         for (Symbol s: list) {
             if(s.getName().equals(id)){
-                Type tp = new Type(s.getType().getName().equals("int")? "integer": s.getType().getName(), s.getType().isArray());
-                return tp;
+                return new Type(s.getType().getName().equals("int")? "integer": s.getType().getName(), s.getType().isArray());
             }
         }
         return null;
@@ -161,8 +173,14 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         }
 
         else{
-            putType(jmmNode, new Type("undefined", false));
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+ jmmNode.get("id") +" does not exist."));
+            boolean isImport = getImports(symbolTable).contains(jmmNode.get("id"));
+            if(isImport){
+                putType(jmmNode, new Type("library", false));
+            }
+            else{
+                putType(jmmNode, new Type("undefined", false));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+ jmmNode.get("id") +" does not exist."));
+            }
         }
         System.out.println(reports);
         return reports;
@@ -270,8 +288,16 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         // If function caller is a 'this' object or an object with the class type
         if(child.getKind().equals("Object") || (child.hasAttribute("varType") && child.get("varType").equals(symbolTable.getClassName()))){
             if(methodExists){
-                Type tp = symbolTable.getReturnType(jmmNode.get("method"));
-                putType(jmmNode, tp);
+                // Check if method has the correct number of arguments
+                if(symbolTable.getParameters(jmmNode.get("method")).size() == (jmmNode.getNumChildren()-1)){
+                    Type tp = symbolTable.getReturnType(jmmNode.get("method"));
+                    putType(jmmNode, tp);
+                }
+
+                else{
+                    putType(jmmNode, new Type("undefined", false));
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Method "+jmmNode.get("method")+ " ("+ (jmmNode.getNumChildren() - 1) +") couldn't be found."));
+                }
             }
 
             // If class extends another Class
@@ -282,7 +308,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             // If class does not extend any other class and method isn't declared
             else{
                 putType(jmmNode, new Type("undefined", false));
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Method "+jmmNode.get("method")+" couldn't be found."));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Method "+jmmNode.get("method")+" ("+ (jmmNode.getNumChildren() - 1) +") couldn't be found."));
             }
         }
 
@@ -293,7 +319,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             }
             else{
                 putType(jmmNode, new Type("undefined", false));
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Method "+jmmNode.get("method")+" couldn't be found."));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Method "+jmmNode.get("method")+" ("+ (jmmNode.getNumChildren() - 1) +") couldn't be found."));
             }
         }
 
@@ -366,20 +392,22 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         return reports;
     }
 
-
-    // fixme - tem de verificar se o nome do construtor coincide com o tipo
     private List<Report> dealWithObjectInstantiation(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
 
-        jmmNode.put("varType", "libraryMethodInvocation");
-        jmmNode.put("isArray", "false");
+        boolean validVar = isValidType(jmmNode.get("objectName"), symbolTable, false);
+        if(validVar){
+            putType(jmmNode, new Type(jmmNode.get("objectName"), false));
+        }
+        else{
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable type "+jmmNode.get("objectName")+" does not exist."));
+            putType(jmmNode, new Type("undefined", false));
+        }
 
         System.out.println(reports);
         return reports;
     }
 
-    //fixme
-    /** Only verifies if the type of the declared variable is valid. */
     private List<Report> dealWithVarDeclaration(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
 
@@ -390,34 +418,66 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         }
         else{
             Type tp = getVarType(jmmNode.getJmmChild(0));
-            jmmNode.put("varType", tp.getName());
-            jmmNode.put("varType", Boolean.toString(tp.isArray()));
+            putType(jmmNode, tp);
         }
 
         System.out.println(reports);
         return reports;
     }
 
-
-    /** FIXME - tenho primeiro de verificar se a variavel em questao existe. pode ser um objeto, uma library ou um this */
     private List<Report> dealWithClassVariable(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
+        String childId = jmmNode.getJmmChild(0).get("id"), childType = "";
+        if(jmmNode.getJmmChild(0).hasAttribute("varType")){
+            childType = jmmNode.getJmmChild(0).get("varType");
+        }
 
-        /*if(jmmNode.getJmmChild(0).get("id").equals("this")){
+
+        // If variable is of type equal to declared class or a 'this' object.
+        if(childId.equals("this") || childType.equals(symbolTable.getClassName())){
             Type tp = matchVariable(symbolTable.getFields(), jmmNode.get("method"));
+            // If variable is declared class field.
             if(tp != null){
-                jmmNode.put("varType", tp.getName());
-                jmmNode.put("isArray", Boolean.toString(tp.isArray()));
+                putType(jmmNode, tp);
             }
+            // If variable not declared class field.
             else{
-                Report rep = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Class field "+jmmNode.get("method")+" does not exist.");
-                reports.add(rep);
+                // If class extends another class, any method call is allowed.
+                if(symbolTable.getSuper().equals("")){
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Class field "+jmmNode.get("method")+" does not exist."));
+                    putType(jmmNode, new Type("undefined", false));
+                }
+                else{
+                    putType(jmmNode, new Type("unknown", false));
+                }
             }
         }
 
-        else{
+        else {
+            // Non-existent variable.
+            if(childType.equals("undefined")){
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Can't read field of "+childId+", variable does not exist."));
+                putType(jmmNode, new Type("undefined", false));
 
-        }*/
+            }
+
+            // Call to a library.
+            else if (childType.equals("library")) {
+                putType(jmmNode, new Type("unknown", false));
+            }
+
+            // Previously declared variable.
+            else{
+                // Type is not equal to already known primitive types.
+                if(isValidType(childType, symbolTable, false)){
+                    putType(jmmNode, new Type("unknown", false));
+                }
+                else{
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "No field "+jmmNode.get("method")+" associated with var of type "+childType+"."));
+                    putType(jmmNode, new Type("undefined", false));
+                }
+            }
+        }
 
         System.out.println(reports);
         return reports;

@@ -1,4 +1,5 @@
 import A;
+import io;
 
 class CallToMethodAssumedInImport extends A {
 
@@ -8,14 +9,13 @@ class CallToMethodAssumedInImport extends A {
     }
 
     public int foo() {
+        A a;
         boolean badBitch;
+        CallToMethodAssumedInImport b;
 
+        badBitch = true;
 
-        arr[true] = 12;
-        badBitch[1] = true;
-
-
-
+        b.foo();
         return 0;
     }
 }
