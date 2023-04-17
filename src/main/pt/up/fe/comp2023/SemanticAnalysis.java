@@ -29,6 +29,8 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         addVisit("ObjectInstantiation", this::dealWithObjectInstantiation);
         addVisit("VarDeclaration", this::dealWithVarDeclaration);
         addVisit("ClassVariable", this::dealWithClassVariable);
+        addVisit("ReturnStmt", this::dealWithReturnStmt);
+        addVisit("IfStatement", this::dealWithIfStatement);
     }
 
     SemanticAnalysis(){
@@ -492,6 +494,36 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
                     putType(jmmNode, new Type("undefined", false));
                 }
             }
+        }
+
+        System.out.println(reports);
+        return reports;
+    }
+
+    private List<Report> dealWithReturnStmt(JmmNode jmmNode, SymbolTable symbolTable) {
+        List<Report> reports = new ArrayList<>();
+
+        Type statementType = getVarType(jmmNode.getJmmChild(0)), functionType = symbolTable.getReturnType(jmmNode.getJmmParent().get("methodName"));
+        Type functionTypeSanitized = new Type(functionType.getName().equals("int")? "integer" : functionType.getName(), functionType.isArray());
+        boolean returnCorrect = functionTypeSanitized.equals(statementType);
+        if(!returnCorrect){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Method "+jmmNode.getJmmParent().get("methodName")+" returns type "+functionTypeSanitized.getName()+" ."));
+            putType(jmmNode, new Type("undefined", false));
+        }
+        else{
+            putType(jmmNode, functionTypeSanitized);
+        }
+
+        System.out.println(reports);
+        return reports;
+    }
+
+    private List<Report> dealWithIfStatement(JmmNode jmmNode, SymbolTable symbolTable) {
+        List<Report> reports = new ArrayList<>();
+
+        String type = jmmNode.getJmmChild(0).getJmmChild(0).get("varType");
+        if(!type.equals("boolean")){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "If statement condition must be of type boolean."));
         }
 
         System.out.println(reports);
