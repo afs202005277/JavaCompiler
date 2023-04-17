@@ -121,11 +121,11 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private String getMethodOrigin(CallInstruction instruction, List<String> methods, List<String> imports, String parentClass) {
         String methodName = ((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", "");
-        if (methods.contains(methodName) && ((Operand) instruction.getFirstArg()).getName().equals(this.myClass)) {
+        if (instruction.getInvocationType().name().contains("static"))
+            return ((Operand) instruction.getFirstArg()).getName();
+        if (methods.contains(methodName)) {
             return ((ClassType) instruction.getFirstArg().getType()).getName();
-        } else if (!checkImport(((Operand) instruction.getFirstArg()).getName(), imports).equals("")) {
-            return checkImport(((Operand) instruction.getFirstArg()).getName(), imports);
-        } else if ((instruction.getFirstArg().toString().equals("OBJECTREF") || (instruction.getFirstArg().toString().equals("CLASS"))) && !checkImport(((ClassType) instruction.getFirstArg().getType()).getName(), imports).equals("")) {
+        } else if ((instruction.getFirstArg().toString().equals("OBJECTREF")) && !checkImport(((ClassType) instruction.getFirstArg().getType()).getName(), imports).equals("")) {
             return checkImport(((ClassType) instruction.getFirstArg().getType()).getName(), imports);
         } else {
             return parentClass;
