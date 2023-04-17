@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 class VarNotDeclared {
 
     public static void main(String[] args) {
@@ -8,3 +9,27 @@ class VarNotDeclared {
         return x;
     }
 }
+=======
+import io;
+import Cheese;
+
+class setInlineAndPrintOtherClassFromParam {
+
+      public int method1(Cheese a) {
+
+        Cheese b = a;
+
+        int c = b.calcStuff(7 + 3);
+        io.println(c);
+
+        return c;
+
+    }
+
+    public static void main(String[] args) {
+
+    }
+
+
+}
+>>>>>>> master

@@ -48,6 +48,7 @@ public class ASTConverter extends AJmmVisitor<String, String> {
 
     private String dealWithMethodArguments(JmmNode jmmNode, String s) {
         Type type = getType(jmmNode.getJmmChild(0).getJmmChild(0).get("varType"));
+        System.out.println(type);
         Symbol symbol = new Symbol(type, jmmNode.get("argumentName"));
         ArrayList<Symbol> list = new ArrayList<>();
         list.add(symbol);
@@ -58,7 +59,7 @@ public class ASTConverter extends AJmmVisitor<String, String> {
     private String dealWithMethods(JmmNode jmmNode, String s) {
         if (Objects.equals(jmmNode.get("methodName"), "main")) {
             Type type = new Type("void", false);
-            Symbol symbol = new Symbol(type, "main");
+            Symbol symbol = new Symbol(type, "public static main");
             ArrayList<Symbol> list = new ArrayList<>();
             list.add(symbol);
             this.symbolTable.addEntry("methods", list);
@@ -70,7 +71,7 @@ public class ASTConverter extends AJmmVisitor<String, String> {
             this.symbolTable.addEntry("main_params", list);
         } else {
             Type type = getType(jmmNode.getJmmChild(0).getJmmChild(0).get("varType"));
-            Symbol symbol = new Symbol(type, jmmNode.get("methodName"));
+            Symbol symbol = new Symbol(type, jmmNode.get("accessModifier") + " " + jmmNode.get("methodName"));
             ArrayList<Symbol> list = new ArrayList<>();
             list.add(symbol);
             this.symbolTable.addEntry("methods", list);

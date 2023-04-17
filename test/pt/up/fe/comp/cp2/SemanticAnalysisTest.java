@@ -76,7 +76,6 @@ public class SemanticAnalysisTest {
     @Test
     public void objectAssignmentPassImports() {
         var result = TestUtils.analyse(SpecsIo.getResource("pt/up/fe/comp/cp2/semanticanalysis/ObjectAssignmentPassImports.jmm"));
-        System.out.println(result);
         TestUtils.noErrors(result);
     }
 

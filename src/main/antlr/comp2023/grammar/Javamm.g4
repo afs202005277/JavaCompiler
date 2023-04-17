@@ -74,7 +74,7 @@ statement
     | variable = ID '=' expression ';' #Assignment
     | variable = ID '=' ('new' type)? '{' (contents+=INT',')*contents+=INT '}' ';' #AssignmentArray
     | variable = ID '=' 'new' 'int' '[' INT ']' ';' #ArrayDeclaration
-    | variable = ID '[' expression ']' '=' expression ';' #Assignment
+    | id=ID '[' expression ']' '=' expression ';' #Assignment
     | expression ';' #Stmt
     ;
 

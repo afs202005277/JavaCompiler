@@ -376,7 +376,13 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
 
         // If it is a class field being declared and assigned outside a method
         if(getCallerFunctionName(jmmNode).equals("")){
-            Type tp = matchVariable(symbolTable.getFields(), jmmNode.get("variable"));
+            String id;
+            if(jmmNode.hasAttribute("id")){
+                id = jmmNode.get("id");
+            }
+            else { id = jmmNode.get("variable");}
+
+            Type tp = matchVariable(symbolTable.getFields(), id);
 
             // If the assignment matches the variable type
             if(/*getVarType(child1).equals(tp) && */ equalTypes(getVarType(child1), tp, symbolTable)){
@@ -411,7 +417,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
                 // If it's an array element assignment, check if variable is of type int[], if array access is integer and if assigned value is integer.
                 else{
                     if(!tp.isArray()){
-                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+jmmNode.get("variable")+" is of type "+tp.getName()+"."));
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+jmmNode.get("id")+" is of type "+tp.getName()+"."));
                         putType(jmmNode, new Type("undefined", false));
                     }
                     else if(!getVarType(child1).equals(new Type("integer", false))){

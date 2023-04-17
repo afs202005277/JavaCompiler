@@ -29,6 +29,10 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
         }
     }
 
+    public ArrayList<Symbol> getSomethingFromTable(String something) {
+        return table.getOrDefault(something, null);
+    }
+
     @Override
     public List<String> getImports() {
         ArrayList<Symbol> symbols = table.get("import");
@@ -76,14 +80,22 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
     @Override
     public Type getReturnType(String s) {
-        List<String> methods = getMethods();
+        s = s.split(" ")[s.split(" ").length-1];
+        List<String> methods_tmp = getMethods();
+        ArrayList<String> methods = new ArrayList<>();
+        for (String m : methods_tmp) {
+            String[] m_tmp = m.split(" ");
+            methods.add(m_tmp[m_tmp.length-1]);
+        }
         int index = methods.indexOf(s);
         return table.get("methods").get(index).getType();
     }
 
     @Override
     public List<Symbol> getParameters(String s) {
-        List<Symbol> params = table.get(s + "_params");
+        String[] tmp = s.split(" ");
+        String method_name = tmp[tmp.length-1];
+        List<Symbol> params = table.get(method_name + "_params");
         return params == null ? new ArrayList<>() : params;
     }
 
