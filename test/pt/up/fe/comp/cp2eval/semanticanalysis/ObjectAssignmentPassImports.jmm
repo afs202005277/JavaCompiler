@@ -1,21 +1,20 @@
-import A;
 import B;
 
-class ObjectAssignmentPassImports {
+class ObjectAssignmentFail {
 
-    public static void main(String[] args) {
+    public void main(String[] args) {
 
     }
 
-    public A foo() {
-        A a;
+    static public ObjectAssignmentFail foo() {
+        ObjectAssignmentFail a;
         B b;
 
-        a = new A();
+        a = new ObjectAssignmentFail();
         b = new B();
 
-        // A and B imported, assume it is correct
-        a = b;
+        // ObjectAssignmentFail does not extend B
+        b = a;
 
         return a;
     }

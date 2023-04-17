@@ -132,10 +132,22 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
 
     /** Returns a list with all the variables accessible in the scope of a function (variables declared inside said function + function parameters + class fields) */
     private List<Symbol> getAccessibleVariables(String functionName, SymbolTable symbolTable){
+
         List<Symbol> localVars = symbolTable.table.get(functionName + "_variables");
         List<Symbol> functionParams = symbolTable.table.get(functionName + "_params");
         List<Symbol> classFields = symbolTable.getFields();
         List<Symbol> functionVars = new ArrayList<>();
+
+        List<Symbol> symbols = symbolTable.getSomethingFromTable("methods");
+
+        for (Symbol symbol: symbols) {
+            if(symbol.getName().contains(functionName)){
+                if(symbol.getName().contains("static")){
+                    classFields.clear();
+                    break;
+                }
+            }
+        }
 
         if(functionParams != null){
             functionVars.addAll(functionParams);

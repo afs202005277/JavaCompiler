@@ -2,11 +2,13 @@ import B;
 
 class ObjectAssignmentFail {
 
-    public static void main(String[] args) {
+    int bigBoy = 3;
 
+    public static void main(String[] args) {
+        B.println(bigBoy);
     }
 
-    public ObjectAssignmentFail foo() {
+    static public ObjectAssignmentFail foo() {
         ObjectAssignmentFail a;
         B b;
 
