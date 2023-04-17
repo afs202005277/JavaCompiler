@@ -31,7 +31,6 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         addVisit("ClassVariable", this::dealWithClassVariable);
     }
 
-
     SemanticAnalysis(){
         this.setDefaultValue(Collections::emptyList);
         this.setReduceSimple(this::joinReports);
@@ -54,6 +53,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         }
         return result;
     }
+
     private List<String> possibleVarTypes(SymbolTable symbolTable, Boolean includePrimitives){
         List<String> imports = getImports(symbolTable);
         imports.add(symbolTable.getClassName());
@@ -73,14 +73,20 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
     }
 
     private Type getVarType(JmmNode jmmNode){
-        if(jmmNode.get("varType").equals("int")){
-            return new Type("integer", false);
+        if(jmmNode.hasAttribute("isArray")){
+            boolean isArray = jmmNode.get("isArray").equals("true");
+            return new Type(jmmNode.get("varType"), isArray);
         }
-        else if(jmmNode.get("varType").equals("int[]")){
-            return new Type("integer", true);
-        }
-        else {
-            return new Type(jmmNode.get("varType"), false);
+        else{
+            if(jmmNode.get("varType").equals("int")){
+                return new Type("integer", false);
+            }
+            else if(jmmNode.get("varType").equals("int[]")){
+                return new Type("integer", true);
+            }
+            else {
+                return new Type(jmmNode.get("varType"), false);
+            }
         }
     }
 
@@ -132,6 +138,23 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         return null;
     }
 
+    /** Returns a boolean if number and type of the arguments matches the function method */
+    private boolean checkMethodCallArguments(JmmNode jmmNode, SymbolTable symbolTable){
+
+        if(symbolTable.getParameters(jmmNode.get("method")).size() != (jmmNode.getNumChildren()-1)){
+            return false;
+        }
+
+        List<Symbol> functionParams = symbolTable.getParameters(jmmNode.get("method"));
+
+        for (int i=0; i<functionParams.size(); i++) {
+            Type typeOfParam = functionParams.get(i).getType();
+            Type typeOfParamSanitized = new Type(typeOfParam.getName().equals("int")? "integer" : typeOfParam.getName(), typeOfParam.isArray()), typeOfArg = getVarType(jmmNode.getJmmChild(i+1));
+            boolean equalType = typeOfArg.equals(typeOfParamSanitized);
+            if(!equalType){return false;}
+        }
+        return true;
+    }
 
     private List<Report> visitDefault(JmmNode jmmNode, SymbolTable symbolTable) {
         System.out.println(jmmNode.getKind());
@@ -192,14 +215,14 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
 
         List<JmmNode> children = jmmNode.getChildren();
         String child1_type = children.get(0).get("varType"), child2_type = children.get(1).get("varType");
-        boolean child1_isArray = Boolean.getBoolean(children.get(0).get("isArray")), child2_isArray = Boolean.getBoolean(children.get(0).get("isArray"));
+        boolean child1_isArray = getVarType(children.get(0)).isArray(), child2_isArray = getVarType(children.get(1)).isArray();
 
         boolean everythingOk;
 
 
         switch (jmmNode.get("op")){
             case "&&", "||":
-                everythingOk = child1_type.equals(child2_type) && !(child1_type.equals("undefined") || child1_type.equals("integer")) && !(child1_isArray || child2_isArray);
+                everythingOk = child1_type.equals(child2_type) && !((child1_type.equals("undefined")) || child1_type.equals("integer")) && !(child1_isArray || child2_isArray);
                 if(!everythingOk){
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Binary operator " +jmmNode.get("op") +" not defined for given type."));
                 }
@@ -287,17 +310,9 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
 
         // If function caller is a 'this' object or an object with the class type
         if(child.getKind().equals("Object") || (child.hasAttribute("varType") && child.get("varType").equals(symbolTable.getClassName()))){
-            if(methodExists){
-                // Check if method has the correct number of arguments
-                if(symbolTable.getParameters(jmmNode.get("method")).size() == (jmmNode.getNumChildren()-1)){
-                    Type tp = symbolTable.getReturnType(jmmNode.get("method"));
-                    putType(jmmNode, tp);
-                }
-
-                else{
-                    putType(jmmNode, new Type("undefined", false));
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Method "+jmmNode.get("method")+ " ("+ (jmmNode.getNumChildren() - 1) +") couldn't be found."));
-                }
+            if(methodExists && checkMethodCallArguments(jmmNode, symbolTable)){
+                Type tp = symbolTable.getReturnType(jmmNode.get("method"));
+                putType(jmmNode, tp);
             }
 
             // If class extends another Class

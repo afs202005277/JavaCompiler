@@ -1,21 +1,20 @@
-import A;
-import io;
+class IncompatibleReturn {
 
-class CallToMethodAssumedInImport extends A {
-
-    int bigBoy = 10;
     public static void main(String[] args) {
 
     }
 
-    public int foo() {
-        A a;
-        boolean badBitch;
-        CallToMethodAssumedInImport b;
+    public int foo(int a) {
+        return a + 1;
+    }
 
-        badBitch = true;
+    public boolean bar() {
+        IncompatibleReturn a;
+        int b;
 
-        b.foo();
-        return 0;
+        a = new IncompatibleReturn();
+        b = 0;
+
+        return a.foo(b);
     }
 }
