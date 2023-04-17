@@ -71,7 +71,14 @@ public class ASTConverter extends AJmmVisitor<String, String> {
             this.symbolTable.addEntry("main_params", list);
         } else {
             Type type = getType(jmmNode.getJmmChild(0).getJmmChild(0).get("varType"));
-            Symbol symbol = new Symbol(type, jmmNode.get("accessModifier") + " " + jmmNode.get("methodName"));
+            String accessModifier;
+            if(jmmNode.hasAttribute("accessModifier")){
+                accessModifier = jmmNode.get("accessModifier");
+            }
+            else{
+                accessModifier = "private";
+            }
+            Symbol symbol = new Symbol(type, accessModifier + " " + jmmNode.get("methodName"));
             ArrayList<Symbol> list = new ArrayList<>();
             list.add(symbol);
             this.symbolTable.addEntry("methods", list);
