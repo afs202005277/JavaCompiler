@@ -109,20 +109,21 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return "ldc " + value + "\n";
     }
 
-    private String checkImport(String importName, List<String> imports){
-        for (String fullImport : imports){
+    private String checkImport(String importName, List<String> imports) {
+        for (String fullImport : imports) {
             if (fullImport.contains(importName))
                 return fullImport;
         }
         return "";
     }
+
     private String getMethodOrigin(CallInstruction instruction, List<String> methods, List<String> imports, String parentClass) {
         String methodName = ((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", "");
         if (methods.contains(methodName)) {
             return ((ClassType) instruction.getFirstArg().getType()).getName();
         } else if (!checkImport(((Operand) instruction.getFirstArg()).getName(), imports).equals("")) {
             return checkImport(((Operand) instruction.getFirstArg()).getName(), imports);
-        } else if (instruction.getFirstArg().toString().equals("OBJECTREF") && !checkImport(((ClassType) instruction.getFirstArg().getType()).getName(), imports).equals("")){
+        } else if (instruction.getFirstArg().toString().equals("OBJECTREF") && !checkImport(((ClassType) instruction.getFirstArg().getType()).getName(), imports).equals("")) {
             return checkImport(((ClassType) instruction.getFirstArg().getType()).getName(), imports);
         } else {
             return parentClass;
@@ -143,7 +144,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             methods.add(m.getMethodName());
         }
         List<String> imports = new ArrayList<>();
-        for (String importString : ollirClassUnit.getImports()){
+        for (String importString : ollirClassUnit.getImports()) {
             imports.add(importString.replace('.', '/'));
         }
 
@@ -171,10 +172,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             }
             jasminCode.append(outputMethodId(method));
             jasminCode.append("\n");
-            if (true) {
-                jasminCode.append(".limit stack 99\n");
-                jasminCode.append(".limit locals 99\n");
-            }
+            jasminCode.append(".limit stack 99\n");
+            jasminCode.append(".limit locals 99\n");
             for (Instruction instruction : instructions) {
                 for (Map.Entry<String, Instruction> entry : method.getLabels().entrySet()) {
                     String key = entry.getKey();
