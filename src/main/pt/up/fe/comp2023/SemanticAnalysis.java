@@ -344,7 +344,11 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
 
     private List<Report> dealWithWhileLoop(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
-        if(!(jmmNode.getJmmChild(0).get("varType").equals("boolean") || jmmNode.getJmmChild(0).get("varType").equals("unknown")) && !(jmmNode.getJmmChild(0).get("isArray").equals("false"))){
+        if(jmmNode.getAncestor("WhileLoop").isPresent()){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Not possible to nest while loops."));
+        }
+
+        else if(!(jmmNode.getJmmChild(0).get("varType").equals("boolean") || jmmNode.getJmmChild(0).get("varType").equals("unknown")) && !(jmmNode.getJmmChild(0).get("isArray").equals("false"))){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "While loop condition must be of type boolean."));
         }
 

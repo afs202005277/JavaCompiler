@@ -1,18 +1,16 @@
-import A;
+class While_If_Array_WhileCondBool {
 
-class AssumeArguments {
+	public static void main(String[] args) {
+        int i;
+        boolean j;
 
-    public static void main(String[] args) {
+        i = 1;
+        j = false;
 
-    }
+        while (i) {
+            while(i && j) {
 
-    public int bar() {
-        A a;
-        boolean b;
-
-        a = new A();
-        b = true;
-
-        return a.foo(b);
-    }
+            }
+        }
+	}
 }
