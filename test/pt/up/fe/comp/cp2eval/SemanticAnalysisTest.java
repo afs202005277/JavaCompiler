@@ -6,7 +6,7 @@ import pt.up.fe.specs.util.SpecsIo;
 
 public class SemanticAnalysisTest {
 
-    /*@Test
+    @Test
     public void symbolTable() {
 
         var result = TestUtils.analyse(SpecsIo.getResource("pt/up/fe/comp/cp2eval/semanticanalysis/SymbolTable.jmm"));
@@ -108,7 +108,7 @@ public class SemanticAnalysisTest {
     public void t5ArrayInWhileCondition() {
         var result = TestUtils.analyse(SpecsIo.getResource("pt/up/fe/comp/cp2eval/semanticanalysis/ArrayInWhileCondition.jmm"));
         TestUtils.mustFail(result);
-    }*/
+    }
 
     @Test
     public void t5NoReports() {
@@ -116,7 +116,7 @@ public class SemanticAnalysisTest {
         TestUtils.noErrors(result);
     }
 
-    /*@Test
+    @Test
     public void t6CallToUndeclaredMethod() {
         var result = TestUtils.analyse(SpecsIo.getResource("pt/up/fe/comp/cp2eval/semanticanalysis/CallToUndeclaredMethod.jmm"));
         TestUtils.mustFail(result);
@@ -161,5 +161,5 @@ public class SemanticAnalysisTest {
         var result = TestUtils
                 .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2eval/semanticanalysis/AssumeArguments.jmm"));
         TestUtils.noErrors(result);
-    }*/
+    }
 }

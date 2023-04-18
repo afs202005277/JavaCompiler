@@ -134,7 +134,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             return tp1.equals(tp2);
         }
 
-        else if(getImports(symbolTable).contains(tp1.getName()) && getImports(symbolTable).contains(tp2.getName()) || tp1.getName().equals("unknown") || tp2.getName().equals("unknown")){
+        else if((getImports(symbolTable).contains(tp1.getName()) && getImports(symbolTable).contains(tp2.getName())) || tp1.getName().equals("unknown") || tp2.getName().equals("unknown")){
             return true;
         }
 
@@ -448,7 +448,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             Type tp = matchVariable(accessibleVars, id);
             // If variable does not exist:
             if(tp == null){
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+jmmNode.get("variable")+" couldn't be found."));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+id+" couldn't be found."));
                 putType(jmmNode, new Type("undefined", false));
             }
             // If variable does exist, it can be an array element assignment (2 children nodes) or a regular variable assignment (1 child node).
