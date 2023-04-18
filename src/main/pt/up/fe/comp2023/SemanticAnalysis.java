@@ -128,8 +128,13 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
     /** Returns whether two variables have equivalent type. Child class equivalent to parent class  */
     private boolean equalTypes(Type tp1, Type tp2, SymbolTable symbolTable){
         String superClass = symbolTable.getSuper();
+        Type intArray = new Type("integer", true);
 
-        if(getImports(symbolTable).contains(tp1.getName()) || getImports(symbolTable).contains(tp2.getName()) || tp1.getName().equals("unknown") || tp2.getName().equals("unknown")){
+        if(tp1.equals(intArray) || tp2.equals(intArray)){
+            return tp1.equals(tp2);
+        }
+
+        else if(getImports(symbolTable).contains(tp1.getName()) || getImports(symbolTable).contains(tp2.getName()) || tp1.getName().equals("unknown") || tp2.getName().equals("unknown")){
             return true;
         }
 
