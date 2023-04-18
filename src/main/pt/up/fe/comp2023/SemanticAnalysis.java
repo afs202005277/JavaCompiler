@@ -215,7 +215,6 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
     }
 
     private List<Report> visitDefault(JmmNode jmmNode, SymbolTable symbolTable) {
-        System.out.println(jmmNode.getKind());
         return new ArrayList<>();
     }
 
@@ -240,7 +239,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         }
 
 
-        System.out.println(reports);
+        
         return reports;
     }
 
@@ -263,7 +262,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+ jmmNode.get("id") +" does not exist."));
             }
         }
-        System.out.println(reports);
+        
         return reports;
 
     }
@@ -319,7 +318,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             putType(jmmNode, new Type("integer",false));
         }
 
-        System.out.println(reports);
+        
         return reports;
     }
 
@@ -351,7 +350,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             putType(jmmNode, new Type("boolean", false));
         }
 
-        System.out.println(reports);
+        
         return reports;
     }
 
@@ -362,7 +361,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "While loop condition must be of type boolean."));
         }
 
-        System.out.println(reports);
+        
         return reports;
     }
 
@@ -408,7 +407,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         }
 
 
-        System.out.println(reports);
+        
         return reports;
 
     }
@@ -484,7 +483,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             }
         }
 
-        System.out.println(reports);
+        
         return reports;
     }
 
@@ -500,7 +499,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             putType(jmmNode, new Type("undefined", false));
         }
 
-        System.out.println(reports);
+        
         return reports;
     }
 
@@ -517,7 +516,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             putType(jmmNode, tp);
         }
 
-        System.out.println(reports);
+        
         return reports;
     }
 
@@ -580,7 +579,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             }
         }
 
-        System.out.println(reports);
+        
         return reports;
     }
 
@@ -598,7 +597,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             putType(jmmNode, functionTypeSanitized);
         }
 
-        System.out.println(reports);
+        
         return reports;
     }
 
@@ -611,7 +610,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "If statement condition must be of type boolean."));
         }
 
-        System.out.println(reports);
+        
         return reports;
     }
 
@@ -629,14 +628,14 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             putType(jmmNode, getVarType(jmmNode.getJmmChild(0)));
         }
 
-        System.out.println(reports);
+        
         return reports;
     }
 
     private List<Report> dealWithObject(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
         putType(jmmNode, new Type(symbolTable.getClassName(), false));
-        System.out.println(reports);
+        
         return reports;
     }
 
@@ -654,7 +653,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             putType(jmmNode, intArray);
         }
 
-        System.out.println(reports);
+        
         return reports;
     }
 }
