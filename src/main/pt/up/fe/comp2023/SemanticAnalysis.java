@@ -43,6 +43,16 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         return SpecsCollections.concatList(reps1, reps2);
     }
 
+    private boolean methodExists(String methodName, SymbolTable symbolTable){
+        List<String> methods = symbolTable.getMethods();
+        for(String method: methods){
+            if(method.contains(methodName)){
+                return true;
+            }
+        }
+        return false;
+    }
+
     private List<String> getImports(SymbolTable symbolTable){
         List<String> imports = symbolTable.getImports(), result = new ArrayList<>();
         for (String importClass: imports){
@@ -59,6 +69,8 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
     private List<String> possibleVarTypes(SymbolTable symbolTable, Boolean includePrimitives){
         List<String> imports = getImports(symbolTable);
         imports.add(symbolTable.getClassName());
+        imports.add("unknown");
+        imports.add("library");
         if(includePrimitives){
             imports.add("int");
             imports.add("int[]");
@@ -343,7 +355,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
     private List<Report> dealWithMethodCall(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
         JmmNode child = jmmNode.getJmmChild(0);
-        boolean methodExists = symbolTable.getMethods().contains(jmmNode.get("method"));
+        boolean methodExists = methodExists(jmmNode.get("method"), symbolTable);
 
 
         // If function caller is a 'this' object or an object with the class type
@@ -408,7 +420,13 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
 
         else{
             List<Symbol> accessibleVars = getAccessibleVariables(getCallerFunctionName(jmmNode),symbolTable);
-            Type tp = matchVariable(accessibleVars, jmmNode.get("variable"));
+            String id;
+            if(jmmNode.hasAttribute("id")){
+                id = jmmNode.get("id");
+            }
+            else { id = jmmNode.get("variable");}
+
+            Type tp = matchVariable(accessibleVars, id);
             // If variable does not exist:
             if(tp == null){
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+jmmNode.get("variable")+" couldn't be found."));
