@@ -134,7 +134,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             return tp1.equals(tp2);
         }
 
-        else if(getImports(symbolTable).contains(tp1.getName()) || getImports(symbolTable).contains(tp2.getName()) || tp1.getName().equals("unknown") || tp2.getName().equals("unknown")){
+        else if(getImports(symbolTable).contains(tp1.getName()) && getImports(symbolTable).contains(tp2.getName()) || tp1.getName().equals("unknown") || tp2.getName().equals("unknown")){
             return true;
         }
 
