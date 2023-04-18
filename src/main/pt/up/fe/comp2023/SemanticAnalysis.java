@@ -364,9 +364,14 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         JmmNode child = jmmNode.getJmmChild(0);
         boolean methodExists = methodExists(jmmNode.get("method"), symbolTable);
 
+        // If function is static, can't invoke 'this' keyword
+        if(child.getKind().equals("Object") && jmmNode.getAncestor("MethodDeclaration").isPresent() && jmmNode.getAncestor("MethodDeclaration").get().hasAttribute("isStatic") && jmmNode.getAncestor("MethodDeclaration").get().get("isStatic").equals("static")){
+            putType(jmmNode, new Type("undefined", false));
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Method "+jmmNode.getAncestor("MethodDeclaration").get().get("methodName")+" is static, can't use 'this' keyword."));
+        }
 
         // If function caller is a 'this' object or an object with the class type
-        if(child.getKind().equals("Object") || (child.hasAttribute("varType") && child.get("varType").equals(symbolTable.getClassName()))){
+        else if(child.getKind().equals("Object") || (child.hasAttribute("varType") && child.get("varType").equals(symbolTable.getClassName()))){
             if(methodExists && checkMethodCallArguments(jmmNode, symbolTable)){
                 Type tp = symbolTable.getReturnType(jmmNode.get("method"));
                 putType(jmmNode, tp);
@@ -516,9 +521,14 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             childType = jmmNode.getJmmChild(0).get("varType");
         }
 
+        // If method is static, can't access 'this' keyword.
+        if(jmmNode.getJmmChild(0).getKind().equals("Object") && jmmNode.getAncestor("MethodDeclaration").isPresent() && jmmNode.getAncestor("MethodDeclaration").get().hasAttribute("isStatic") && jmmNode.getAncestor("MethodDeclaration").get().get("isStatic").equals("static")){
+            putType(jmmNode, new Type("undefined", false));
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Method "+jmmNode.getAncestor("MethodDeclaration").get().get("methodName")+" is static, can't use 'this' keyword."));
+        }
 
         // If variable is of type equal to declared class or a 'this' object.
-        if(childId.equals("this") || childType.equals(symbolTable.getClassName())){
+        else if(childId.equals("this") || childType.equals(symbolTable.getClassName())){
             Type tp = matchVariable(symbolTable.getFields(), jmmNode.get("method"));
             // If variable is declared class field.
             if(tp != null){
