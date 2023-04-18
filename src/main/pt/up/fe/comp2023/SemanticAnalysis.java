@@ -10,6 +10,7 @@ import pt.up.fe.comp.jmm.report.Stage;
 import pt.up.fe.specs.util.SpecsCollections;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -269,6 +270,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
 
         boolean everythingOk;
 
+        List<String> boolOp = Arrays.asList("&&", "||", "!=", "==", "<" , ">" , "<=" , ">="), intOp = Arrays.asList("*", "/", "+");
 
         switch (jmmNode.get("op")){
             case "&&", "||":
@@ -301,9 +303,11 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         if(!everythingOk) {
             putType(jmmNode, new Type("undefined", false));
         }
-
+        else if(boolOp.contains(jmmNode.get("op"))) {
+            putType(jmmNode, new Type("boolean",false));
+        }
         else{
-            putType(jmmNode, new Type(child1_type, false));
+            putType(jmmNode, new Type("integer",false));
         }
 
         System.out.println(reports);
@@ -410,7 +414,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             Type tp = matchVariable(symbolTable.getFields(), id);
 
             // If the assignment matches the variable type
-            if(/*getVarType(child1).equals(tp) && */ equalTypes(getVarType(child1), tp, symbolTable)){
+            if(equalTypes(getVarType(child1), tp, symbolTable)){
                 putType(jmmNode, getVarType(child1));
             }
             else{
@@ -437,7 +441,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             else{
                 // If it is a regular variable assignment, check if assigned value matches variable's varType.
                 if(jmmNode.getNumChildren() == 1){
-                    if(/*getVarType(child1).equals(tp) && */ equalTypes(getVarType(child1), tp, symbolTable)){
+                    if(equalTypes(getVarType(child1), tp, symbolTable)){
                         putType(jmmNode, tp);
                     }
                     else{
@@ -583,7 +587,8 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         List<Report> reports = new ArrayList<>();
 
         String type = jmmNode.getJmmChild(0).getJmmChild(0).get("varType");
-        if(!type.equals("boolean")){
+        boolean isArray = jmmNode.getJmmChild(0).getJmmChild(0).get("isArray").equals("true");
+        if(!equalTypes(new Type(type, isArray), new Type("boolean", false),symbolTable)){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "If statement condition must be of type boolean."));
         }
 
