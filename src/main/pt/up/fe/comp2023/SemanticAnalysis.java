@@ -32,6 +32,8 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         addVisit("ClassVariable", this::dealWithClassVariable);
         addVisit("ReturnStmt", this::dealWithReturnStmt);
         addVisit("IfStatement", this::dealWithIfStatement);
+        addVisit("Stmt", this::dealWithStmt);
+        addVisit("Object", this::dealWithObject);
     }
 
     SemanticAnalysis(){
@@ -125,7 +127,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
     private boolean equalTypes(Type tp1, Type tp2, SymbolTable symbolTable){
         String superClass = symbolTable.getSuper();
 
-        if((getImports(symbolTable).contains(tp1.getName()) && getImports(symbolTable).contains(tp2.getName())) || tp1.getName().equals("unknown") || tp2.getName().equals("unknown")){
+        if(getImports(symbolTable).contains(tp1.getName()) || getImports(symbolTable).contains(tp2.getName()) || tp1.getName().equals("unknown") || tp2.getName().equals("unknown")){
             return true;
         }
 
@@ -270,7 +272,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
 
         boolean everythingOk;
 
-        List<String> boolOp = Arrays.asList("&&", "||", "!=", "==", "<" , ">" , "<=" , ">="), intOp = Arrays.asList("*", "/", "+");
+        List<String> boolOp = Arrays.asList("&&", "||", "!=", "==", "<" , ">" , "<=" , ">=");
 
         switch (jmmNode.get("op")){
             case "&&", "||":
@@ -592,6 +594,31 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "If statement condition must be of type boolean."));
         }
 
+        System.out.println(reports);
+        return reports;
+    }
+
+    private List<Report> dealWithStmt(JmmNode jmmNode, SymbolTable symbolTable) {
+        List<Report> reports = new ArrayList<>();
+        JmmNode child = jmmNode.getJmmChild(0);
+
+        // If 'this' object is used and function is static
+        if(child.getKind().equals("Object") && jmmNode.getAncestor("MethodDeclaration").isPresent() && jmmNode.getAncestor("MethodDeclaration").get().hasAttribute("isStatic") && jmmNode.getAncestor("MethodDeclaration").get().get("isStatic").equals("static")){
+            putType(jmmNode, new Type("undefined", false));
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Method "+jmmNode.getAncestor("MethodDeclaration").get().get("methodName")+" is static, can't use 'this' keyword."));
+        }
+
+        else{
+            putType(jmmNode, getVarType(jmmNode.getJmmChild(0)));
+        }
+
+        System.out.println(reports);
+        return reports;
+    }
+
+    private List<Report> dealWithObject(JmmNode jmmNode, SymbolTable symbolTable) {
+        List<Report> reports = new ArrayList<>();
+        putType(jmmNode, new Type(symbolTable.getClassName(), false));
         System.out.println(reports);
         return reports;
     }
