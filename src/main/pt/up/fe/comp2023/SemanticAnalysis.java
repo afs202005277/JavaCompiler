@@ -34,6 +34,8 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         addVisit("IfStatement", this::dealWithIfStatement);
         addVisit("Stmt", this::dealWithStmt);
         addVisit("Object", this::dealWithObject);
+        addVisit("ArrayDeclaration", this::dealWithArray);
+        addVisit("AssignmentArray", this::dealWithArray);
     }
 
     SemanticAnalysis(){
@@ -629,6 +631,24 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
     private List<Report> dealWithObject(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
         putType(jmmNode, new Type(symbolTable.getClassName(), false));
+        System.out.println(reports);
+        return reports;
+    }
+
+    private List<Report> dealWithArray(JmmNode jmmNode, SymbolTable symbolTable) {
+        List<Report> reports = new ArrayList<>();
+        List<Symbol> accessibleVars = getAccessibleVariables(getCallerFunctionName(jmmNode),symbolTable);
+
+        Type tp = matchVariable(accessibleVars, jmmNode.get("variable")), intArray = new Type("integer", true);
+
+        if(!equalTypes(tp, intArray, symbolTable)){
+            putType(jmmNode, new Type("undefined", false));
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+jmmNode.get("variable")+" not of type integer array."));
+        }
+        else{
+            putType(jmmNode, intArray);
+        }
+
         System.out.println(reports);
         return reports;
     }
