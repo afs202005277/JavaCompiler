@@ -20,7 +20,7 @@ public class Analyser implements JmmAnalysis {
             return new JmmSemanticsResult(jmmParserResult, jmmSemanticsResult.getSymbolTable(), reports);
         }
 
-        catch(Exception e){
+        catch(NullPointerException e){
             System.out.println("Something went wrong");
             return null;
         }
