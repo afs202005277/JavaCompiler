@@ -58,7 +58,9 @@ public class Launcher {
                 OllirResult ollirResult = ollirParser.toOllir(jmmSemanticsResult);
 
                 JasminConverter jasminConverter = new JasminConverter();
-                (jasminConverter.toJasmin(ollirResult)).run();
+                JasminResult jasminResult = jasminConverter.toJasmin(ollirResult);
+                System.out.println(jasminResult.getJasminCode());
+                jasminResult.run();
             } else {
                 System.out.println("SEMANTIC ERRORS:");
                 for (Report temp : jmmSemanticsResult.getReports()) {

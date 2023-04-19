@@ -148,10 +148,6 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
         SymbolTable symbolTable = gen.getTable();
 
-
-
-
-
         return new JmmSemanticsResult(jmmParserResult, symbolTable, jmmParserResult.getReports());
     }
 }
