@@ -111,7 +111,6 @@ public class OllirParser implements JmmOptimization {
         res.append("\n");
         write_class(this.symbol_table.getSomethingFromTable("class").get(0), this.symbol_table.getMethods());
 
-        System.out.println(res.toString());
         return new OllirResult(this.res.toString(), jmmSemanticsResult.getConfig());
     }
 

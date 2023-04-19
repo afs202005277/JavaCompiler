@@ -47,19 +47,22 @@ public class Launcher {
         if (parserResult == null) {
             System.out.println(new Report(ReportType.ERROR, Stage.SYNTATIC, -1, -1, "[PARSING ERROR] Invalid characters detected, terminating."));
         } else if (parserResult.getRootNode() != null) {
-            // System.out.println(parserResult.getRootNode().toTree());
 
             Analyser analyser = new Analyser();
             JmmSemanticsResult jmmSemanticsResult = analyser.semanticAnalysis(parserResult);
 
-
             if (jmmSemanticsResult.getReports().isEmpty()) {
                 OllirParser ollirParser = new OllirParser();
                 OllirResult ollirResult = ollirParser.toOllir(jmmSemanticsResult);
-
+                System.out.println("Ollir code:");
+                System.out.println(ollirResult.getOllirCode());
                 JasminConverter jasminConverter = new JasminConverter();
                 JasminResult jasminResult = jasminConverter.toJasmin(ollirResult);
+                System.out.println("=======================");
+                System.out.println("Jasmin code:");
                 System.out.println(jasminResult.getJasminCode());
+                System.out.println("=======================");
+                System.out.println("Output:");
                 jasminResult.run();
             } else {
                 System.out.println("SEMANTIC ERRORS:");
