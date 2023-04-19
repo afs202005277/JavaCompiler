@@ -1,7 +1,8 @@
 import io;
 
 class A {
-    boolean a;
+    int a;
+    boolean b;
 
     public int x(){
         a = 10;
