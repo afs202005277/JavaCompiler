@@ -51,12 +51,14 @@ public class Launcher {
 
             Analyser analyser = new Analyser();
             JmmSemanticsResult jmmSemanticsResult = analyser.semanticAnalysis(parserResult);
+
+
             if (jmmSemanticsResult.getReports().isEmpty()) {
                 OllirParser ollirParser = new OllirParser();
-                //OllirResult ollirResult = ollirParser.toOllir(jmmSemanticsResult);
+                OllirResult ollirResult = ollirParser.toOllir(jmmSemanticsResult);
 
                 JasminConverter jasminConverter = new JasminConverter();
-                //(jasminConverter.toJasmin(ollirResult)).run();
+                (jasminConverter.toJasmin(ollirResult)).run();
             } else {
                 System.out.println("SEMANTIC ERRORS:");
                 for (Report temp : jmmSemanticsResult.getReports()) {
