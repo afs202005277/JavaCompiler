@@ -38,52 +38,39 @@ public class Launcher {
 
         // Read contents of input file
         String code = SpecsIo.read(inputFile);
-        String content = new Scanner(new File("./input.txt")).useDelimiter("\\Z").next();
-        JasminConverter jasminConverter = new JasminConverter();
-        JasminResult jasminResult = jasminConverter.toJasmin(new OllirResult(content, config));
-        //jasminResult.compile(new File("compiled.j"));
-        System.out.println(jasminResult.getJasminCode());
-        System.out.println("Result");
-        jasminResult.run();
 
-        /*
         // Instantiate JmmParser
         SimpleParser parser = new SimpleParser();
-        SemanticAnalysis sa = new SemanticAnalysis();
 
         // Parse stage
         JmmParserResult parserResult = parser.parse(code, config);
-        if (parserResult == null){
-            System.out.println(new Report(ReportType.ERROR, Stage.SYNTATIC,-1, -1, "[PARSING ERROR] Invalid characters detected, terminating."));
-        }
-        else if (parserResult.getRootNode() != null) {
-            System.out.println(parserResult.getRootNode().toTree());
+        if (parserResult == null) {
+            System.out.println(new Report(ReportType.ERROR, Stage.SYNTATIC, -1, -1, "[PARSING ERROR] Invalid characters detected, terminating."));
+        } else if (parserResult.getRootNode() != null) {
+            // System.out.println(parserResult.getRootNode().toTree());
 
-            // ... add remaining stages
-            SymbolTable symbolTable = new SymbolTable();
-            JmmSemanticsResult jmmSemanticsResult = symbolTable.semanticAnalysis(parserResult);
-            // jmmSemanticsResult.getSymbolTable().print();
+            Analyser analyser = new Analyser();
+            JmmSemanticsResult jmmSemanticsResult = analyser.semanticAnalysis(parserResult);
+            if (jmmSemanticsResult.getReports().isEmpty()) {
+                OllirParser ollirParser = new OllirParser();
+                //OllirResult ollirResult = ollirParser.toOllir(jmmSemanticsResult);
 
-            OllirParser ollirParser = new OllirParser();
-            OllirResult tmp = ollirParser.toOllir(jmmSemanticsResult);
-
-            System.out.println(tmp.getOllirCode());
+                JasminConverter jasminConverter = new JasminConverter();
+                //(jasminConverter.toJasmin(ollirResult)).run();
+            } else {
+                System.out.println("SEMANTIC ERRORS:");
+                for (Report temp : jmmSemanticsResult.getReports()) {
+                    System.out.println(temp);
+                    System.out.println('\n');
+                }
+            }
 
         } else {
             for (pt.up.fe.comp.jmm.report.Report temp : parserResult.getReports()) {
                 System.out.println(temp);
                 System.out.println('\n');
             }
-        }*/
-
-        // Analise semantica -- matilde
-        /*SimpleParser parser = new SimpleParser();
-        JmmParserResult parserResult = parser.parse(code, config);
-
-        Analyser analyser = new Analyser();
-
-        analyser.semanticAnalysis(parserResult);*/
-
+        }
     }
 
     private static Map<String, String> parseArgs(String[] args) {

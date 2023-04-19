@@ -12,18 +12,11 @@ public class Analyser implements JmmAnalysis {
     @Override
     public JmmSemanticsResult semanticAnalysis(JmmParserResult jmmParserResult) {
 
-        try{
-            SymbolTable symbolTable = new SymbolTable();
-            JmmSemanticsResult jmmSemanticsResult = symbolTable.semanticAnalysis(jmmParserResult);
-            List<Report> reports = new SemanticAnalysis().visit(jmmSemanticsResult.getRootNode(), (SymbolTable) jmmSemanticsResult.getSymbolTable());
+        SymbolTable symbolTable = new SymbolTable();
+        JmmSemanticsResult jmmSemanticsResult = symbolTable.semanticAnalysis(jmmParserResult);
+        List<Report> reports = new SemanticAnalysis().visit(jmmSemanticsResult.getRootNode(), (SymbolTable) jmmSemanticsResult.getSymbolTable());
 
-            return new JmmSemanticsResult(jmmParserResult, jmmSemanticsResult.getSymbolTable(), reports);
-        }
-
-        catch(NullPointerException e){
-            System.out.println("Something went wrong");
-            return null;
-        }
+        return new JmmSemanticsResult(jmmParserResult, jmmSemanticsResult.getSymbolTable(), reports);
 
     }
 }
