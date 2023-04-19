@@ -226,7 +226,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
 
         JmmNode child1 = jmmNode.getJmmChild(0), child2 = jmmNode.getJmmChild(1);
 
-        if(!child1.hasAttribute("varType") || !child2.hasAttribute("isArray")){
+        if(!child1.hasAttribute("varType") || !child1.hasAttribute("isArray") || !child2.hasAttribute("varType") || !child2.hasAttribute("isArray")){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable type couldn't be found."));
             putType(jmmNode, new Type("undefined", false));
         }
@@ -263,6 +263,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         if(!jmmNode.hasAttribute("id")){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable ID couldn't be found."));
             putType(jmmNode, new Type("undefined", false));
+            return reports;
         }
 
         Type variable = matchVariable(getAccessibleVariables(getCallerFunctionName(jmmNode), symbolTable), jmmNode.get("id"));
@@ -290,6 +291,12 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         List<Report> reports = new ArrayList<>();
 
         List<JmmNode> children = jmmNode.getChildren();
+        if(!(children.get(0).hasAttribute("varType") && children.get(0).hasAttribute("isArray") && children.get(1).hasAttribute("varType") && children.get(1).hasAttribute("isArray"))){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable type couldn't be found."));
+            putType(jmmNode, new Type("undefined", false));
+            return reports;
+        }
+
         String child1_type = children.get(0).get("varType"), child2_type = children.get(1).get("varType");
         boolean child1_isArray = getVarType(children.get(0)).isArray(), child2_isArray = getVarType(children.get(1)).isArray();
 
@@ -354,14 +361,28 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
     }
 
     private List<Report> dealWithParenthesis(JmmNode jmmNode, SymbolTable symbolTable) {
+        List<Report> reports = new ArrayList<>();
+
+        if(!(jmmNode.getJmmChild(0).hasAttribute("varType") && jmmNode.getJmmChild(0).hasAttribute("isArray"))){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable type couldn't be found."));
+            putType(jmmNode, new Type("undefined", false));
+            return reports;
+        }
+
         putType(jmmNode, new Type(jmmNode.getJmmChild(0).get("varType"), Boolean.getBoolean(jmmNode.getJmmChild(0).get("isArray"))));
-        return new ArrayList<>();
+        return reports;
     }
 
     private List<Report> dealWithUnaryOp(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
 
-        if(!jmmNode.getJmmChild(0).get("varType").equals("boolean")){
+        if(!jmmNode.getJmmChild(0).hasAttribute("varType")){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable type couldn't be found."));
+            putType(jmmNode, new Type("undefined", false));
+            return reports;
+        }
+
+        else if(!(jmmNode.getJmmChild(0).get("varType").equals("boolean") || jmmNode.getJmmChild(0).get("varType").equals("unknown"))){
             putType(jmmNode, new Type("undefined", false));
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Unary operator ! must be used on variable of type boolean."));
         }
@@ -376,6 +397,13 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
     private List<Report> dealWithWhileLoop(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
 
+        if(!(jmmNode.getJmmChild(0).hasAttribute("varType") && jmmNode.getJmmChild(0).hasAttribute("isArray"))){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable type couldn't be found."));
+            putType(jmmNode, new Type("undefined", false));
+            return reports;
+        }
+
+
         if(!(jmmNode.getJmmChild(0).get("varType").equals("boolean") || jmmNode.getJmmChild(0).get("varType").equals("unknown")) || (jmmNode.getJmmChild(0).get("isArray").equals("true"))){
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "While loop condition must be of type boolean."));
         }
@@ -387,6 +415,14 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
     private List<Report> dealWithMethodCall(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
         JmmNode child = jmmNode.getJmmChild(0);
+
+        if(!jmmNode.hasAttribute("method")){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "No method attribute was found."));
+            putType(jmmNode, new Type("undefined", false));
+            return reports;
+        }
+
+
         boolean methodExists = methodExists(jmmNode.get("method"), symbolTable);
 
         // If function is static, can't invoke 'this' keyword
@@ -415,6 +451,13 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         }
 
         else {
+
+            if(!child.hasAttribute("varType")){
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable type couldn't be found."));
+                putType(jmmNode, new Type("undefined", false));
+                return reports;
+            }
+
             boolean isValidType = isValidType(child.get("varType"), symbolTable, false);
             if(isValidType){
                 putType(jmmNode, new Type("unknown", false));
@@ -450,7 +493,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
                 putType(jmmNode, getVarType(child1));
             }
             else{
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+jmmNode.get("variable")+" is of type "+tp.getName()+"."));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+id+" is of type "+tp.getName()+"."));
                 putType(jmmNode, new Type("undefined", false));
             }
         }
@@ -477,14 +520,14 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
                         putType(jmmNode, tp);
                     }
                     else{
-                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+jmmNode.get("variable")+" is of type "+tp.getName()+"."));
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+id+" is of type "+tp.getName()+"."));
                         putType(jmmNode, new Type("undefined", false));
                     }
                 }
                 // If it's an array element assignment, check if variable is of type int[], if array access is integer and if assigned value is integer.
                 else{
                     if(!tp.isArray()){
-                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+jmmNode.get("id")+" is of type "+tp.getName()+"."));
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+id+" is of type "+tp.getName()+"."));
                         putType(jmmNode, new Type("undefined", false));
                     }
                     else if(!getVarType(child1).equals(new Type("integer", false))){
@@ -509,6 +552,12 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
     private List<Report> dealWithObjectInstantiation(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
 
+        if(!jmmNode.hasAttribute("objectName")){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Object name couldn't be found"));
+            putType(jmmNode, new Type("undefined", false));
+            return reports;
+        }
+
         boolean validVar = isValidType(jmmNode.get("objectName"), symbolTable, false);
         if(validVar){
             putType(jmmNode, new Type(jmmNode.get("objectName"), false));
@@ -525,6 +574,11 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
     private List<Report> dealWithVarDeclaration(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
 
+        if(!jmmNode.getJmmChild(0).hasAttribute("varType")){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable type couldn't be found"));
+            putType(jmmNode, new Type("undefined", false));
+            return reports;
+        }
         boolean isValidType = isValidType(jmmNode.getJmmChild(0).get("varType"), symbolTable, true);
         if(!isValidType){
             Report rep = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Type "+jmmNode.getJmmChild(0).get("varType")+" does not exist.");
@@ -541,6 +595,13 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
 
     private List<Report> dealWithClassVariable(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
+
+        if(!jmmNode.getJmmChild(0).hasAttribute("id")){
+            putType(jmmNode, new Type("undefined", false));
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Class variable couldn't be found."));
+            return reports;
+        }
+
         String childId = jmmNode.getJmmChild(0).get("id"), childType = "";
         if(jmmNode.getJmmChild(0).hasAttribute("varType")){
             childType = jmmNode.getJmmChild(0).get("varType");
@@ -554,6 +615,11 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
 
         // If variable is of type equal to declared class or a 'this' object.
         else if(childId.equals("this") || childType.equals(symbolTable.getClassName())){
+            if(!jmmNode.hasAttribute("method")){
+                putType(jmmNode, new Type("undefined", false));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Class field couldn't be found"));
+                return reports;
+            }
             Type tp = matchVariable(symbolTable.getFields(), jmmNode.get("method"));
             // If variable is declared class field.
             if(tp != null){
@@ -605,6 +671,12 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
     private List<Report> dealWithReturnStmt(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
 
+        if(!jmmNode.getJmmParent().hasAttribute("methodName")){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Method name couldn't be found."));
+            putType(jmmNode, new Type("undefined", false));
+            return reports;
+        }
+
         Type statementType = getVarType(jmmNode.getJmmChild(0)), functionType = symbolTable.getReturnType(jmmNode.getJmmParent().get("methodName"));
         Type functionTypeSanitized = new Type(functionType.getName().equals("int")? "integer" : functionType.getName(), functionType.isArray());
         boolean returnCorrect = equalTypes(statementType, functionTypeSanitized, symbolTable);
@@ -622,6 +694,11 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
 
     private List<Report> dealWithIfStatement(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
+
+        if(!jmmNode.getJmmChild(0).getJmmChild(0).hasAttribute("varType") || !jmmNode.getJmmChild(0).getJmmChild(0).hasAttribute("isArray")){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Condition type couldn't be found."));
+            return reports;
+        }
 
         String type = jmmNode.getJmmChild(0).getJmmChild(0).get("varType");
         boolean isArray = jmmNode.getJmmChild(0).getJmmChild(0).get("isArray").equals("true");
@@ -662,6 +739,12 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         List<Report> reports = new ArrayList<>();
         List<Symbol> accessibleVars = getAccessibleVariables(getCallerFunctionName(jmmNode),symbolTable);
 
+        if(!jmmNode.hasAttribute("variable")){
+            putType(jmmNode, new Type("undefined", false));
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable couldn't be found."));
+            return reports;
+        }
+
         Type tp = matchVariable(accessibleVars, jmmNode.get("variable")), intArray = new Type("integer", true);
 
         if(!equalTypes(tp, intArray, symbolTable)){
@@ -679,6 +762,13 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
     private List<Report> dealWithLength(JmmNode jmmNode, SymbolTable symbolTable) {
 
         List<Report> reports = new ArrayList<>();
+
+        if(!jmmNode.getJmmChild(0).hasAttribute("varType") || !jmmNode.getJmmChild(0).hasAttribute("isArray")){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable type couldn't be found."));
+            putType(jmmNode, new Type("undefined", false));
+            return reports;
+        }
+
         Type tp = new Type(jmmNode.getJmmChild(0).get("varType"), jmmNode.getJmmChild(0).get("isArray").equals("true"));
 
         if(tp.getName().equals("boolean") || (tp.getName().equals("integer") && !tp.isArray())){
