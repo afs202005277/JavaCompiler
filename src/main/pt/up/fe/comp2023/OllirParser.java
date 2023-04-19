@@ -96,9 +96,9 @@ public class OllirParser implements JmmOptimization {
         for (JmmNode f : class_node.getChildren()) {
             if (Objects.equals(f.getKind(), "VarDeclaration")) {
                 if (f.getNumChildren() == 1)
-                    res.append(".field private ").append(f.get("variableName")).append(".").append(convert_type(new Type(f.getJmmChild(0).get("varType"), false))).append(";\n");
+                    res.append(".field private ").append(f.get("variableName")).append(".").append(convert_type(new Type(f.getJmmChild(0).get("varType"), Objects.equals(f.get("isArray"), "true")))).append(";\n");
                 else {
-                    res.append(".field private ").append(f.getJmmChild(1).get("variable")).append(".").append(convert_type(new Type(f.getJmmChild(0).get("varType"), false))).append(" :=.").append(convert_type(new Type(f.getJmmChild(0).get("varType"), false))).append(" ").append(get_value_from_terminal_literal(f.getJmmChild(1).getJmmChild(0))).append(";\n");
+                    res.append(".field private ").append(f.getJmmChild(1).get("variable")).append(".").append(convert_type(new Type(f.getJmmChild(0).get("varType"), Objects.equals(f.get("isArray"), "true")))).append(" :=.").append(convert_type(new Type(f.getJmmChild(0).get("varType"), Objects.equals(f.get("isArray"), "true")))).append(" ").append(get_value_from_terminal_literal(f.getJmmChild(1).getJmmChild(0))).append(";\n");
                 }
             }
         }
@@ -472,6 +472,8 @@ public class OllirParser implements JmmOptimization {
         if (t.isArray())
             tmp = "array.";
         String name = t.getName();
+        if (name.contains("[]"))
+            name = name.substring(0, name.length()-2);
         switch (name) {
             case "int", "integer" -> {
                 return tmp + "i32";
