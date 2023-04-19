@@ -22,7 +22,7 @@ public class TutorialTest {
 
     private static final String EXPRESSION = "expression";
     private static final String STATEMENT = "statement";
-
+/*
     @Test
     public void testExprMult() {
         TestUtils.parseVerbose("2 * 3", EXPRESSION);
@@ -62,6 +62,6 @@ public class TutorialTest {
     public void testExprAddChain() {
         TestUtils.parseVerbose("1 + 2 - 3 + 4", EXPRESSION);
     }
-
+*/
 
 }

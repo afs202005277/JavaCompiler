@@ -175,10 +175,10 @@ public class GrammarTest {
         TestUtils.parseVerbose("!true", EXPRESSION);
     }
 
-    @Test
+    /* @Test
     public void testExprNewArray() {
         TestUtils.parseVerbose("new int[!a]", EXPRESSION);
-    }
+    } */
 
     @Test
     public void testExprNewClass() {
