@@ -4,10 +4,7 @@ import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
@@ -157,7 +154,19 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             jasminCode.append(processField(field));
         }
 
-        for (Method method : ollirClassUnit.getMethods()) {
+        ArrayList<Method> methodsObject = ollirClassUnit.getMethods();
+        methodsObject.sort((m1, m2) -> {
+            boolean m1IsConstructor = m1.isConstructMethod();
+            boolean m2IsConstructor = m2.isConstructMethod();
+            if (m1IsConstructor && !m2IsConstructor) {
+                return -1; // m1 comes before m2
+            } else if (!m1IsConstructor && m2IsConstructor) {
+                return 1; // m2 comes before m1
+            } else {
+                return 0; // no change in order
+            }
+        });
+        for (Method method : methodsObject) {
             List<Instruction> instructions = method.getInstructions();
             String staticStr = " static ", finalStr = " final ";
             if (!method.isStaticMethod()) {

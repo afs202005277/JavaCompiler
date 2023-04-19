@@ -1,7 +1,7 @@
 import io;
 
 class ArithmeticOperations {
-    int field = 5;
+    int atributo;
 
     public int addMultConstants() {
         int x = 1 + 2 * 3 + 4;
@@ -29,7 +29,7 @@ class ArithmeticOperations {
     }
 
     public int varLookupField() {
-        int x = field + 1;
+        int x = atributo + 1;
         return x;
     }
 
@@ -54,7 +54,7 @@ class ArithmeticOperations {
 
         io.println(calc.addMultVars());
 
-        io.prinln(calc.addMultVarsParams(a, b, c));
+        io.println(calc.addMultVarsParams(a, b, c));
 
         io.println(calc.multDivLeftAssociativity());
 
@@ -66,6 +66,7 @@ class ArithmeticOperations {
 
         io.println(2 * 3 + 5 + (2 * 10) * ((3 + 7) * 5));
 
+        return;
     }
 
 }
