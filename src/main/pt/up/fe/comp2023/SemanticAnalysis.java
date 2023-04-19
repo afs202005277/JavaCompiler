@@ -36,6 +36,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         addVisit("Object", this::dealWithObject);
         addVisit("ArrayDeclaration", this::dealWithArray);
         addVisit("AssignmentArray", this::dealWithArray);
+        addVisit("Length", this::dealWithLength);
     }
 
     SemanticAnalysis(){
@@ -654,6 +655,19 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         }
 
         
+        return reports;
+    }
+
+    private List<Report> dealWithLength(JmmNode jmmNode, SymbolTable symbolTable) {
+
+        List<Report> reports = new ArrayList<>();
+        Type tp = new Type(jmmNode.getJmmChild(0).get("varType"), jmmNode.getJmmChild(0).get("isArray").equals("true"));
+
+        if(tp.getName().equals("boolean") || (tp.getName().equals("integer") && !tp.isArray())){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable not of type array."));
+        }
+
+        putType(jmmNode, new Type("integer", false));
         return reports;
     }
 }

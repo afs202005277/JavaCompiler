@@ -82,6 +82,8 @@ expression
     : ('(' expression ')' | '[' expression ']') #Parenthesis
     | expression '[' expression ']' #ArrayIndex
     | expression '.' method = ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
+    | expression '.' method='length' #Length
+    | expression '.' method = ID #ClassVariable
     | op='!' expression #UnaryOp
     | expression op=('*' | '/' ) expression #BinaryOp
     | expression op=('+' | '-' ) expression #BinaryOp
@@ -89,8 +91,6 @@ expression
     | expression op='&&' expression #BinaryOp
     | expression op='||' expression  #BinaryOp
     | value=expression op='?' value=expression op=':' value=expression  #TernaryOp
-    | expression '.' method='length' #Length
-    | expression '.' method = ID #ClassVariable
     | 'new' objectName = ID '(' ')' #ObjectInstantiation
     | integer=INT #Literal
     | bool='true' #Literal
