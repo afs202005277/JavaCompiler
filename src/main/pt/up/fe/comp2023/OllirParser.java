@@ -91,7 +91,7 @@ public class OllirParser implements JmmOptimization {
 
     private void write_fields()
     {
-        JmmNode class_node = this.root_node.getJmmChild(1);
+        /*JmmNode class_node = this.root_node.getJmmChild(1);
 
         for (JmmNode f : class_node.getChildren()) {
             if (Objects.equals(f.getKind(), "VarDeclaration")) {
@@ -101,7 +101,13 @@ public class OllirParser implements JmmOptimization {
                     res.append(".field private ").append(f.getJmmChild(1).get("variable")).append(".").append(convert_type(new Type(f.getJmmChild(0).get("varType"), Objects.equals(f.get("isArray"), "true")))).append(" :=.").append(convert_type(new Type(f.getJmmChild(0).get("varType"), Objects.equals(f.get("isArray"), "true")))).append(" ").append(get_value_from_terminal_literal(f.getJmmChild(1).getJmmChild(0))).append(";\n");
                 }
             }
+        }*/
+
+        List<Symbol> fields = this.symbol_table.getFields();
+        for (Symbol f : fields) {
+            res.append(".field private ").append(f.getName()).append(".").append(this.convert_type(f.getType())).append(";\n");
         }
+
     }
     @Override
     public OllirResult toOllir(JmmSemanticsResult jmmSemanticsResult) {
