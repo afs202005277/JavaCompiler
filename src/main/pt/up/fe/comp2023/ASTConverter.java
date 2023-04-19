@@ -48,7 +48,6 @@ public class ASTConverter extends AJmmVisitor<String, String> {
 
     private String dealWithMethodArguments(JmmNode jmmNode, String s) {
         Type type = getType(jmmNode.getJmmChild(0).getJmmChild(0).get("varType"));
-        System.out.println(type);
         Symbol symbol = new Symbol(type, jmmNode.get("argumentName"));
         ArrayList<Symbol> list = new ArrayList<>();
         list.add(symbol);
