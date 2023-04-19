@@ -148,12 +148,17 @@ public class OllirParser implements JmmOptimization {
                 method_insides_handler(statement, local_variables, parameter_variables, classfield_variables);
         }
         res.append("\n");
+        boolean has_ret = false;
         for (JmmNode statement : method_node.getChildren()) {
             if (!Objects.equals(statement.getKind(), "ReturnType") && !Objects.equals(statement.getKind(), "MethodArgument") && statement.hasAttribute("ollirhelper")) {
                 res.append(statement.get("beforehand")).append("\n");
                 res.append(statement.get("ollirhelper")).append("\n");
             }
+            if (Objects.equals(statement.getKind(), "ReturnStmt"))
+                has_ret = true;
         }
+        if (!has_ret)
+            res.append("ret.V;\n");
     }
 
     private void method_insides_handler(JmmNode node, List<Symbol> local_variables, List<Symbol> parameter_variables, List<Symbol> classfield_variables) {
