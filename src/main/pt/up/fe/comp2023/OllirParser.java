@@ -308,7 +308,8 @@ public class OllirParser implements JmmOptimization {
             is_variable = true;
             variable = get_classfield_variable(node.getJmmChild(0), node.getJmmChild(0).get("id"), classfield_variables);
         }
-        res.append((!Objects.equals(node.getJmmChild(0).get("id"), "this") && !is_variable ? "invokestatic(" + node.getJmmChild(0).get("id") : "invokevirtual(" + node.getJmmChild(0).get("id") + "." + get_var_type_from_name(variable) )).append(",\"").append(node.get("method")).append("\"");
+
+        res.append((!Objects.equals(node.getJmmChild(0).get("id"), "this") && !is_variable ? "invokestatic(" + node.getJmmChild(0).get("id") : "invokevirtual(" + node.getJmmChild(0).get("id") + (!Objects.equals(node.getJmmChild(0).get("id"), "this") ? "." + get_var_type_from_name(variable) : "") )).append(",\"").append(node.get("method")).append("\"");
         if (node.getChildren().size() > 1) {
             List<JmmNode> arguments = node.getChildren();
             for (int j = 1; j < arguments.size(); j++) {
