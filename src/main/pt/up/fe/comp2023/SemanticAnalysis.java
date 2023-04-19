@@ -597,7 +597,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         List<Report> reports = new ArrayList<>();
 
         if(!jmmNode.getJmmChild(0).hasAttribute("id")){
-            putType(jmmNode, new Type("undefined", false));
+            //putType(jmmNode, new Type("undefined", false));
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Class variable couldn't be found."));
             return reports;
         }
