@@ -91,9 +91,16 @@ public class OllirParser implements JmmOptimization {
 
     private void write_fields()
     {
-        List<Symbol> fields = this.symbol_table.getFields();
-        for (Symbol f : fields) {
-            res.append(".field private ").append(f.getName()).append(".").append(this.convert_type(f.getType())).append(";\n");
+        JmmNode class_node = this.root_node.getJmmChild(1);
+
+        for (JmmNode f : class_node.getChildren()) {
+            if (Objects.equals(f.getKind(), "VarDeclaration")) {
+                if (f.getNumChildren() == 1)
+                    res.append(".field private ").append(f.get("variableName")).append(".").append(convert_type(new Type(f.getJmmChild(0).get("varType"), false))).append(";\n");
+                else {
+                    res.append(".field private ").append(f.getJmmChild(1).get("variable")).append(".").append(convert_type(new Type(f.getJmmChild(0).get("varType"), false))).append(" :=.").append(convert_type(new Type(f.getJmmChild(0).get("varType"), false))).append(" ").append(get_value_from_terminal_literal(f.getJmmChild(1).getJmmChild(0))).append(";\n");
+                }
+            }
         }
     }
     @Override
@@ -141,12 +148,17 @@ public class OllirParser implements JmmOptimization {
                 method_insides_handler(statement, local_variables, parameter_variables, classfield_variables);
         }
         res.append("\n");
+        boolean has_ret = false;
         for (JmmNode statement : method_node.getChildren()) {
             if (!Objects.equals(statement.getKind(), "ReturnType") && !Objects.equals(statement.getKind(), "MethodArgument") && statement.hasAttribute("ollirhelper")) {
                 res.append(statement.get("beforehand")).append("\n");
                 res.append(statement.get("ollirhelper")).append("\n");
             }
+            if (Objects.equals(statement.getKind(), "ReturnStmt"))
+                has_ret = true;
         }
+        if (!has_ret)
+            res.append("ret.V;\n");
     }
 
     private void method_insides_handler(JmmNode node, List<Symbol> local_variables, List<Symbol> parameter_variables, List<Symbol> classfield_variables) {
