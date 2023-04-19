@@ -3,6 +3,8 @@ import io;
 class ArithmeticOperations {
 
     int field;
+    boolean a;
+    int[] b;
 
     public static void main(String[] args) {
             int a = 4;
