@@ -8,8 +8,6 @@ import java.util.*;
 
 
 public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
-
-    private String myClass;
     private static final HashMap<String, String> typeToDescriptor = new HashMap<>() {{
         put("BOOLEAN", "Z");
         put("INT32", "I");
@@ -118,8 +116,12 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private String getMethodOrigin(CallInstruction instruction, List<String> methods, List<String> imports, String parentClass) {
         String methodName = ((LiteralElement) instruction.getSecondArg()).getLiteral().replace("\"", "");
-        if (instruction.getInvocationType().name().contains("static"))
-            return ((Operand) instruction.getFirstArg()).getName();
+        if (instruction.getInvocationType().name().contains("static")) {
+            String fullImport = checkImport(((Operand) instruction.getFirstArg()).getName(), imports);
+            if (fullImport.equals(""))
+                return ((Operand) instruction.getFirstArg()).getName();
+            return fullImport;
+        }
         if (methods.contains(methodName)) {
             return ((ClassType) instruction.getFirstArg().getType()).getName();
         } else if ((instruction.getFirstArg().toString().equals("OBJECTREF")) && !checkImport(((ClassType) instruction.getFirstArg().getType()).getName(), imports).equals("")) {
@@ -149,7 +151,6 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
         jasminCode.append(".class ").append("public").append(" ").append(ollirClassUnit.getClassName()).append("\n");
         jasminCode.append(".super ").append(ollirClassUnit.getSuperClass()).append("\n\n\n");
-        this.myClass = ollirClassUnit.getClassName();
         for (Field field : ollirClassUnit.getFields()) {
             jasminCode.append(processField(field));
         }
@@ -159,11 +160,11 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             boolean m1IsConstructor = m1.isConstructMethod();
             boolean m2IsConstructor = m2.isConstructMethod();
             if (m1IsConstructor && !m2IsConstructor) {
-                return -1; // m1 comes before m2
+                return -1;
             } else if (!m1IsConstructor && m2IsConstructor) {
-                return 1; // m2 comes before m1
+                return 1;
             } else {
-                return 0; // no change in order
+                return 0;
             }
         });
         for (Method method : methodsObject) {
