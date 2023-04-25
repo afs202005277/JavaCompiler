@@ -224,7 +224,13 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             for (Element arg : instruction.getListOfOperands()) {
                 code.append(handleLiteral(arg, varTable));
             }
-            return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").append(pop).toString();
+            if (!((Operand) instruction.getFirstArg()).getType().getTypeOfElement().name().equals("ARRAYREF"))
+                return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").append(pop).toString();
+            else {
+                String type = ((ArrayType) instruction.getReturnType()).getElementType().getTypeOfElement().name().toLowerCase();
+                type = type.substring(0, type.indexOf("32"));
+                return code.append("newarray ").append(type).append("\n").append(pop).toString();
+            }
         }
         if (instruction.getInvocationType().toString().equals("arraylength"))
             return code.append(handleLiteral(instruction.getFirstArg(), varTable)).append(instruction.getInvocationType().toString()).append("\n").append(pop).toString();
@@ -264,9 +270,17 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         if (instruction.getRhs() instanceof CallInstruction) {
             res = res.substring(0, res.lastIndexOf("pop\n"));
         }
-        code.append(res);
-        Operand tmpVariable = ((Operand) instruction.getDest());
-        code.append(handleType(varTable.get(tmpVariable.getName()).getVarType(), "store " + varTable.get(tmpVariable.getName()).getVirtualReg())).append("\n");
+        if (instruction.getDest() instanceof ArrayOperand arrayOperand){
+            Type type = new Type(ElementType.ARRAYREF);
+            code.append(handleType(type, "load " +  varTable.get(arrayOperand.getName()).getVirtualReg())).append("\n");
+            code.append(handleLiteral(arrayOperand.getIndexOperands().get(0), varTable));
+            code.append(res);
+            code.append("iastore\n");
+        }else{
+            code.append(res);
+            Operand tmpVariable = (Operand) instruction.getDest();
+            code.append(handleType(varTable.get(tmpVariable.getName()).getVarType(), "store " + varTable.get(tmpVariable.getName()).getVirtualReg())).append("\n");
+        }
         return code.toString();
     }
 
@@ -328,8 +342,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }
 
     private String processUnaryOp(UnaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
-        String operation = instruction.getOperation().getOpType().name(), code="";
-        if (operation.equals("NOT") || operation.equals("NOTB")){
+        String operation = instruction.getOperation().getOpType().name(), code = "";
+        if (operation.equals("NOT") || operation.equals("NOTB")) {
             code += "iconst_1\n";
             code += "ixor";
             return handleLiteral(instruction.getOperand(), varTable) + code + "\n";
@@ -350,7 +364,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             return "ERROR HANDLE LITERAL\n";
         }
 
-        if (element instanceof Operand operand && element.getType().getTypeOfElement().name().equals("BOOLEAN")){
+        if (element instanceof Operand operand && element.getType().getTypeOfElement().name().equals("BOOLEAN") && (operand.getName().equals("true") || operand.getName().equals("false"))) {
             return addToOperandStack(operand.getName().equals("true") ? 1 : 0);
         }
 
@@ -372,9 +386,9 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         String operation = instruction.getOperation().getOpType().toString().toLowerCase();
         if (operation.equals("add") || operation.equals("mul") || operation.equals("div") || operation.equals("sub"))
             code.append("i");
-        if (operation.equals("andb") || operation.equals("orb")){
+        if (operation.equals("andb") || operation.equals("orb")) {
             code.append("i");
-            operation = operation.substring(0, operation.length()-1);
+            operation = operation.substring(0, operation.length() - 1);
         }
         code.append(operation).append("\n");
         return code.toString();
