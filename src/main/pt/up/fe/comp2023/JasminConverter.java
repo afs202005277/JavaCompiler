@@ -390,7 +390,12 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             code.append("i");
             operation = operation.substring(0, operation.length() - 1);
         }
-        code.append(operation).append("\n");
+        // a < b: a-b < 0
+        if (operation.equals("lth")){
+            code.append("isub\niflt true_jasmin\n").append(addToOperandStack(0)).append("goto done\n").append("true_jasmin:\n").append(addToOperandStack(1)).append("done:\n");
+        } else{
+            code.append(operation).append("\n");
+        }
         return code.toString();
     }
 }
