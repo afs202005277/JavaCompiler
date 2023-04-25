@@ -285,15 +285,18 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return loaders + res + " " + label + "\n";
     }
 
-    private String handleDifferentIfs(String label) {
-        return " " + label + "\n";
+    private String handleDifferentIfs(SingleOpInstruction singleOpInstruction, String label, HashMap<String, Descriptor> varTable) {
+        StringBuilder code = new StringBuilder();
+        code.append(handleLiteral(singleOpInstruction.getSingleOperand(), varTable));
+        code.append("ifne ").append(label).append("\n");
+        return code.toString();
     }
 
     private String processBranch(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
         if (instruction.getCondition() instanceof BinaryOpInstruction op)
             return handleDifferentIfs(op, instruction.getLabel(), varTable);
-        else if (instruction.getCondition() instanceof SingleOpInstruction)
-            return handleDifferentIfs(instruction.getLabel());
+        else if (instruction.getCondition() instanceof SingleOpInstruction singleOpInstruction)
+            return handleDifferentIfs(singleOpInstruction, instruction.getLabel(), varTable);
         else
             return "PROCESS BRANCH\n";
     }
@@ -325,6 +328,12 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }
 
     private String processUnaryOp(UnaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
+        String operation = instruction.getOperation().getOpType().name(), code="";
+        if (operation.equals("NOT") || operation.equals("NOTB")){
+            code += "iconst_1\n";
+            code += "ixor";
+            return handleLiteral(instruction.getOperand(), varTable) + code + "\n";
+        }
         return handleLiteral(instruction.getOperand(), varTable) + instruction.getOperation().getOpType().name().toLowerCase() + "\n";
     }
 
@@ -339,6 +348,10 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                 return addToOperandStack(tmp.getLiteral());
 
             return "ERROR HANDLE LITERAL\n";
+        }
+
+        if (element instanceof Operand operand && element.getType().getTypeOfElement().name().equals("BOOLEAN")){
+            return addToOperandStack(operand.getName().equals("true") ? 1 : 0);
         }
 
         if (element instanceof ArrayOperand tmp) {
@@ -359,6 +372,10 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         String operation = instruction.getOperation().getOpType().toString().toLowerCase();
         if (operation.equals("add") || operation.equals("mul") || operation.equals("div") || operation.equals("sub"))
             code.append("i");
+        if (operation.equals("andb") || operation.equals("orb")){
+            code.append("i");
+            operation = operation.substring(0, operation.length()-1);
+        }
         code.append(operation).append("\n");
         return code.toString();
     }

@@ -23,7 +23,7 @@ class ArithmeticOperations {
     public int multDivLeftAssociativity() {
         int a = 4;
         int b = 2;
-        int c = 3;tmp
+        int c = 3;
         int x = a / b * c;
         return x;
     }
