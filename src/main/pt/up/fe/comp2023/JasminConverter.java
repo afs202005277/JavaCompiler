@@ -8,6 +8,8 @@ import java.util.*;
 
 
 public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
+
+    private long label = 0;
     private static final HashMap<String, String> typeToDescriptor = new HashMap<>() {{
         put("BOOLEAN", "Z");
         put("INT32", "I");
@@ -131,6 +133,10 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         }
     }
 
+    public String getNextLabel(){
+        this.label++;
+        return "jasminLabel_" + this.label;
+    }
     @Override
     public JasminResult toJasmin(OllirResult ollirResult) {
         StringBuilder jasminCode = new StringBuilder();
@@ -392,7 +398,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         }
         // a < b: a-b < 0
         if (operation.equals("lth")){
-            code.append("isub\niflt true_jasmin\n").append(addToOperandStack(0)).append("goto done\n").append("true_jasmin:\n").append(addToOperandStack(1)).append("done:\n");
+            String trueLabel = getNextLabel(), doneLabel = getNextLabel();
+            code.append("isub\niflt ").append(trueLabel).append("\n").append(addToOperandStack(0)).append("goto ").append(doneLabel).append("\n").append(trueLabel).append(":\n").append(addToOperandStack(1)).append(doneLabel).append(":\n");
         } else{
             code.append(operation).append("\n");
         }
