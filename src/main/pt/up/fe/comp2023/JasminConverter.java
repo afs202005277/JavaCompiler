@@ -10,6 +10,8 @@ import java.util.*;
 public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private long label = 0;
+
+    private Operand dest;
     private static final HashMap<String, String> typeToDescriptor = new HashMap<>() {{
         put("BOOLEAN", "Z");
         put("INT32", "I");
@@ -133,10 +135,11 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         }
     }
 
-    public String getNextLabel(){
+    public String getNextLabel() {
         this.label++;
         return "jasminLabel_" + this.label;
     }
+
     @Override
     public JasminResult toJasmin(OllirResult ollirResult) {
         StringBuilder jasminCode = new StringBuilder();
@@ -272,20 +275,23 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private String processAssign(AssignInstruction instruction, HashMap<String, Descriptor> varTable, List<String> methods, List<String> imports, String parentClass) {
         StringBuilder code = new StringBuilder();
+        this.dest = (Operand) instruction.getDest();
         String res = dispatcher(instruction.getRhs(), varTable, methods, imports, parentClass);
         if (instruction.getRhs() instanceof CallInstruction) {
             res = res.substring(0, res.lastIndexOf("pop\n"));
         }
-        if (instruction.getDest() instanceof ArrayOperand arrayOperand){
+        if (instruction.getDest() instanceof ArrayOperand arrayOperand) {
             Type type = new Type(ElementType.ARRAYREF);
-            code.append(handleType(type, "load " +  varTable.get(arrayOperand.getName()).getVirtualReg())).append("\n");
+            code.append(handleType(type, "load " + varTable.get(arrayOperand.getName()).getVirtualReg())).append("\n");
             code.append(handleLiteral(arrayOperand.getIndexOperands().get(0), varTable));
             code.append(res);
             code.append("iastore\n");
-        }else{
+        } else {
             code.append(res);
-            Operand tmpVariable = (Operand) instruction.getDest();
-            code.append(handleType(varTable.get(tmpVariable.getName()).getVarType(), "store " + varTable.get(tmpVariable.getName()).getVirtualReg())).append("\n");
+            if (!res.contains("iinc")) {
+                Operand tmpVariable = (Operand) instruction.getDest();
+                code.append(handleType(varTable.get(tmpVariable.getName()).getVarType(), "store " + varTable.get(tmpVariable.getName()).getVirtualReg())).append("\n");
+            }
         }
         return code.toString();
     }
@@ -386,10 +392,14 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private String processBinaryOp(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
         StringBuilder code = new StringBuilder();
+        String operation = instruction.getOperation().getOpType().toString().toLowerCase();
         Element leftOperand = instruction.getLeftOperand(), rightOperand = instruction.getRightOperand();
+        if (this.dest.equals(leftOperand) && (operation.equals("add") || operation.equals("sub")) && !leftOperand.isLiteral() && rightOperand.isLiteral() && rightOperand.getType().getTypeOfElement() == ElementType.INT32) {
+            code.append("iinc ").append(varTable.get(((Operand) leftOperand).getName()).getVirtualReg()).append(" ").append(((LiteralElement) rightOperand).getLiteral()).append("\n");
+            return code.toString();
+        }
         code.append(handleLiteral(leftOperand, varTable));
         code.append(handleLiteral(rightOperand, varTable));
-        String operation = instruction.getOperation().getOpType().toString().toLowerCase();
         if (operation.equals("add") || operation.equals("mul") || operation.equals("div") || operation.equals("sub"))
             code.append("i");
         if (operation.equals("andb") || operation.equals("orb")) {
@@ -397,10 +407,10 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             operation = operation.substring(0, operation.length() - 1);
         }
         // a < b: a-b < 0
-        if (operation.equals("lth")){
+        if (operation.equals("lth")) {
             String trueLabel = getNextLabel(), doneLabel = getNextLabel();
             code.append("isub\niflt ").append(trueLabel).append("\n").append(addToOperandStack(0)).append("goto ").append(doneLabel).append("\n").append(trueLabel).append(":\n").append(addToOperandStack(1)).append(doneLabel).append(":\n");
-        } else{
+        } else {
             code.append(operation).append("\n");
         }
         return code.toString();
