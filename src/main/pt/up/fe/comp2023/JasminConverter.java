@@ -194,7 +194,14 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             jasminCode.append(outputMethodId(method));
             jasminCode.append("\n");
             jasminCode.append(".limit stack 99\n");
-            jasminCode.append(".limit locals 99\n");
+            if (method.isStaticMethod())
+                jasminCode.append(".limit locals ").append(method.getVarTable().size()).append("\n");
+            else{
+                if (method.getVarTable().containsKey("this"))
+                    jasminCode.append(".limit locals ").append(method.getVarTable().size()).append("\n");
+                else
+                    jasminCode.append(".limit locals ").append(method.getVarTable().size()+1).append("\n");
+            }
             for (Instruction instruction : instructions) {
                 for (Map.Entry<String, Instruction> entry : method.getLabels().entrySet()) {
                     String key = entry.getKey();
