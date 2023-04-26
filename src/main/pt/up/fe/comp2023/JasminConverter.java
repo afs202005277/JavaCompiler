@@ -299,12 +299,12 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     private String handleDifferentIfs(BinaryOpInstruction instruction, String label, HashMap<String, Descriptor> varTable) {
         String loaders = handleLiteral(instruction.getLeftOperand(), varTable) + handleLiteral(instruction.getRightOperand(), varTable);
         String res = switch (instruction.getOperation().getOpType().toString()) {
-            case "LTH" -> "if_icmplt";
-            case "GTH" -> "if_icmpgt";
-            case "EQ" -> "if_icmpeq";
-            case "NEQ" -> "if_icmpne";
-            case "LTE" -> "if_icmple";
-            case "GTE" -> "if_icmpge";
+            case "LTH" -> "isub\n" + "iflt";
+            case "GTH" -> "isub\n" + "ifgt";
+            case "EQ" -> "isub\n" + "ifeq";
+            case "NEQ" -> "isub\n" + "ifne";
+            case "LTE" -> "isub\n" + "ifle";
+            case "GTE" -> "isub\n" + "ifge";
             case "ANDB" -> "andb\n" + "ifne";
             default -> "IF ERROR";
         };
