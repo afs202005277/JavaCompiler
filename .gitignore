@@ -7,6 +7,7 @@
 /run/
 gradle*
 out/
+guidelines/
 
 .DS_Store
 

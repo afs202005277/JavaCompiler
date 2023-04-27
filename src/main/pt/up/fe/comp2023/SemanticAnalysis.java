@@ -306,32 +306,29 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
 
         List<String> boolOp = Arrays.asList("&&", "||", "!=", "==", "<" , ">" , "<=" , ">=");
 
-        switch (jmmNode.get("op")){
-            case "&&", "||":
+        switch (jmmNode.get("op")) {
+            case "&&", "||" -> {
                 everythingOk = equalTypes(child1Type, child2Type, symbolTable) && !((child1_type.equals("undefined")) || child1_type.equals("integer")) && !(child1_isArray || child2_isArray);
-                if(!everythingOk){
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Binary operator " +jmmNode.get("op") +" not defined for given type."));
+                if (!everythingOk) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Binary operator " + jmmNode.get("op") + " not defined for given type."));
                 }
-                break;
-
-            case "!=", "==":
+            }
+            case "!=", "==" -> {
                 everythingOk = equalTypes(child1Type, child2Type, symbolTable) && !(child1_type.equals("undefined")) && !(child1_isArray || child2_isArray);
-                if(!everythingOk){
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Binary operator " +jmmNode.get("op") +" expects two non-null variables of the same type."));
+                if (!everythingOk) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Binary operator " + jmmNode.get("op") + " expects two non-null variables of the same type."));
                 }
-                break;
-
-            case "*", "/", "+", "-", "<" , ">" , "<=" , ">=":
+            }
+            case "*", "/", "+", "-", "<", ">", "<=", ">=" -> {
                 everythingOk = equalTypes(child1Type, child2Type, symbolTable) && !(child1_type.equals("undefined") || child1_type.equals("boolean")) && !(child1_isArray || child2_isArray);
-                if(!everythingOk){
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Binary operator " +jmmNode.get("op") +" not defined for given type."));
+                if (!everythingOk) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Binary operator " + jmmNode.get("op") + " not defined for given type."));
                 }
-                break;
-
-            default:
+            }
+            default -> {
                 everythingOk = false;
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Binary operation incorrect."));
-                break;
+            }
         }
 
         if(!everythingOk) {
