@@ -19,6 +19,107 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         put("VOID", "V");
     }};
 
+    private int computeStackLimit(String jasminCode, HashMap<String, Method> methods) {
+        int currentStackSize = 0, maxStackSize = 0;
+        HashMap<String, Integer> instructionToCost = new HashMap<>() {{
+            put("bipush", 1);
+            put("sipush", 1);
+            put("iconst_m1", 1);
+            put("iconst_0", 1);
+            put("iconst_1", 1);
+            put("iconst_2", 1);
+            put("iconst_3", 1);
+            put("iconst_4", 1);
+            put("iconst_5", 1);
+            put("ldc", 1);
+            put("iload", 1);
+            put("iload_0", 1);
+            put("iload_1", 1);
+            put("iload_2", 1);
+            put("iload_3", 1);
+            put("aload", 1);
+            put("aload_0", 1);
+            put("aload_1", 1);
+            put("aload_2", 1);
+            put("aload_3", 1);
+            put("istore", -1);
+            put("istore_0", -1);
+            put("istore_1", -1);
+            put("istore_2", -1);
+            put("istore_3", -1);
+            put("astore", -1);
+            put("astore_0", -1);
+            put("astore_1", -1);
+            put("astore_2", -1);
+            put("astore_3", -1);
+            put("iastore", -3);
+            put("aastore", -3);
+            put("iaload", -2 + 1);
+            put("aaload", -2 + 1);
+            put("new", 1);
+            put("pop", -1);
+            put("newarray", -1 + 1);
+            put("isub", -2 + 1);
+            put("iadd", -2 + 1);
+            put("imul", -2 + 1);
+            put("idiv", -2 + 1);
+            put("iflt", -1);
+            put("ifgt", -1);
+            put("ifeq", -1);
+            put("ifne", -1);
+            put("ifle", -1);
+            put("ifge", -1);
+            put("goto", 0);
+            put("ireturn", -1);
+            put("areturn", -1);
+            put("return", -1);
+        }};
+
+        for (String fullInstruction : jasminCode.split("\n")) {
+            String[] instructionParts = fullInstruction.split(" ");
+            String instruction = fullInstruction.split(" ")[0];
+            Integer cost = instructionToCost.get(instruction);
+            if (cost != null) {
+                currentStackSize += cost;
+            } else {
+                if (instruction.contains("invoke")) {
+                    Method method = methods.get(instructionParts[1]);
+                    if (method != null) {
+                        currentStackSize -= method.getParams().size();
+                        currentStackSize += method.getReturnType().getTypeOfElement().name().equals("VOID") ? 0 : 1;
+                    } else {
+                        System.out.println("UNKNOWN METHOD: " + instructionParts[1]);
+                    }
+                } else {
+                    System.out.println("UNKNOWN INSTRUCTION: " + fullInstruction);
+                }
+            }
+            if (currentStackSize > maxStackSize)
+                maxStackSize = currentStackSize;
+        }
+        return maxStackSize;
+    }
+
+    public static int getNumArgs(String methodSig) {
+        // Define the regular expression pattern to match strings that start with "L" and end with ";"
+        String regexPattern = "L[^;]+;";
+
+        methodSig = methodSig.replaceAll("\\((.*?)\\)")
+        // Remove all substrings from the method signature that match the pattern
+        String strippedMethodSig = methodSig.replaceAll(regexPattern, "");
+
+        // Count the number of uppercase letters in the resulting string
+        int numUppercaseLetters = 0;
+        for (int i = 0; i < strippedMethodSig.length(); i++) {
+            char c = strippedMethodSig.charAt(i);
+            if (Character.isUpperCase(c)) {
+                numUppercaseLetters++;
+            }
+        }
+
+        return numUppercaseLetters;
+    }
+
     private String handleType(Type type, String suffix) {
         if (suffix.contains("load ") || suffix.contains("store ")) {
             String indexStr = suffix.substring(suffix.indexOf(' ') + 1);
@@ -176,6 +277,10 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                 return 0;
             }
         });
+        HashMap<String, Method> methodMap = new HashMap<>();
+        for (Method method : methodsObject) {
+            methodMap.put(method.getMethodName(), method);
+        }
         for (Method method : methodsObject) {
             List<Instruction> instructions = method.getInstructions();
             String staticStr = " static ", finalStr = " final ";
@@ -193,28 +298,33 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             }
             jasminCode.append(outputMethodId(method));
             jasminCode.append("\n");
-            jasminCode.append(".limit stack 99\n");
+            StringBuilder limits = new StringBuilder();
             if (method.isStaticMethod())
-                jasminCode.append(".limit locals ").append(method.getVarTable().size()).append("\n");
-            else{
+                limits.append(".limit locals ").append(method.getVarTable().size()).append("\n");
+            else {
                 if (method.getVarTable().containsKey("this"))
-                    jasminCode.append(".limit locals ").append(method.getVarTable().size()).append("\n");
+                    limits.append(".limit locals ").append(method.getVarTable().size()).append("\n");
                 else
-                    jasminCode.append(".limit locals ").append(method.getVarTable().size()+1).append("\n");
+                    limits.append(".limit locals ").append(method.getVarTable().size() + 1).append("\n");
             }
+            StringBuilder methodBody = new StringBuilder();
             for (Instruction instruction : instructions) {
                 for (Map.Entry<String, Instruction> entry : method.getLabels().entrySet()) {
                     String key = entry.getKey();
                     Instruction value = entry.getValue();
                     if (instruction.equals(value)) {
-                        jasminCode.append(key).append(":\n");
+                        methodBody.append(key).append(":\n");
                         break;
                     }
                 }
-                jasminCode.append(this.dispatcher(instruction, method.getVarTable(), methods, imports, ollirClassUnit.getSuperClass()));
+                methodBody.append(this.dispatcher(instruction, method.getVarTable(), methods, imports, ollirClassUnit.getSuperClass()));
             }
             if (method.isConstructMethod() && method.getParams().isEmpty())
                 methods.add("<init>");
+
+            jasminCode.append(".limit stack ").append(computeStackLimit(methodBody.toString().replaceAll("\\b\\w+\\s*:", ""), methodMap)).append("\n");
+            jasminCode.append(limits);
+            jasminCode.append(methodBody);
             jasminCode.append(".end method").append("\n\n");
         }
         return new JasminResult(jasminCode.toString());
