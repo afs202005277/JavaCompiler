@@ -5,10 +5,75 @@ import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
+    private final HashMap<String, Integer> instructionToCost = new HashMap<>() {{
+        put("bipush", 1);
+        put("sipush", 1);
+        put("iconst_m1", 1);
+        put("iconst_0", 1);
+        put("iconst_1", 1);
+        put("iconst_2", 1);
+        put("iconst_3", 1);
+        put("iconst_4", 1);
+        put("iconst_5", 1);
+        put("ldc", 1);
+        put("iload", 1);
+        put("iload_0", 1);
+        put("iload_1", 1);
+        put("iload_2", 1);
+        put("iload_3", 1);
+        put("aload", 1);
+        put("aload_0", 1);
+        put("aload_1", 1);
+        put("aload_2", 1);
+        put("aload_3", 1);
+        put("istore", -1);
+        put("istore_0", -1);
+        put("istore_1", -1);
+        put("istore_2", -1);
+        put("istore_3", -1);
+        put("astore", -1);
+        put("astore_0", -1);
+        put("astore_1", -1);
+        put("astore_2", -1);
+        put("astore_3", -1);
+        put("iastore", -3);
+        put("aastore", -3);
+        put("iaload", -2 + 1);
+        put("aaload", -2 + 1);
+        put("new", 1);
+        put("pop", -1);
+        put("newarray", -1 + 1);
+        put("isub", -2 + 1);
+        put("iadd", -2 + 1);
+        put("iand", -2 + 1);
+        put("imul", -2 + 1);
+        put("idiv", -2 + 1);
+        put("ixor", -2 + 1);
+        put("iflt", -1);
+        put("ifgt", -1);
+        put("ifeq", -1);
+        put("ifne", -1);
+        put("ifle", -1);
+        put("ifge", -1);
+        put("goto", 0);
+        put("ireturn", -1);
+        put("areturn", -1);
+        put("return", -1);
+        put("arraylength", -1 + 1);
+        put("putfield", -2);
+        put("getfield", -1 + 1);
+        put("putstatic", -1);
+        put("getstatic", 1);
+        put("andb", -2 + 1);
+        put("orb", -2 + 1);
+        put("iinc", 0);
+    }};
     private long label = 0;
 
     private Operand dest;
@@ -21,61 +86,10 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private int computeStackLimit(String jasminCode, HashMap<String, Method> methods) {
         int currentStackSize = 0, maxStackSize = 0;
-        HashMap<String, Integer> instructionToCost = new HashMap<>() {{
-            put("bipush", 1);
-            put("sipush", 1);
-            put("iconst_m1", 1);
-            put("iconst_0", 1);
-            put("iconst_1", 1);
-            put("iconst_2", 1);
-            put("iconst_3", 1);
-            put("iconst_4", 1);
-            put("iconst_5", 1);
-            put("ldc", 1);
-            put("iload", 1);
-            put("iload_0", 1);
-            put("iload_1", 1);
-            put("iload_2", 1);
-            put("iload_3", 1);
-            put("aload", 1);
-            put("aload_0", 1);
-            put("aload_1", 1);
-            put("aload_2", 1);
-            put("aload_3", 1);
-            put("istore", -1);
-            put("istore_0", -1);
-            put("istore_1", -1);
-            put("istore_2", -1);
-            put("istore_3", -1);
-            put("astore", -1);
-            put("astore_0", -1);
-            put("astore_1", -1);
-            put("astore_2", -1);
-            put("astore_3", -1);
-            put("iastore", -3);
-            put("aastore", -3);
-            put("iaload", -2 + 1);
-            put("aaload", -2 + 1);
-            put("new", 1);
-            put("pop", -1);
-            put("newarray", -1 + 1);
-            put("isub", -2 + 1);
-            put("iadd", -2 + 1);
-            put("imul", -2 + 1);
-            put("idiv", -2 + 1);
-            put("iflt", -1);
-            put("ifgt", -1);
-            put("ifeq", -1);
-            put("ifne", -1);
-            put("ifle", -1);
-            put("ifge", -1);
-            put("goto", 0);
-            put("ireturn", -1);
-            put("areturn", -1);
-            put("return", -1);
-        }};
 
         for (String fullInstruction : jasminCode.split("\n")) {
+            if (fullInstruction.isBlank())
+                continue;
             String[] instructionParts = fullInstruction.split(" ");
             String instruction = fullInstruction.split(" ")[0];
             Integer cost = instructionToCost.get(instruction);
@@ -88,7 +102,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                         currentStackSize -= method.getParams().size();
                         currentStackSize += method.getReturnType().getTypeOfElement().name().equals("VOID") ? 0 : 1;
                     } else {
-                        System.out.println("UNKNOWN METHOD: " + instructionParts[1]);
+                        currentStackSize -= getNumArgs(instructionParts[1]);
+                        currentStackSize += instructionParts[1].substring(instructionParts[1].indexOf(')') + 1).startsWith("V") ? 0 : 1;
                     }
                 } else {
                     System.out.println("UNKNOWN INSTRUCTION: " + fullInstruction);
@@ -100,24 +115,34 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return maxStackSize;
     }
 
-    public static int getNumArgs(String methodSig) {
-        // Define the regular expression pattern to match strings that start with "L" and end with ";"
-        String regexPattern = "L[^;]+;";
+    public static boolean containsRegex(String str, String regex) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(str);
+        return matcher.find();
+    }
 
-        methodSig = methodSig.replaceAll("\\((.*?)\\)")
-        // Remove all substrings from the method signature that match the pattern
-        String strippedMethodSig = methodSig.replaceAll(regexPattern, "");
+    public static int getNumArgs(String methodSig) {
+        int numArgs = 0;
+        // Define the regular expression pattern to match strings that start with "L" and end with ";"
+        String regexPattern = "L[^;]+?;";
+
+        methodSig = methodSig.substring(methodSig.indexOf('(') + 1, methodSig.indexOf(')'));
+
+        String tmpMethodSig = methodSig;
+        while (containsRegex(tmpMethodSig, regexPattern)) {
+            tmpMethodSig = tmpMethodSig.replaceFirst(regexPattern, "");
+            numArgs++;
+        }
 
         // Count the number of uppercase letters in the resulting string
-        int numUppercaseLetters = 0;
-        for (int i = 0; i < strippedMethodSig.length(); i++) {
-            char c = strippedMethodSig.charAt(i);
+        for (int i = 0; i < methodSig.length(); i++) {
+            char c = methodSig.charAt(i);
             if (Character.isUpperCase(c)) {
-                numUppercaseLetters++;
+                numArgs++;
             }
         }
 
-        return numUppercaseLetters;
+        return numArgs;
     }
 
     private String handleType(Type type, String suffix) {
@@ -152,7 +177,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             case PUTFIELD -> jasminCode.append(processPutField((PutFieldInstruction) instruction, varTable));
             case UNARYOPER -> jasminCode.append(processUnaryOp((UnaryOpInstruction) instruction, varTable));
             case BINARYOPER -> jasminCode.append(processBinaryOp((BinaryOpInstruction) instruction, varTable));
-            default -> jasminCode.append("UNKNOWN INSTRUCTION");
+            default -> jasminCode.append("UNKNOWN INSTRUCTION TYPE");
         }
         return jasminCode.toString();
     }
