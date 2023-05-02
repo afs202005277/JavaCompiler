@@ -123,7 +123,6 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     public static int getNumArgs(String methodSig) {
         int numArgs = 0;
-        // Define the regular expression pattern to match strings that start with "L" and end with ";"
         String regexPattern = "L[^;]+?;";
 
         methodSig = methodSig.substring(methodSig.indexOf('(') + 1, methodSig.indexOf(')'));
@@ -133,8 +132,6 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             tmpMethodSig = tmpMethodSig.replaceFirst(regexPattern, "");
             numArgs++;
         }
-
-        // Count the number of uppercase letters in the resulting string
         for (int i = 0; i < methodSig.length(); i++) {
             char c = methodSig.charAt(i);
             if (Character.isUpperCase(c)) {
@@ -549,9 +546,18 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             operation = operation.substring(0, operation.length() - 1);
         }
         // a < b: a-b < 0
-        if (operation.equals("lth")) {
+        if (operation.equals("lth") || operation.equals("gth") || operation.equals("lte") || operation.equals("gte") || operation.equals("eq") || operation.equals("neq")) {
+            String ifType = "";
+            switch (operation) {
+                case "lth" -> ifType = "iflt";
+                case "gth" -> ifType = "ifgt";
+                case "lte" -> ifType = "ifle";
+                case "gte" -> ifType = "ifge";
+                case "eq" -> ifType = "ifeq";
+                case "neq" -> ifType = "ifne";
+            }
             String trueLabel = getNextLabel(), doneLabel = getNextLabel();
-            code.append("isub\niflt ").append(trueLabel).append("\n").append(addToOperandStack(0)).append("goto ").append(doneLabel).append("\n").append(trueLabel).append(":\n").append(addToOperandStack(1)).append(doneLabel).append(":\n");
+            code.append("isub\n").append(ifType).append(" ").append(trueLabel).append("\n").append(addToOperandStack(0)).append("goto ").append(doneLabel).append("\n").append(trueLabel).append(":\n").append(addToOperandStack(1)).append(doneLabel).append(":\n");
         } else {
             code.append(operation).append("\n");
         }
