@@ -1,70 +1,18 @@
 import io;
 
-class ArithmeticOperations {
-    int classField;
+class A {
 
-    public int addMultConstants() {
-        int x = 1 + 2 * 3 + 4;
-        return x;
-    }
+    public int comp(MyClass b) {
 
-    public int addMultVars() {
-        int a = 2;
-        int b = 3;
-        int c = 4;
-        int x = 1 + a * b + c;
-        return x;
-    }
+        int a = 10;
 
-    public int addMultVarsParams(int a, int b, int c) {
-        return 1 + a * b + c;
-    }
 
-    public int multDivLeftAssociativity() {
-        int a = 4;
-        int b = 2;
-        int c = 3;
-        int x = a / b * c;
-        return x;
-    }
+        while (a > 0) {
+            io.println(a);
+            a = a - 1;
+        }
 
-    public int varLookupField() {
-        int x = classField + 1;
-        return x;
-    }
-
-    public int varLookupLocal(int a) {
-        int x = a + 1;
-        return x;
-    }
-
-    public int varLookupParam(int a, int b) {
-        int x = a + b;
-        return x;
-    }
-
-    public static void main(String[] args) {
-        int a = 4;
-        int b = 2;
-        int c = 3;
-
-        ArithmeticOperations calc = new ArithmeticOperations();
-
-        io.println(calc.addMultConstants());
-
-        io.println(calc.addMultVars());
-
-        io.println(calc.addMultVarsParams(a, b, c));
-
-        io.println(calc.multDivLeftAssociativity());
-
-        io.println(calc.varLookupField());
-
-        io.println(calc.varLookupLocal(7));
-
-        io.println(calc.varLookupParam(2, 3));
-
-        io.println(2 * 3 + 5 + (2 * 10) * ((3 + 7) * 5));
+        return a;
     }
 
 }
