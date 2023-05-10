@@ -5,15 +5,142 @@ import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
+
+    private final HashMap<String, Integer> instructionToCost = new HashMap<>() {{
+        put("bipush", 1);
+        put("sipush", 1);
+        put("iconst_m1", 1);
+        put("iconst_0", 1);
+        put("iconst_1", 1);
+        put("iconst_2", 1);
+        put("iconst_3", 1);
+        put("iconst_4", 1);
+        put("iconst_5", 1);
+        put("ldc", 1);
+        put("iload", 1);
+        put("iload_0", 1);
+        put("iload_1", 1);
+        put("iload_2", 1);
+        put("iload_3", 1);
+        put("aload", 1);
+        put("aload_0", 1);
+        put("aload_1", 1);
+        put("aload_2", 1);
+        put("aload_3", 1);
+        put("istore", -1);
+        put("istore_0", -1);
+        put("istore_1", -1);
+        put("istore_2", -1);
+        put("istore_3", -1);
+        put("astore", -1);
+        put("astore_0", -1);
+        put("astore_1", -1);
+        put("astore_2", -1);
+        put("astore_3", -1);
+        put("iastore", -3);
+        put("aastore", -3);
+        put("iaload", -2 + 1);
+        put("aaload", -2 + 1);
+        put("new", 1);
+        put("pop", -1);
+        put("newarray", -1 + 1);
+        put("isub", -2 + 1);
+        put("iadd", -2 + 1);
+        put("iand", -2 + 1);
+        put("imul", -2 + 1);
+        put("idiv", -2 + 1);
+        put("ixor", -2 + 1);
+        put("iflt", -1);
+        put("ifgt", -1);
+        put("ifeq", -1);
+        put("ifne", -1);
+        put("ifle", -1);
+        put("ifge", -1);
+        put("goto", 0);
+        put("ireturn", -1);
+        put("areturn", -1);
+        put("return", -1);
+        put("arraylength", -1 + 1);
+        put("putfield", -2);
+        put("getfield", -1 + 1);
+        put("putstatic", -1);
+        put("getstatic", 1);
+        put("andb", -2 + 1);
+        put("orb", -2 + 1);
+        put("iinc", 0);
+    }};
+    private long label = 0;
+
+    private Operand dest;
     private static final HashMap<String, String> typeToDescriptor = new HashMap<>() {{
         put("BOOLEAN", "Z");
         put("INT32", "I");
         put("STRING", "Ljava/lang/String;");
         put("VOID", "V");
     }};
+
+    private int computeStackLimit(String jasminCode, HashMap<String, Method> methods) {
+        int currentStackSize = 0, maxStackSize = 0;
+
+        for (String fullInstruction : jasminCode.split("\n")) {
+            if (fullInstruction.isBlank())
+                continue;
+            String[] instructionParts = fullInstruction.split(" ");
+            String instruction = fullInstruction.split(" ")[0];
+            Integer cost = instructionToCost.get(instruction);
+            if (cost != null) {
+                currentStackSize += cost;
+            } else {
+                if (instruction.contains("invoke")) {
+                    Method method = methods.get(instructionParts[1]);
+                    if (method != null) {
+                        currentStackSize -= method.getParams().size();
+                        currentStackSize += method.getReturnType().getTypeOfElement().name().equals("VOID") ? 0 : 1;
+                    } else {
+                        currentStackSize -= getNumArgs(instructionParts[1]);
+                        currentStackSize += instructionParts[1].substring(instructionParts[1].indexOf(')') + 1).startsWith("V") ? 0 : 1;
+                    }
+                } else {
+                    System.out.println("UNKNOWN INSTRUCTION: " + fullInstruction);
+                }
+            }
+            if (currentStackSize > maxStackSize)
+                maxStackSize = currentStackSize;
+        }
+        return maxStackSize;
+    }
+
+    public static boolean containsRegex(String str, String regex) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(str);
+        return matcher.find();
+    }
+
+    public static int getNumArgs(String methodSig) {
+        int numArgs = 0;
+        String regexPattern = "L[^;]+?;";
+
+        methodSig = methodSig.substring(methodSig.indexOf('(') + 1, methodSig.indexOf(')'));
+
+        String tmpMethodSig = methodSig;
+        while (containsRegex(tmpMethodSig, regexPattern)) {
+            tmpMethodSig = tmpMethodSig.replaceFirst(regexPattern, "");
+            numArgs++;
+        }
+        for (int i = 0; i < methodSig.length(); i++) {
+            char c = methodSig.charAt(i);
+            if (Character.isUpperCase(c)) {
+                numArgs++;
+            }
+        }
+
+        return numArgs;
+    }
 
     private String handleType(Type type, String suffix) {
         if (suffix.contains("load ") || suffix.contains("store ")) {
@@ -47,7 +174,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             case PUTFIELD -> jasminCode.append(processPutField((PutFieldInstruction) instruction, varTable));
             case UNARYOPER -> jasminCode.append(processUnaryOp((UnaryOpInstruction) instruction, varTable));
             case BINARYOPER -> jasminCode.append(processBinaryOp((BinaryOpInstruction) instruction, varTable));
-            default -> jasminCode.append("UNKNOWN INSTRUCTION");
+            default -> jasminCode.append("UNKNOWN INSTRUCTION TYPE");
         }
         return jasminCode.toString();
     }
@@ -131,6 +258,11 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         }
     }
 
+    public String getNextLabel() {
+        this.label++;
+        return "jasminLabel_" + this.label;
+    }
+
     @Override
     public JasminResult toJasmin(OllirResult ollirResult) {
         StringBuilder jasminCode = new StringBuilder();
@@ -167,6 +299,10 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                 return 0;
             }
         });
+        HashMap<String, Method> methodMap = new HashMap<>();
+        for (Method method : methodsObject) {
+            methodMap.put(method.getMethodName(), method);
+        }
         for (Method method : methodsObject) {
             List<Instruction> instructions = method.getInstructions();
             String staticStr = " static ", finalStr = " final ";
@@ -184,21 +320,33 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             }
             jasminCode.append(outputMethodId(method));
             jasminCode.append("\n");
-            jasminCode.append(".limit stack 99\n");
-            jasminCode.append(".limit locals 99\n");
+            StringBuilder limits = new StringBuilder();
+            if (method.isStaticMethod())
+                limits.append(".limit locals ").append(method.getVarTable().size()).append("\n");
+            else {
+                if (method.getVarTable().containsKey("this"))
+                    limits.append(".limit locals ").append(method.getVarTable().size()).append("\n");
+                else
+                    limits.append(".limit locals ").append(method.getVarTable().size() + 1).append("\n");
+            }
+            StringBuilder methodBody = new StringBuilder();
             for (Instruction instruction : instructions) {
                 for (Map.Entry<String, Instruction> entry : method.getLabels().entrySet()) {
                     String key = entry.getKey();
                     Instruction value = entry.getValue();
                     if (instruction.equals(value)) {
-                        jasminCode.append(key).append(":\n");
+                        methodBody.append(key).append(":\n");
                         break;
                     }
                 }
-                jasminCode.append(this.dispatcher(instruction, method.getVarTable(), methods, imports, ollirClassUnit.getSuperClass()));
+                methodBody.append(this.dispatcher(instruction, method.getVarTable(), methods, imports, ollirClassUnit.getSuperClass()));
             }
             if (method.isConstructMethod() && method.getParams().isEmpty())
                 methods.add("<init>");
+
+            jasminCode.append(".limit stack ").append(computeStackLimit(methodBody.toString().replaceAll("\\b\\w+\\s*:", ""), methodMap)).append("\n");
+            jasminCode.append(limits);
+            jasminCode.append(methodBody);
             jasminCode.append(".end method").append("\n\n");
         }
         return new JasminResult(jasminCode.toString());
@@ -224,7 +372,13 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             for (Element arg : instruction.getListOfOperands()) {
                 code.append(handleLiteral(arg, varTable));
             }
-            return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").append(pop).toString();
+            if (!((Operand) instruction.getFirstArg()).getType().getTypeOfElement().name().equals("ARRAYREF"))
+                return code.append("new ").append(((Operand) instruction.getFirstArg()).getName()).append("\n").append(pop).toString();
+            else {
+                String type = ((ArrayType) instruction.getReturnType()).getElementType().getTypeOfElement().name().toLowerCase();
+                type = type.substring(0, type.indexOf("32"));
+                return code.append("newarray ").append(type).append("\n").append(pop).toString();
+            }
         }
         if (instruction.getInvocationType().toString().equals("arraylength"))
             return code.append(handleLiteral(instruction.getFirstArg(), varTable)).append(instruction.getInvocationType().toString()).append("\n").append(pop).toString();
@@ -260,40 +414,54 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private String processAssign(AssignInstruction instruction, HashMap<String, Descriptor> varTable, List<String> methods, List<String> imports, String parentClass) {
         StringBuilder code = new StringBuilder();
+        this.dest = (Operand) instruction.getDest();
         String res = dispatcher(instruction.getRhs(), varTable, methods, imports, parentClass);
         if (instruction.getRhs() instanceof CallInstruction) {
             res = res.substring(0, res.lastIndexOf("pop\n"));
         }
-        code.append(res);
-        Operand tmpVariable = ((Operand) instruction.getDest());
-        code.append(handleType(varTable.get(tmpVariable.getName()).getVarType(), "store " + varTable.get(tmpVariable.getName()).getVirtualReg())).append("\n");
+        if (instruction.getDest() instanceof ArrayOperand arrayOperand) {
+            Type type = new Type(ElementType.ARRAYREF);
+            code.append(handleType(type, "load " + varTable.get(arrayOperand.getName()).getVirtualReg())).append("\n");
+            code.append(handleLiteral(arrayOperand.getIndexOperands().get(0), varTable));
+            code.append(res);
+            code.append("iastore\n");
+        } else {
+            code.append(res);
+            if (!res.contains("iinc")) {
+                Operand tmpVariable = (Operand) instruction.getDest();
+                code.append(handleType(varTable.get(tmpVariable.getName()).getVarType(), "store " + varTable.get(tmpVariable.getName()).getVirtualReg())).append("\n");
+            }
+        }
         return code.toString();
     }
 
     private String handleDifferentIfs(BinaryOpInstruction instruction, String label, HashMap<String, Descriptor> varTable) {
         String loaders = handleLiteral(instruction.getLeftOperand(), varTable) + handleLiteral(instruction.getRightOperand(), varTable);
         String res = switch (instruction.getOperation().getOpType().toString()) {
-            case "LTH" -> "if_icmplt";
-            case "GTH" -> "if_icmpgt";
-            case "EQ" -> "if_icmpeq";
-            case "NEQ" -> "if_icmpne";
-            case "LTE" -> "if_icmple";
-            case "GTE" -> "if_icmpge";
+            case "LTH" -> "isub\n" + "iflt";
+            case "GTH" -> "isub\n" + "ifgt";
+            case "EQ" -> "isub\n" + "ifeq";
+            case "NEQ" -> "isub\n" + "ifne";
+            case "LTE" -> "isub\n" + "ifle";
+            case "GTE" -> "isub\n" + "ifge";
             case "ANDB" -> "andb\n" + "ifne";
             default -> "IF ERROR";
         };
         return loaders + res + " " + label + "\n";
     }
 
-    private String handleDifferentIfs(String label) {
-        return " " + label + "\n";
+    private String handleDifferentIfs(SingleOpInstruction singleOpInstruction, String label, HashMap<String, Descriptor> varTable) {
+        StringBuilder code = new StringBuilder();
+        code.append(handleLiteral(singleOpInstruction.getSingleOperand(), varTable));
+        code.append("ifne ").append(label).append("\n");
+        return code.toString();
     }
 
     private String processBranch(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
         if (instruction.getCondition() instanceof BinaryOpInstruction op)
             return handleDifferentIfs(op, instruction.getLabel(), varTable);
-        else if (instruction.getCondition() instanceof SingleOpInstruction)
-            return handleDifferentIfs(instruction.getLabel());
+        else if (instruction.getCondition() instanceof SingleOpInstruction singleOpInstruction)
+            return handleDifferentIfs(singleOpInstruction, instruction.getLabel(), varTable);
         else
             return "PROCESS BRANCH\n";
     }
@@ -325,6 +493,12 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }
 
     private String processUnaryOp(UnaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
+        String operation = instruction.getOperation().getOpType().name(), code = "";
+        if (operation.equals("NOT") || operation.equals("NOTB")) {
+            code += "iconst_1\n";
+            code += "ixor";
+            return handleLiteral(instruction.getOperand(), varTable) + code + "\n";
+        }
         return handleLiteral(instruction.getOperand(), varTable) + instruction.getOperation().getOpType().name().toLowerCase() + "\n";
     }
 
@@ -341,6 +515,10 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             return "ERROR HANDLE LITERAL\n";
         }
 
+        if (element instanceof Operand operand && element.getType().getTypeOfElement().name().equals("BOOLEAN") && (operand.getName().equals("true") || operand.getName().equals("false"))) {
+            return addToOperandStack(operand.getName().equals("true") ? 1 : 0);
+        }
+
         if (element instanceof ArrayOperand tmp) {
             String res = handleType(varTable.get(tmp.getName()).getVarType(), "load " + varTable.get(tmp.getName()).getVirtualReg()) + "\n";
             res += handleLiteral(tmp.getIndexOperands().get(0), varTable) + "\n";
@@ -353,13 +531,36 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private String processBinaryOp(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
         StringBuilder code = new StringBuilder();
+        String operation = instruction.getOperation().getOpType().toString().toLowerCase();
         Element leftOperand = instruction.getLeftOperand(), rightOperand = instruction.getRightOperand();
+        if (this.dest.equals(leftOperand) && (operation.equals("add") || operation.equals("sub")) && !leftOperand.isLiteral() && rightOperand.isLiteral() && rightOperand.getType().getTypeOfElement() == ElementType.INT32) {
+            code.append("iinc ").append(varTable.get(((Operand) leftOperand).getName()).getVirtualReg()).append(" ").append(((LiteralElement) rightOperand).getLiteral()).append("\n");
+            return code.toString();
+        }
         code.append(handleLiteral(leftOperand, varTable));
         code.append(handleLiteral(rightOperand, varTable));
-        String operation = instruction.getOperation().getOpType().toString().toLowerCase();
         if (operation.equals("add") || operation.equals("mul") || operation.equals("div") || operation.equals("sub"))
             code.append("i");
-        code.append(operation).append("\n");
+        if (operation.equals("andb") || operation.equals("orb")) {
+            code.append("i");
+            operation = operation.substring(0, operation.length() - 1);
+        }
+        // a < b: a-b < 0
+        if (operation.equals("lth") || operation.equals("gth") || operation.equals("lte") || operation.equals("gte") || operation.equals("eq") || operation.equals("neq")) {
+            String ifType = "";
+            switch (operation) {
+                case "lth" -> ifType = "iflt";
+                case "gth" -> ifType = "ifgt";
+                case "lte" -> ifType = "ifle";
+                case "gte" -> ifType = "ifge";
+                case "eq" -> ifType = "ifeq";
+                case "neq" -> ifType = "ifne";
+            }
+            String trueLabel = getNextLabel(), doneLabel = getNextLabel();
+            code.append("isub\n").append(ifType).append(" ").append(trueLabel).append("\n").append(addToOperandStack(0)).append("goto ").append(doneLabel).append("\n").append(trueLabel).append(":\n").append(addToOperandStack(1)).append(doneLabel).append(":\n");
+        } else {
+            code.append(operation).append("\n");
+        }
         return code.toString();
     }
 }
