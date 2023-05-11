@@ -92,6 +92,7 @@ expression
     | expression op='&&' expression #BinaryOp
     | expression op='||' expression  #BinaryOp
     | value=expression op='?' value=expression op=':' value=expression  #TernaryOp
+    | 'new' 'int' '[' (expression?) ']' ('{' (contents+=INT','?)* '}' ';')? #IntArray
     | 'new' objectName = ID '(' ')' #ObjectInstantiation
     | integer=INT #Literal
     | bool='true' #Literal
