@@ -164,7 +164,7 @@ public class OllirParser implements JmmOptimization {
                 case "VarDeclaration" ->
                         node.put("ollirhelper", handle_variable_declaration(node, local_variables, parameter_variables, classfield_variables));
                 case "BinaryOp" -> node.put("ollirhelper", handle_binary_ops(node));
-                case "Condition" -> node.put("ollirhelper", node.getJmmChild(0).get("ollirhelper"));
+                case "Condition" -> {node.put("ollirhelper", node.getJmmChild(0).get("ollirhelper")); handle_before_hand(node, new StringBuilder());}
                 case "Body", "ElseStmtBody" -> node.put("ollirhelper", handle_bodies(node));
                 case "Assignment" ->
                         node.put("ollirhelper", handle_assignments(node, local_variables, parameter_variables, classfield_variables));
@@ -173,6 +173,8 @@ public class OllirParser implements JmmOptimization {
                 case "Parenthesis" -> node.put("ollirhelper", handle_parenthesis(node));
                 case "IfStatement" -> node.put("ollirhelper", handle_ifs(node));
                 case "Stmt" -> handle_before_hand(node, new StringBuilder());
+                case "WhileLoop" -> node.put("ollirhelper", handle_whiles(node));
+                case "Length" -> node.put("ollirhelper", handle_lengths(node));
             }
         } else {
             switch (node.getKind()) {
@@ -185,6 +187,35 @@ public class OllirParser implements JmmOptimization {
                 }
             }
         }
+    }
+
+    private String handle_lengths(JmmNode node) {
+        return "";
+    }
+
+    private String handle_whiles(JmmNode node) {
+        StringBuilder res = new StringBuilder();
+        res.append("loopstart").append(temp_n).append(":\n");
+        temp_n++;
+        res.append(node.getJmmChild(0).get("beforehand"));
+        res.append("if (").append(node.getJmmChild(0).get("ollirhelper")).append(") goto whilestart").append(temp_n).append(";\n");
+        temp_n++;
+        res.append("goto loopend").append(temp_n).append(";\n");
+        temp_n++;
+        res.append("whilestart").append(temp_n-2).append(":\n");
+        if (Objects.equals(node.getJmmChild(1).getKind(), "Body")) {
+            for (JmmNode child : node.getJmmChild(1).getChildren()) {
+                res.append(child.get("beforehand"));
+                res.append(child.get("ollirhelper"));
+            }
+        } else {
+            res.append(node.getJmmChild(1).get("beforehand"));
+            res.append(node.getJmmChild(1).get("ollirhelper"));
+        }
+        res.append("\ngoto loopstart").append(temp_n-3).append(";\n");
+        res.append("loopend").append(temp_n-1).append(":\n");
+
+        return res.toString();
     }
 
     private String handle_return_statement(JmmNode node) {
@@ -207,7 +238,9 @@ public class OllirParser implements JmmOptimization {
             res.append(node.getJmmChild(0).get("ollirhelper")).append("\n");
         } else {
             for (JmmNode c : node.getChildren()) {
-                res.append(c.get("ollirhelper")).append(";\n");
+                res.append(c.get("ollirhelper"));
+                if (!c.get("ollirhelper").contains(";"))
+                    res.append(";\n");
             }
         }
         handle_before_hand(node, new StringBuilder());
@@ -216,19 +249,32 @@ public class OllirParser implements JmmOptimization {
 
     private String handle_ifs(JmmNode node) {
         StringBuilder res = new StringBuilder();
-        res.append("if (").append(node.getJmmChild(0).get("ollirhelper")).append(") goto ");
+        res.append("if (").append(node.getJmmChild(0).get("ollirhelper")).append(") goto ifstart").append(temp_n).append(";\n");
+        temp_n++;
         if (node.getNumChildren() == 3) {
-            res.append("else;\n");
+            res.append("goto else").append(temp_n).append(";\n");
+            temp_n++;
         } else {
-            res.append("endif;\n");
+            res.append("goto endif").append(temp_n).append(";\n");
+            temp_n++;
         }
+        res.append("ifstart").append(temp_n-2).append(":\n");
+        res.append(node.getJmmChild(1).get("beforehand"));
         res.append(node.getJmmChild(1).get("ollirhelper"));
         if (node.getNumChildren() == 3) {
-            res.append("else:\n");
+            res.append("goto endif").append(temp_n).append(";\nelse").append(temp_n-1).append(":\n");
+            res.append(node.getJmmChild(2).get("beforehand"));
             res.append(node.getJmmChild(2).get("ollirhelper"));
         }
-        res.append("endif:\n");
-        handle_before_hand(node, new StringBuilder());
+        res.append("endif");
+        if (node.getNumChildren() == 2) {
+            res.append(temp_n-1);
+        } else {
+            res.append(temp_n);
+            temp_n++;
+        }
+        res.append(":\n");
+        node.put("beforehand", node.getJmmChild(0).get("beforehand"));
         return res.toString();
     }
 
@@ -352,7 +398,7 @@ public class OllirParser implements JmmOptimization {
         this.temp_n++;
         String variable = convert_type(tmp);
         variable = switch (condition.get("op")) {
-            case "<", ">", "<=", ">=", "==", "!=" -> ".bool";
+            case "<", ">", "<=", ">=", "==", "!=" -> "bool";
             default -> variable;
         };
         res_beforehand.append(condition.getJmmChild(0).get("ollirhelper")).append(" ").append(condition.get("op")).append(".").append(variable).append(" ").append(condition.getJmmChild(1).get("ollirhelper")).append(";\n");
@@ -407,6 +453,9 @@ public class OllirParser implements JmmOptimization {
                 handle_before_hand(node, new StringBuilder());
                 return node.getJmmChild(1).get("ollirhelper");
             }
+        } else if (Objects.equals(node.get("isArray"), "true")) {
+            String res = node.get("variableName") + convert_type(new Type(node.get("varType"), true)) + " :=" + convert_type(new Type(node.get("varType"), true)) + " new(array, " + "contents-length" + ".i32)" + convert_type(new Type(node.get("varType"), true)) + ";\n";
+            node.put("ollirhelper", res);
         }
         handle_before_hand(node, new StringBuilder());
         return "";
