@@ -54,6 +54,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         put("iand", -2 + 1);
         put("imul", -2 + 1);
         put("idiv", -2 + 1);
+        put("ior", -2 + 1);
         put("ixor", -2 + 1);
         put("iflt", -1);
         put("ifgt", -1);
