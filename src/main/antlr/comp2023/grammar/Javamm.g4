@@ -73,13 +73,13 @@ statement
     | 'for' '(' (varDeclaration | expression ';') expression ';' expression ')' statement #ForLoop
     | variable = ID '=' expression ';' #Assignment
     | variable = ID '=' ('new' type)? '{' (contents+=INT',')*contents+=INT '}' ';' #AssignmentArray
+    | variable = ID '=' 'new' 'int' '[' arraySize=expression ']' ';' #ArrayDeclaration
     | id=ID '[' expression ']' '=' expression ';' #Assignment
     | expression ';' #Stmt
     ;
 
 expression
     : ('(' expression ')' | '[' expression ']') #Parenthesis
-    | 'new' 'int' '[' (arraySize=expression)? ']' #ArrayDeclaration
     | expression '[' expression ']' #ArrayIndex
     | expression '.' method = ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
     | expression '.' method='length' #Length
