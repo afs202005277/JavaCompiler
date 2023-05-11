@@ -73,6 +73,7 @@ statement
     | 'for' '(' (varDeclaration | expression ';') expression ';' expression ')' statement #ForLoop
     | variable = ID '=' expression ';' #Assignment
     | variable = ID '=' ('new' type)? '{' (contents+=INT',')*contents+=INT '}' ';' #AssignmentArray
+    | variable = ID '=' 'new' 'int' '[' arraySize=expression ']' ';' #ArrayDeclaration
     | id=ID '[' expression ']' '=' expression ';' #Assignment
     | expression ';' #Stmt
     ;
@@ -90,7 +91,6 @@ expression
     | expression op='&&' expression #BinaryOp
     | expression op='||' expression  #BinaryOp
     | value=expression op='?' value=expression op=':' value=expression  #TernaryOp
-    | 'new' 'int' '[' (arraySize=expression)? ']' #ArrayDeclaration
     | 'new' objectName = ID '(' ')' #ObjectInstantiation
     | integer=INT #Literal
     | bool='true' #Literal
