@@ -1,9 +1,19 @@
 import io;
 
 class ArithmeticOperations {
+
     public static void main(String[] args) {
-        int a = 5 + 3 + 2;
-        int b = 7 + 8 + 10;
+        int a = 0;
+        a = a + 1;
+        a = a + 127;
+        a = a + 128;
+        a = 5 + a;
+        io.println(a);
+
+        if (5 < 10 && 4 < 6){
+            io.println(52);
+        }
+
     }
 
 }
