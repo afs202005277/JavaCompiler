@@ -444,7 +444,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             case "NEQ" -> "isub\n" + "ifne";
             case "LTE" -> "isub\n" + "ifle";
             case "GTE" -> "isub\n" + "ifge";
-            case "ANDB" -> "iand\n" + "ifne";
+            case "ANDB" -> "iand\n" + "ifeq";
             default -> "IF ERROR";
         };
         return loaders + res + " " + label + "\n";
