@@ -457,12 +457,21 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         return code.toString();
     }
 
+    private String handleDifferentIfs(UnaryOpInstruction singleOpInstruction, String label, HashMap<String, Descriptor> varTable) {
+        StringBuilder code = new StringBuilder();
+        code.append(handleLiteral(singleOpInstruction.getOperand(), varTable));
+        code.append("ifeq ").append(label).append("\n");
+        return code.toString();
+    }
+
     private String processBranch(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
         if (instruction.getCondition() instanceof BinaryOpInstruction op)
             return handleDifferentIfs(op, instruction.getLabel(), varTable);
         else if (instruction.getCondition() instanceof SingleOpInstruction singleOpInstruction)
             return handleDifferentIfs(singleOpInstruction, instruction.getLabel(), varTable);
-        else
+        else if (instruction.getCondition() instanceof UnaryOpInstruction unaryOpInstruction) {
+            return handleDifferentIfs(unaryOpInstruction, instruction.getLabel(), varTable);
+        } else
             return "PROCESS BRANCH\n";
     }
 
