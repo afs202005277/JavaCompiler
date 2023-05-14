@@ -41,7 +41,7 @@ argument
     ;
 
 methodDeclaration
-    : (accessModifier='public')? typeRet? methodName = ID '(' ( argument ( ',' argument )* )? ')' '{' ( varDeclaration )* ( statement )* returnStmt ';' '}'
+    : (accessModifier='public')? typeRet methodName = ID '(' ( argument ( ',' argument )* )? ')' '{' ( varDeclaration )* ( statement )* returnStmt ';' '}'
     | (accessModifier='public')? isStatic='static' 'void' methodName='main' '(' argumentType='String[]' argumentName=ID ')' '{' ( varDeclaration )* ( statement )* '}'
     ;
 
@@ -91,7 +91,7 @@ expression
     | expression op='&&' expression #BinaryOp
     | expression op='||' expression  #BinaryOp
     | value=expression op='?' value=expression op=':' value=expression  #TernaryOp
-    | 'new' objectName = ID '(' expression ')' #ObjectInstantiation
+    | 'new' objectName = ID '(' ')' #ObjectInstantiation
     | integer=INT #Literal
     | bool='true' #Literal
     | bool='false' #Literal
