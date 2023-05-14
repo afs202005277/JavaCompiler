@@ -1,40 +1,21 @@
-import io;
+import ioPlus;
+class ComplexArrayAccess {
 
-class MyClass {
-    int value;
+	public static void main(String[] args) {
+	    int result;
 
-    public MyClass(int value) {
-        value = value;
-        return;
-    }
+	    int[] a;
 
-    public void setValue(int value) {
-        value = value;
-        return;
-    }
+        result = a[0];
+        result = a[1] + a[2];
+        result = result + a[3];
+        result = 1 + a[4];
 
-    public int getValue() {
-        return value;
-    }
+        a[0] = 1;
+        a[1] = 2;
+        a[2] = 3;
+        a[3] = 4;
+        a[4] = 5;
 
-    public static void main(String[] args) {
-            MyClass myObj = new MyClass(10);
-            MyClass otherObj = new MyClass(5);
-            MyClass thirdObj = new MyClass(myObj.getValue() - otherObj.getValue());
-            io.println(myObj.getValue()); // should print 10
-
-            myObj.setValue(20);
-            io.println(myObj.getValue()); // should print 20
-
-
-            io.println(otherObj.getValue()); // should print 5
-
-            otherObj.setValue(myObj.getValue() + otherObj.getValue());
-            io.println(otherObj.getValue()); // should print 30
-
-            io.println(myObj.getValue()); // should print "My value is: 20"
-
-
-            io.println(thirdObj.getValue()); // should print -10
-        }
+	}
 }

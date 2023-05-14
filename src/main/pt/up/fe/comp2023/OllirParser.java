@@ -175,6 +175,7 @@ public class OllirParser implements JmmOptimization {
                 case "Stmt" -> handle_before_hand(node, new StringBuilder());
                 case "WhileLoop" -> node.put("ollirhelper", handle_whiles(node));
                 case "Length" -> node.put("ollirhelper", handle_lengths(node));
+                case "ArrayIndex" -> node.put("ollirhelper", handle_array_index(node));
             }
         } else {
             switch (node.getKind()) {
@@ -185,12 +186,46 @@ public class OllirParser implements JmmOptimization {
                     node.put("ollirhelper", handle_object_instantiation(node));
                     node.put("id", node.get("ollirhelper"));
                 }
+                case "ArrayDeclaration" -> node.put("ollirhelper", handle_array_declaration(node));
             }
         }
     }
 
+    private String handle_array_index(JmmNode node) {
+        StringBuilder res = new StringBuilder();
+        String argument = node.getJmmChild(0).get("ollirhelper").replace(node.getJmmChild(0).get("id") + ".array", "");
+        String variable;
+        if (argument.contains("$")) {
+            variable = argument.split("\\$[0-9]+\\.")[1];
+            argument = argument.split(variable)[0];
+        } else {
+            variable = argument;
+            argument = "";
+        }
+
+        if (Objects.equals(node.getJmmChild(1).getKind(), "Literal")) {
+            res.append("temp_").append(this.temp_n).append(".").append(convert_type(new Type(node.getJmmChild(1).get("varType"), false))).append(" :=.").append(convert_type(new Type(node.getJmmChild(1).get("varType"), false))).append(" ").append(node.getJmmChild(1).get("ollirhelper")).append(";\n");
+            this.temp_n++;
+            node.getJmmChild(1).put("ollirhelper", "temp_" + (this.temp_n-1) + "." + convert_type(new Type(node.getJmmChild(1).get("varType"), false)));
+        }
+        res.append("temp_").append(this.temp_n).append(variable).append(" :=").append(variable).append(" ").append(argument + node.getJmmChild(0).get("id")).append("[");
+        res.append(node.getJmmChild(1).get("ollirhelper")).append("]").append(variable).append(";");
+        this.temp_n++;
+        handle_before_hand(node, res);
+        return "temp_" + (this.temp_n-1) + variable;
+    }
+
+    private String handle_array_declaration(JmmNode node) {
+        String var_type = convert_type(new Type(node.get("varType"), true));
+        return node.get("variable") + "." + var_type + " :=." + var_type + " new(array, " + node.get("arraySize") + ".i32)." + var_type + ";";
+    }
+
     private String handle_lengths(JmmNode node) {
-        return "";
+        StringBuilder res = new StringBuilder("");
+        res.append("temp_").append(this.temp_n).append(".i32 :=.i32 arraylength(").append(node.getJmmChild(0).get("ollirhelper")).append(").i32;");
+        this.temp_n++;
+        handle_before_hand(node, res);
+        return "temp_" + (this.temp_n-1) + ".i32";
     }
 
     private String handle_whiles(JmmNode node) {
@@ -375,19 +410,58 @@ public class OllirParser implements JmmOptimization {
     }
 
     private String handle_assignments(JmmNode node, List<Symbol> local_variables, List<Symbol> parameter_variables, List<Symbol> classfield_variables) {
-        String variable;
-        if (exists_in_variable(local_variables, node.get("variable"))) {
-            // its a local variable
-            variable = get_local_variable(node.get("variable"), local_variables);
-        } else if (exists_in_variable(parameter_variables, node.get("variable"))) {
-            variable =  get_parameter_variable(node.get("variable"), parameter_variables);
+        if (node.getNumChildren() != 1) {
+            // it is an array assignment
+
+            StringBuilder res = new StringBuilder();
+            res.append("temp_").append(this.temp_n).append(".i32 :=.i32 ").append(node.getJmmChild(0).get("ollirhelper")).append(";");
+            this.temp_n++;
+            String variable;
+            if (exists_in_variable(local_variables, node.get("id"))) {
+                // its a local variable
+                variable = get_local_variable(node.get("id"), local_variables);
+                variable = variable.split("array")[1];
+
+                handle_before_hand(node, res);
+                return node.get("id") + "[temp_" + (this.temp_n-1) + ".i32]" + variable + " :=" + variable + " " + node.getJmmChild(1).get("ollirhelper") + ";";
+            } else if (exists_in_variable(parameter_variables, node.get("id"))) {
+                variable = get_parameter_variable(node.get("id"), parameter_variables);
+                String argument = (variable.contains("$") ? variable.split(node.get("id"))[0] : "");
+                variable = variable.split("array")[1];
+                res.append("\ntemp_").append(this.temp_n).append(variable).append(" :=").append(variable).append(" ").append(argument + node.get("id") + "[temp_" + (this.temp_n-1) + ".i32]" + variable).append(";\n");
+                this.temp_n++;
+                handle_before_hand(node, res);
+                return "temp_" + (this.temp_n-1) + variable + " :=" + variable + " " + node.getJmmChild(1).get("ollirhelper") + ";";
+            } else {
+                System.out.println("NEEDS TO BE DONE");
+                variable = get_classfield_variable(node, node.get("id"), classfield_variables);
+                return "";
+            }
+
         } else {
-            variable =  get_classfield_variable(node, node.get("variable"), classfield_variables);
+
+
+            // NAO SEI SE É NECESSARIO
+            String array = "";
+            if (Objects.equals(node.getJmmChild(0).getKind(), "ArrayIndex")) {
+                String[] tmp = node.getJmmChild(0).get("beforehand").split(" ");
+                array = tmp[tmp.length-1];
+            }
+
+            String variable;
+            if (exists_in_variable(local_variables, node.get("variable"))) {
+                // its a local variable
+                variable = get_local_variable(node.get("variable"), local_variables);
+            } else if (exists_in_variable(parameter_variables, node.get("variable"))) {
+                variable = get_parameter_variable(node.get("variable"), parameter_variables);
+            } else {
+                variable = get_classfield_variable(node, node.get("variable"), classfield_variables);
+                handle_before_hand(node, new StringBuilder());
+                return "putfield(this, " + node.get("variable") + "." + get_var_type_from_name(variable) + ", " + node.getJmmChild(0).get("ollirhelper") + ").V;";
+            }
             handle_before_hand(node, new StringBuilder());
-            return "putfield(this, " + node.get("variable") + "." + get_var_type_from_name(variable) + ", " + node.getJmmChild(0).get("ollirhelper") + ").V;";
+            return variable + " :=." + get_var_type_from_name(variable) + " " + (array == "" ? node.getJmmChild(0).get("ollirhelper") + ";" : array);
         }
-        handle_before_hand(node, new StringBuilder());
-        return variable + " :=." + get_var_type_from_name(variable) + " " + node.getJmmChild(0).get("ollirhelper") + ";";
     }
 
     private String handle_binary_ops(JmmNode condition) {
