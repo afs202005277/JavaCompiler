@@ -185,12 +185,22 @@ public class OllirParser implements JmmOptimization {
                     node.put("ollirhelper", handle_object_instantiation(node));
                     node.put("id", node.get("ollirhelper"));
                 }
+                case "ArrayDeclaration" -> node.put("ollirhelper", handle_array_declaration(node));
             }
         }
     }
 
+    private String handle_array_declaration(JmmNode node) {
+        String var_type = convert_type(new Type(node.get("varType"), true));
+        return node.get("variable") + "." + var_type + " :=." + var_type + " new(array, " + node.get("arraySize") + ".i32)." + var_type + ";";
+    }
+
     private String handle_lengths(JmmNode node) {
-        return "";
+        StringBuilder res = new StringBuilder("");
+        res.append("temp_").append(this.temp_n).append(".i32 :=.i32 arraylength(").append(node.getJmmChild(0).get("ollirhelper")).append(").i32;");
+        this.temp_n++;
+        handle_before_hand(node, res);
+        return "temp_" + (this.temp_n-1) + ".i32";
     }
 
     private String handle_whiles(JmmNode node) {

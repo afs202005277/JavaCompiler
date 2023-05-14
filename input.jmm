@@ -1,18 +1,9 @@
-import io;
+import ioPlus;
+class ArrayInit {
 
-class A {
-
-    public int comp(MyClass b) {
-
-        int a = 10;
-
-
-        while (a > 0) {
-            io.println(a);
-            a = a - 1;
-        }
-
-        return a;
-    }
-
+	public static void main(String[] args) {
+	    int[] a;
+        a = new int[5];
+        ioPlus.printResult(a.length);
+	}
 }
