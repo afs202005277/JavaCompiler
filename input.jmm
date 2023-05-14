@@ -1,18 +1,40 @@
 import io;
 
-class ArithmeticOperations {
+class MyClass {
+    int value;
 
-    public static void main(String[] args) {
-        int a = 0;
-        a = a + 1;
-        a = a + 127;
-        a = a + 128;
-        a = 5 + a;
-        io.println(a);
-
-        if (5 < 10 && 4 < 6){
-            io.println(52);
-        }
+    public MyClass(int value) {
+        value = value;
+        return;
     }
 
+    public void setValue(int value) {
+        value = value;
+        return;
+    }
+
+    public int getValue() {
+        return value;
+    }
+
+    public static void main(String[] args) {
+            MyClass myObj = new MyClass(10);
+            MyClass otherObj = new MyClass(5);
+            MyClass thirdObj = new MyClass(myObj.getValue() - otherObj.getValue());
+            io.println(myObj.getValue()); // should print 10
+
+            myObj.setValue(20);
+            io.println(myObj.getValue()); // should print 20
+
+
+            io.println(otherObj.getValue()); // should print 5
+
+            otherObj.setValue(myObj.getValue() + otherObj.getValue());
+            io.println(otherObj.getValue()); // should print 30
+
+            io.println(myObj.getValue()); // should print "My value is: 20"
+
+
+            io.println(thirdObj.getValue()); // should print -10
+        }
 }
