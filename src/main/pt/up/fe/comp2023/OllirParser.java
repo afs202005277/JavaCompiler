@@ -428,7 +428,6 @@ public class OllirParser implements JmmOptimization {
                 // its a local variable
                 variable = get_local_variable(node.get("id"), local_variables);
                 variable = variable.split("array")[1];
-
                 handle_before_hand(node, res);
                 return node.get("id") + "[temp_" + (this.temp_n-1) + ".i32]" + variable + " :=" + variable + " " + node.getJmmChild(1).get("ollirhelper") + ";";
             } else if (exists_in_variable(parameter_variables, node.get("id"))) {
@@ -450,6 +449,7 @@ public class OllirParser implements JmmOptimization {
             String array = "";
             if (Objects.equals(node.getJmmChild(0).getKind(), "ArrayIndex")) {
                 String[] tmp = node.getJmmChild(0).get("beforehand").split(" ");
+                node.getJmmChild(0).put("beforehand", "");
                 array = tmp[tmp.length-1];
             }
 
