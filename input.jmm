@@ -8,7 +8,7 @@ class AndLess {
 
 	public static void main(String[] args) {
 	    int result = 0;
-	    result = result + 1;
+	    result = result - 128;
 		//AndLess obj = new AndLess();
 		//obj.println(5);
 		//io.println(7);

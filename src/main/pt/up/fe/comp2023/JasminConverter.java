@@ -551,7 +551,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                 if (sameVariable) {
                     int amount = Integer.parseInt(((LiteralElement) rightOperand).getLiteral()) * (operation.equals("sub") ? -1 : 1);
                     if (amount >= -128 && amount <= 127 && varTable.get(((Operand) leftOperand).getName()) != null) {
-                        code.append("iinc ").append(varTable.get(((Operand) leftOperand).getName()).getVirtualReg()).append(" ").append(((LiteralElement) rightOperand).getLiteral()).append("\n");
+                        code.append("iinc ").append(varTable.get(((Operand) leftOperand).getName()).getVirtualReg()).append(" ").append(amount).append("\n");
                         return code.toString();
                     }
                 }
@@ -562,7 +562,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                 if (sameVariable) {
                     int amount = Integer.parseInt(((LiteralElement) leftOperand).getLiteral()) * (operation.equals("sub") ? -1 : 1);
                     if (amount >= -128 && amount <= 127 && varTable.get(((Operand) rightOperand).getName()) != null) {
-                        code.append("iinc ").append(varTable.get(((Operand) rightOperand).getName()).getVirtualReg()).append(" ").append(((LiteralElement) leftOperand).getLiteral()).append("\n");
+                        code.append("iinc ").append(varTable.get(((Operand) rightOperand).getName()).getVirtualReg()).append(" ").append(amount).append("\n");
                         return code.toString();
                     }
                 }
