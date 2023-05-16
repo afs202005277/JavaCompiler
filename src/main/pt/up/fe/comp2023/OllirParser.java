@@ -7,7 +7,9 @@ import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ollir.JmmOptimization;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -449,8 +451,11 @@ public class OllirParser implements JmmOptimization {
             String array = "";
             if (Objects.equals(node.getJmmChild(0).getKind(), "ArrayIndex")) {
                 String[] tmp = node.getJmmChild(0).get("beforehand").split(" ");
-                node.getJmmChild(0).put("beforehand", "");
                 array = tmp[tmp.length-1];
+                ArrayList<String> tmp2 = new ArrayList<>(List.of(String.join(" ", tmp).split("\n")));
+                tmp2.remove(tmp2.size()-1);
+                tmp = tmp2.toArray(new String[0]);
+                node.getJmmChild(0).put("beforehand", String.join(" ", tmp));
             }
 
             String variable;
@@ -464,6 +469,14 @@ public class OllirParser implements JmmOptimization {
                 handle_before_hand(node, new StringBuilder());
                 return "putfield(this, " + node.get("variable") + "." + get_var_type_from_name(variable) + ", " + node.getJmmChild(0).get("ollirhelper") + ").V;";
             }
+
+            if (/*node.getJmmChild(0).get("beforehand").split("\n").length == 1 && */node.getJmmChild(0).get("beforehand") != "") {
+                ArrayList<String> tmp = new ArrayList<>(List.of(node.getJmmChild(0).get("beforehand").split(" ")));
+                tmp.remove(0);
+                tmp.remove(0);
+                return variable + " :=." + get_var_type_from_name(variable) + " " + (array == "" ? String.join(" ", tmp.toArray(new String[0])) : array);
+            }
+
             handle_before_hand(node, new StringBuilder());
             return variable + " :=." + get_var_type_from_name(variable) + " " + (array == "" ? node.getJmmChild(0).get("ollirhelper") + ";" : array);
         }
