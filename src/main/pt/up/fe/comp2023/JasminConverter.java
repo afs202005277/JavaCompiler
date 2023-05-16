@@ -557,7 +557,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                 }
             }
             // i = 1 + i;
-            if (this.dest.equals(rightOperand) && (operation.equals("add") || operation.equals("sub")) && !rightOperand.isLiteral() && leftOperand.isLiteral() && leftOperand.getType().getTypeOfElement() == ElementType.INT32) {
+            if ((operation.equals("add") || operation.equals("sub")) && !rightOperand.isLiteral() && leftOperand.isLiteral() && leftOperand.getType().getTypeOfElement() == ElementType.INT32) {
                 boolean sameVariable = ((Operand) rightOperand).getName().equals(destName);
                 if (sameVariable) {
                     int amount = Integer.parseInt(((LiteralElement) leftOperand).getLiteral()) * (operation.equals("sub") ? -1 : 1);
