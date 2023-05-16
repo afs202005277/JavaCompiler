@@ -322,6 +322,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             jasminCode.append(outputMethodId(method));
             jasminCode.append("\n");
             StringBuilder limits = new StringBuilder();
+            /*
             if (method.isStaticMethod())
                 limits.append(".limit locals ").append(method.getVarTable().size()).append("\n");
             else {
@@ -329,7 +330,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                     limits.append(".limit locals ").append(method.getVarTable().size()).append("\n");
                 else
                     limits.append(".limit locals ").append(method.getVarTable().size() + 1).append("\n");
-            }
+            }*/
+            limits.append(".limit locals 99\n");
             StringBuilder methodBody = new StringBuilder();
             for (Instruction instruction : instructions) {
                 for (Map.Entry<String, Instruction> entry : method.getLabels().entrySet()) {
@@ -345,7 +347,8 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             if (method.isConstructMethod() && method.getParams().isEmpty())
                 methods.add("<init>");
 
-            jasminCode.append(".limit stack ").append(computeStackLimit(methodBody.toString().replaceAll("\\b\\w+\\s*:", ""), methodMap)).append("\n");
+            //jasminCode.append(".limit stack ").append(computeStackLimit(methodBody.toString().replaceAll("\\b\\w+\\s*:", ""), methodMap)).append("\n");
+            limits.append(".limit stack 99\n");
             jasminCode.append(limits);
             jasminCode.append(methodBody);
             jasminCode.append(".end method").append("\n\n");

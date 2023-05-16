@@ -419,7 +419,6 @@ public class OllirParser implements JmmOptimization {
     private String handle_assignments(JmmNode node, List<Symbol> local_variables, List<Symbol> parameter_variables, List<Symbol> classfield_variables) {
         if (node.getNumChildren() != 1) {
             // it is an array assignment
-
             StringBuilder res = new StringBuilder();
             res.append("temp_").append(this.temp_n).append(".i32 :=.i32 ").append(node.getJmmChild(0).get("ollirhelper")).append(";");
             this.temp_n++;
