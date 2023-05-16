@@ -176,6 +176,7 @@ public class OllirParser implements JmmOptimization {
                 case "WhileLoop" -> node.put("ollirhelper", handle_whiles(node));
                 case "Length" -> node.put("ollirhelper", handle_lengths(node));
                 case "ArrayIndex" -> node.put("ollirhelper", handle_array_index(node));
+                case "UnaryOp" -> node.put("ollirhelper", handle_unary_ops(node));
             }
         } else {
             switch (node.getKind()) {
@@ -189,6 +190,11 @@ public class OllirParser implements JmmOptimization {
                 case "ArrayDeclaration" -> node.put("ollirhelper", handle_array_declaration(node));
             }
         }
+    }
+
+    private String handle_unary_ops(JmmNode node) {
+        handle_before_hand(node, new StringBuilder());
+        return node.get("op") + ".bool " + node.getJmmChild(0).get("ollirhelper");
     }
 
     private String handle_array_index(JmmNode node) {
@@ -428,14 +434,12 @@ public class OllirParser implements JmmOptimization {
                 variable = get_parameter_variable(node.get("id"), parameter_variables);
                 String argument = (variable.contains("$") ? variable.split(node.get("id"))[0] : "");
                 variable = variable.split("array")[1];
-                res.append("\ntemp_").append(this.temp_n).append(variable).append(" :=").append(variable).append(" ").append(argument + node.get("id") + "[temp_" + (this.temp_n-1) + ".i32]" + variable).append(";\n");
-                this.temp_n++;
                 handle_before_hand(node, res);
-                return "temp_" + (this.temp_n-1) + variable + " :=" + variable + " " + node.getJmmChild(1).get("ollirhelper") + ";";
+                return argument + node.get("id") + "[temp_" + (this.temp_n-1) + ".i32]" + variable + " :=" + variable + " " + node.getJmmChild(1).get("ollirhelper") + ";";
             } else {
-                System.out.println("NEEDS TO BE DONE");
                 variable = get_classfield_variable(node, node.get("id"), classfield_variables);
-                return "";
+                String var_type = variable.split("array")[1];
+                return variable + " :=" + var_type + " " + node.getJmmChild(1).get("ollirhelper") + ";";
             }
 
         } else {

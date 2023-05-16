@@ -1,21 +1,21 @@
 import ioPlus;
 class ComplexArrayAccess {
 
-	public static void main(String[] args) {
-	    int result;
+    int[] tmpField;
 
-	    int[] a;
+    public int tmp_func(int[] tmpArgument) {
 
-        result = a[0];
-        result = a[1] + a[2];
-        result = result + a[3];
-        result = 1 + a[4];
+        tmpArgument[0]=5;
+        tmpField[0]=5;
+        return 5;
 
-        a[0] = 1;
-        a[1] = 2;
-        a[2] = 3;
-        a[3] = 4;
-        a[4] = 5;
+    }
 
-	}
+    public static void main(String[] args) {
+        if (!(5-3>0)){
+            ioPlus.println(53);
+        } else{
+            ioPlus.print(54);
+        }
+    }
 }
