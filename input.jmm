@@ -1,14 +1,16 @@
 import io;
+class AndLess {
 
-class ArrayAccess {
-
-    public static void main(String[] args) {
-
-        int result = 0;
-
-        result = result + 1;
-
+    public int println(int num){
+        io.println(num);
+        return num;
     }
 
-
+	public static void main(String[] args) {
+	    int result = 0;
+	    result = result + 1;
+		//AndLess obj = new AndLess();
+		//obj.println(5);
+		//io.println(7);
+	}
 }
