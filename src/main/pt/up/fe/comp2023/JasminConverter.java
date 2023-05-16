@@ -77,7 +77,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }};
     private long label = 0;
 
-    private Operand dest;
+    private Element dest;
     private static final HashMap<String, String> typeToDescriptor = new HashMap<>() {{
         put("BOOLEAN", "Z");
         put("INT32", "I");
@@ -415,7 +415,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
 
     private String processAssign(AssignInstruction instruction, HashMap<String, Descriptor> varTable, List<String> methods, List<String> imports, String parentClass) {
         StringBuilder code = new StringBuilder();
-        this.dest = (Operand) instruction.getDest();
+        this.dest = instruction.getDest();
         String res = dispatcher(instruction.getRhs(), varTable, methods, imports, parentClass);
         if (instruction.getRhs() instanceof CallInstruction) {
             res = res.substring(0, res.lastIndexOf("pop\n"));
@@ -445,8 +445,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             case "NEQ" -> "isub\n" + "ifne";
             case "LTE" -> "isub\n" + "ifle";
             case "GTE" -> "isub\n" + "ifge";
-            case "ANDB", "AND" -> "iand\n" + "ifne";
-            case "ORB", "OR" -> "ior\n" + "ifne";
+            case "ANDB" -> "iand\n" + "ifne";
             default -> "IF ERROR";
         };
         return loaders + res + " " + label + "\n";
