@@ -444,9 +444,6 @@ public class OllirParser implements JmmOptimization {
             }
 
         } else {
-
-
-            // NAO SEI SE É NECESSARIO
             String array = "";
             if (Objects.equals(node.getJmmChild(0).getKind(), "ArrayIndex")) {
                 String[] tmp = node.getJmmChild(0).get("beforehand").split(" ");
@@ -469,15 +466,15 @@ public class OllirParser implements JmmOptimization {
                 return "putfield(this, " + node.get("variable") + "." + get_var_type_from_name(variable) + ", " + node.getJmmChild(0).get("ollirhelper") + ").V;";
             }
 
-            if (/*node.getJmmChild(0).get("beforehand").split("\n").length == 1 && */node.getJmmChild(0).get("beforehand") != "") {
+            if (node.getJmmChild(0).get("beforehand").split("\n").length == 1 && !Objects.equals(node.getJmmChild(0).get("beforehand"), "")) {
                 ArrayList<String> tmp = new ArrayList<>(List.of(node.getJmmChild(0).get("beforehand").split(" ")));
                 tmp.remove(0);
                 tmp.remove(0);
-                return variable + " :=." + get_var_type_from_name(variable) + " " + (array == "" ? String.join(" ", tmp.toArray(new String[0])) : array);
+                return variable + " :=." + get_var_type_from_name(variable) + " " + (Objects.equals(array, "") ? String.join(" ", tmp.toArray(new String[0])) : array);
             }
 
             handle_before_hand(node, new StringBuilder());
-            return variable + " :=." + get_var_type_from_name(variable) + " " + (array == "" ? node.getJmmChild(0).get("ollirhelper") + ";" : array);
+            return variable + " :=." + get_var_type_from_name(variable) + " " + (Objects.equals(array, "") ? node.getJmmChild(0).get("ollirhelper") + ";" : array);
         }
     }
 

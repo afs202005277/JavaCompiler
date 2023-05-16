@@ -1,20 +1,28 @@
-import ioPlus;
-class ComplexArrayAccess {
+import io;
+import Simple;
 
-    int[] tmpField;
-
-    public int tmp_func(int[] tmpArgument) {
-
-        tmpArgument[0]=5;
-        tmpField[0]=5;
-        return 5;
-
+Fac {
+    .construct Fac().V {
+        invokespecial(this, "<init>").V;
+    }
+    .method public compFac(param.Simple).i32 {
+        local.Simple :=.Simple new(Simple).Simple;
+        invokespecial(local.Simple,"<init>", 5.i32).V;
+        param.Simple :=.Simple local.Simple;
+        a.i32 :=.i32 20.i32;
+        b.i32 :=.i32 10.i32;
+        return_value.i32 :=.i32 invokevirtual(param.Simple, "add", a.i32, b.i32).i32;
+        ret.i32 return_value.i32;
     }
 
-    public static void main (String[] args) {
-
-        tmpField = new int[5];
-        tmpField[0] = 1;
-
+    .method public static main(args.array.String).V {
+        temp_2.Simple :=.Simple new(Simple).Simple;
+        invokespecial(temp_2.Simple,"<init>", 3.i32).V;
+        temp_3.Fac :=.Fac new(Fac).Fac;
+        invokespecial(temp_3.Fac,"<init>").V;
+        temp_res.i32 :=.i32 invokevirtual(temp_3.Fac, "compFac", temp_2.Simple).i32;
+        c.i32 :=.i32 temp_res.i32;
+        invokestatic(io, "println", c.i32).V;
+        ret.V;
     }
 }

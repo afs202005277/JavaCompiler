@@ -252,7 +252,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         }
         if (methods.contains(methodName)) {
             return ((ClassType) instruction.getFirstArg().getType()).getName();
-        } else if ((instruction.getFirstArg().toString().equals("OBJECTREF")) && !checkImport(((ClassType) instruction.getFirstArg().getType()).getName(), imports).equals("")) {
+        } else if ((instruction.getFirstArg().getType().getTypeOfElement().name().equals("OBJECTREF")) && !checkImport(((ClassType) instruction.getFirstArg().getType()).getName(), imports).equals("")) {
             return checkImport(((ClassType) instruction.getFirstArg().getType()).getName(), imports);
         } else {
             return parentClass;
@@ -268,7 +268,6 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     public JasminResult toJasmin(OllirResult ollirResult) {
         StringBuilder jasminCode = new StringBuilder();
         ClassUnit ollirClassUnit = ollirResult.getOllirClass();
-
         if (ollirClassUnit.getSuperClass() == null) {
             ollirClassUnit.setSuperClass("java/lang/Object");
         }
@@ -337,11 +336,11 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                     Instruction value = entry.getValue();
                     if (instruction.equals(value)) {
                         methodBody.append(key).append(":\n");
-                        break;
                     }
                 }
                 methodBody.append(this.dispatcher(instruction, method.getVarTable(), methods, imports, ollirClassUnit.getSuperClass()));
             }
+
             if (method.isConstructMethod() && method.getParams().isEmpty())
                 methods.add("<init>");
 
@@ -543,22 +542,32 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         StringBuilder code = new StringBuilder();
         String operation = instruction.getOperation().getOpType().toString().toLowerCase();
         Element leftOperand = instruction.getLeftOperand(), rightOperand = instruction.getRightOperand();
-        // i = i + 1:
-        if (this.dest.equals(leftOperand) && (operation.equals("add") || operation.equals("sub")) && !leftOperand.isLiteral() && rightOperand.isLiteral() && rightOperand.getType().getTypeOfElement() == ElementType.INT32) {
-            int amount = Integer.parseInt(((LiteralElement) rightOperand).getLiteral()) * (operation.equals("sub") ? -1 : 1);
-            if (amount >= -128 && amount <= 127 && varTable.get(((Operand) leftOperand).getName()) != null) {
-                code.append("iinc ").append(varTable.get(((Operand) leftOperand).getName()).getVirtualReg()).append(" ").append(((LiteralElement) rightOperand).getLiteral()).append("\n");
-                return code.toString();
+        if (this.dest instanceof Operand destOperand) {
+            String destName = destOperand.getName();
+            // i = i + 1:
+            if ((operation.equals("add") || operation.equals("sub")) && !leftOperand.isLiteral() && rightOperand.isLiteral() && rightOperand.getType().getTypeOfElement() == ElementType.INT32) {
+                boolean sameVariable = ((Operand) leftOperand).getName().equals(destName);
+                if (sameVariable) {
+                    int amount = Integer.parseInt(((LiteralElement) rightOperand).getLiteral()) * (operation.equals("sub") ? -1 : 1);
+                    if (amount >= -128 && amount <= 127 && varTable.get(((Operand) leftOperand).getName()) != null) {
+                        code.append("iinc ").append(varTable.get(((Operand) leftOperand).getName()).getVirtualReg()).append(" ").append(amount).append("\n");
+                        return code.toString();
+                    }
+                }
+            }
+            // i = 1 + i;
+            if ((operation.equals("add") || operation.equals("sub")) && !rightOperand.isLiteral() && leftOperand.isLiteral() && leftOperand.getType().getTypeOfElement() == ElementType.INT32) {
+                boolean sameVariable = ((Operand) rightOperand).getName().equals(destName);
+                if (sameVariable) {
+                    int amount = Integer.parseInt(((LiteralElement) leftOperand).getLiteral()) * (operation.equals("sub") ? -1 : 1);
+                    if (amount >= -128 && amount <= 127 && varTable.get(((Operand) rightOperand).getName()) != null) {
+                        code.append("iinc ").append(varTable.get(((Operand) rightOperand).getName()).getVirtualReg()).append(" ").append(amount).append("\n");
+                        return code.toString();
+                    }
+                }
             }
         }
-        // i = 1 + i;
-        if (this.dest.equals(rightOperand) && (operation.equals("add") || operation.equals("sub")) && !rightOperand.isLiteral() && leftOperand.isLiteral() && leftOperand.getType().getTypeOfElement() == ElementType.INT32) {
-            int amount = Integer.parseInt(((LiteralElement) leftOperand).getLiteral()) * (operation.equals("sub") ? -1 : 1);
-            if (amount >= -128 && amount <= 127 && varTable.get(((Operand) rightOperand).getName()) != null) {
-                code.append("iinc ").append(varTable.get(((Operand) rightOperand).getName()).getVirtualReg()).append(" ").append(((LiteralElement) leftOperand).getLiteral()).append("\n");
-                return code.toString();
-            }
-        }
+
         code.append(handleLiteral(leftOperand, varTable));
         code.append(handleLiteral(rightOperand, varTable));
         if (operation.equals("add") || operation.equals("mul") || operation.equals("div") || operation.equals("sub"))
