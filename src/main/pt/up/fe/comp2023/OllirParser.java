@@ -1,5 +1,6 @@
 package pt.up.fe.comp2023;
 
+import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
@@ -8,10 +9,7 @@ import pt.up.fe.comp.jmm.ollir.JmmOptimization;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class OllirParser implements JmmOptimization {
 
@@ -107,6 +105,141 @@ public class OllirParser implements JmmOptimization {
         write_class(this.symbol_table.getSomethingFromTable("class").get(0), this.symbol_table.getMethods());
 
         return new OllirResult(this.res.toString(), jmmSemanticsResult.getConfig());
+    }
+
+    @Override
+    public OllirResult optimize(OllirResult ollirResult) {
+        ollirResult.getOllirClass().buildCFGs();
+        for (Method method : ollirResult.getOllirClass().getMethods()) {
+            optimization_register_allocation(method);
+        }
+        return ollirResult;
+    }
+
+    private Method optimization_register_allocation(Method method) {
+        // Iterate through the nodes in reverse topological order
+        HashMap<Node, ArrayList<String>> LiveIn = new HashMap<>();
+        HashMap<Node, ArrayList<String>> LiveInCopy = new HashMap<>();
+        HashMap<Node, ArrayList<String>> LiveOut = new HashMap<>();
+        HashMap<Node, ArrayList<String>> LiveOutCopy = new HashMap<>();
+
+        Node checking_node = method.getBeginNode();
+
+        do {
+            ArrayList<Node> visited = new ArrayList<>();
+            loop_through_nodes(checking_node, LiveIn, LiveInCopy, LiveOut, LiveOutCopy, visited);
+        } while (!LiveIn.equals(LiveInCopy) || !LiveOut.equals(LiveOutCopy));
+
+        return method;
+    }
+
+    private void loop_through_nodes(Node checking_node, HashMap<Node, ArrayList<String>> LiveIn, HashMap<Node, ArrayList<String>> LiveInCopy, HashMap<Node, ArrayList<String>> LiveOut, HashMap<Node, ArrayList<String>> LiveOutCopy, ArrayList<Node> visited) {
+        if (checking_node.getNodeType().name().equals("BEGIN")) {
+            for (Node node : checking_node.getSuccessors()) {
+                loop_through_nodes(node, LiveIn, LiveInCopy, LiveOut, LiveOutCopy, visited);
+            }
+        } else if (checking_node.getNodeType().name().equals("END")) {
+        } else if (!visited.contains(checking_node)) {
+
+            LiveInCopy.put(checking_node, (LiveIn.containsKey(checking_node) ? LiveIn.get(checking_node) : new ArrayList<>()));
+            LiveOutCopy.put(checking_node, (LiveOut.containsKey(checking_node) ? LiveOut.get(checking_node) : new ArrayList<>()));
+
+            DefAndUse tmp = def_and_use_variables((Instruction) checking_node);
+
+            if (LiveIn.containsKey(checking_node))
+                LiveIn.get(checking_node).addAll(tmp.use);
+            else
+                LiveIn.put(checking_node, tmp.use);
+
+            if (LiveOut.containsKey(checking_node))
+                LiveIn.get(checking_node).addAll(all_but_select_few(LiveOut.get(checking_node), tmp.def));
+
+            if (!LiveOut.containsKey(checking_node)) {
+                LiveOut.put(checking_node, new ArrayList<>());
+            }
+
+            for (int i = 0; i < checking_node.getSuccessors().size(); i++) {
+                if (LiveIn.containsKey(checking_node.getSuccessors().get(i)))
+                    LiveOut.get(checking_node).addAll(LiveIn.get(checking_node.getSuccessors().get(i)));
+            }
+
+            visited.add(checking_node);
+            for (Node node : checking_node.getSuccessors()) {
+                loop_through_nodes(node, LiveIn, LiveInCopy, LiveOut, LiveOutCopy, visited);
+            }
+        }
+    }
+
+    private ArrayList<String> all_but_select_few(ArrayList<String> total, ArrayList<String> removed) {
+        ArrayList<String> tmp = new ArrayList<>();
+        for (int i = 0; i < total.size(); i++) {
+            if (!removed.contains(total.get(i)))
+                tmp.add(total.get(i));
+        }
+        return tmp;
+    }
+
+    static class DefAndUse {
+        public ArrayList<String> def = new ArrayList<>();
+        public ArrayList<String> use = new ArrayList<>();
+    }
+
+    private DefAndUse def_and_use_variables(Instruction instruction) {
+        DefAndUse tmp = new DefAndUse();
+        switch (instruction.getInstType()) {
+            case CALL -> {
+                if (!Objects.equals(((Operand) ((CallInstruction) instruction).getFirstArg()).getName(), "this"))
+                    tmp.use.add(((Operand) ((CallInstruction) instruction).getFirstArg()).getName());
+                if (((CallInstruction) instruction).getListOfOperands() != null)
+                    for (Element m : ((CallInstruction) instruction).getListOfOperands())
+                        if (!m.isLiteral())
+                            tmp.use.add(((Operand) m).getName());
+                        else
+                            System.out.println("CALL - NEEDS TO BE DONE");
+                return tmp;
+            }
+            case GOTO -> {
+                System.out.println("GOTO - NEEDS TO BE DONE");
+                return new DefAndUse();
+            }
+            case NOPER -> {
+                System.out.println("NOPER - NEEDS TO BE DONE");
+                return new DefAndUse();
+            }
+            case ASSIGN -> {
+                tmp.def.add(((Operand) ((AssignInstruction) instruction).getDest()).getName());
+                tmp.use.addAll(def_and_use_variables(((AssignInstruction) instruction).getRhs()).use);
+                return tmp;
+            }
+            case BRANCH -> {
+                System.out.println("BRANCH - NEEDS TO BE DONE");
+                return new DefAndUse();
+            }
+            case RETURN -> {
+                System.out.println("RETURN - NEEDS TO BE DONE");
+                return new DefAndUse();
+            }
+            case GETFIELD -> {
+                System.out.println("GETFIELD - NEEDS TO BE DONE");
+                return new DefAndUse();
+            }
+            case PUTFIELD -> {
+                System.out.println("PUTFIELD - NEEDS TO BE DONE");
+                return new DefAndUse();
+            }
+            case UNARYOPER -> {
+                System.out.println("UNARYOPER - NEEDS TO BE DONE");
+                return new DefAndUse();
+            }
+            case BINARYOPER -> {
+                System.out.println("BINARYOPER - NEEDS TO BE DONE");
+                return new DefAndUse();
+            }
+            default -> {
+                System.out.println("UNKNOWN INSTRUCTION TYPE IN OPTIMIZER");
+                return new DefAndUse();
+            }
+        }
     }
 
     SymbolTable symbol_table;
