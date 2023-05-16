@@ -1,17 +1,29 @@
 import io;
-class AndLess {
 
-    public int println(int num){
-        io.println(num);
-        return num;
+class ArrayAccess {
+
+    public int sum(int[] a, boolean b) {
+
+        int l;
+        int sum;
+
+        l = a.length;
+        sum = 0;
+
+        if (b) {
+            while (l > 0) {
+                sum = sum + a[l-1];
+                l = l - 1;
+            }
+        }
+
+        return sum;
+
     }
 
-	public static void main(String[] args) {
-	    int result = 0;
-	    result = result + 127;
-	    result = 127 + result;
-		//AndLess obj = new AndLess();
-		//obj.println(5);
-		//io.println(7);
-	}
+    public static void main(String[] args) {
+
+    }
+
+
 }

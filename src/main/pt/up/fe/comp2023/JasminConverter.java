@@ -337,11 +337,11 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                     Instruction value = entry.getValue();
                     if (instruction.equals(value)) {
                         methodBody.append(key).append(":\n");
-                        break;
                     }
                 }
                 methodBody.append(this.dispatcher(instruction, method.getVarTable(), methods, imports, ollirClassUnit.getSuperClass()));
             }
+
             if (method.isConstructMethod() && method.getParams().isEmpty())
                 methods.add("<init>");
 
