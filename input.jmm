@@ -1,15 +1,9 @@
-import io;
+import ioPlus;
+class ArrayInit {
 
-class ArithmeticOperations {
-
-    public static void main(String[] args) {
-        int a = 4;
-        int b = 2;
-        int c = 3;
-
-        if (a < c) {
-            io.println(a);
-        }
-    }
-
+	public static void main(String[] args) {
+	    int[] a;
+        a = new int[5];
+        ioPlus.printResult(a.length);
+	}
 }
