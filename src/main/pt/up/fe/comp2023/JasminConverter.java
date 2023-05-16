@@ -252,7 +252,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         }
         if (methods.contains(methodName)) {
             return ((ClassType) instruction.getFirstArg().getType()).getName();
-        } else if ((instruction.getFirstArg().toString().equals("OBJECTREF")) && !checkImport(((ClassType) instruction.getFirstArg().getType()).getName(), imports).equals("")) {
+        } else if ((instruction.getFirstArg().getType().getTypeOfElement().name().equals("OBJECTREF")) && !checkImport(((ClassType) instruction.getFirstArg().getType()).getName(), imports).equals("")) {
             return checkImport(((ClassType) instruction.getFirstArg().getType()).getName(), imports);
         } else {
             return parentClass;
@@ -268,7 +268,6 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     public JasminResult toJasmin(OllirResult ollirResult) {
         StringBuilder jasminCode = new StringBuilder();
         ClassUnit ollirClassUnit = ollirResult.getOllirClass();
-
         if (ollirClassUnit.getSuperClass() == null) {
             ollirClassUnit.setSuperClass("java/lang/Object");
         }
