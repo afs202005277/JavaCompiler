@@ -1,14 +1,20 @@
-import io;
+import ioPlus;
+class ComplexArrayAccess {
 
-class ArrayAccess {
+    int[] tmpField;
 
-    public static void main(String[] args) {
+    public int tmp_func(int[] tmpArgument) {
 
-        int result = 0;
-
-        result = result + 1;
+        tmpArgument[0]=5;
+        tmpField[0]=5;
+        return 5;
 
     }
 
+    public static void main (String[] args) {
 
+        tmpField = new int[5];
+        tmpField[0] = 1;
+
+    }
 }
