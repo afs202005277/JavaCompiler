@@ -37,7 +37,7 @@ public class Launcher {
         // Read contents of input file
         String code = SpecsIo.read(inputFile);
 
-        /*
+
         // Instantiate JmmParser
         SimpleParser parser = new SimpleParser();
 
@@ -78,13 +78,13 @@ public class Launcher {
                 System.out.println('\n');
             }
         }
-         */
+        /*
         JasminConverter jasminConverter = new JasminConverter();
         JasminResult jasminResult = jasminConverter.toJasmin(new OllirResult(code, config));
         System.out.println("COMPILED:");
         System.out.println(jasminResult.getJasminCode());
         System.out.println("RUN:");
-        jasminResult.run();
+        jasminResult.run();*/
     }
 
     private static Map<String, String> parseArgs(String[] args) {
