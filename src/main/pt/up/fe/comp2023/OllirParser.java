@@ -640,4 +640,9 @@ public class OllirParser implements JmmOptimization {
         handle_before_hand(node, res);
         return "error.error";
     }
+
+    @Override
+    public JmmSemanticsResult optimize(JmmSemanticsResult semanticsResult) {
+        return new OptimizeAST().optimize(semanticsResult);
+    }
 }

@@ -47,7 +47,7 @@ public class Launcher {
             System.out.println(new Report(ReportType.ERROR, Stage.SYNTATIC, -1, -1, "[PARSING ERROR] Invalid characters detected, terminating."));
         } else if (parserResult.getRootNode() != null) {
 
-            Analyser analyser = new Analyser();
+            SemanticAnalyser analyser = new SemanticAnalyser();
             JmmSemanticsResult jmmSemanticsResult = analyser.semanticAnalysis(parserResult);
 
             if (jmmSemanticsResult.getReports().isEmpty()) {
@@ -78,12 +78,21 @@ public class Launcher {
             }
         }
          */
-        JasminConverter jasminConverter = new JasminConverter();
+
+        /*JasminConverter jasminConverter = new JasminConverter();
         JasminResult jasminResult = jasminConverter.toJasmin(new OllirResult(code, config));
         System.out.println("COMPILED:");
         System.out.println(jasminResult.getJasminCode());
         System.out.println("RUN:");
-        jasminResult.run();
+        jasminResult.run();*/
+
+        SimpleParser parser = new SimpleParser();
+        JmmParserResult parserResult = parser.parse(code, config);
+        SemanticAnalyser analyser = new SemanticAnalyser();
+        JmmSemanticsResult jmmSemanticsResult = analyser.semanticAnalysis(parserResult);
+
+        JmmSemanticsResult optimizedResult = new OptimizeAST().optimize(jmmSemanticsResult);
+        System.out.println(optimizedResult);
     }
 
     private static Map<String, String> parseArgs(String[] args) {
