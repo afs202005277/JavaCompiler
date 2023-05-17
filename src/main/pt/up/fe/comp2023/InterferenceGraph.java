@@ -7,6 +7,7 @@ import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.FillMode;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleSheet;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 public class InterferenceGraph {
@@ -14,6 +15,10 @@ public class InterferenceGraph {
 
     public InterferenceGraph() {
         adjList = new HashMap<>();
+    }
+
+    public Set<InterferenceGraphNode> getNodes() {
+        return adjList.keySet();
     }
 
     public void addInterferenceGraphNode(InterferenceGraphNode node) {

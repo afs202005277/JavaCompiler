@@ -8,7 +8,6 @@ import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ollir.JmmOptimization;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 public class OllirParser implements JmmOptimization {
@@ -110,13 +109,13 @@ public class OllirParser implements JmmOptimization {
     @Override
     public OllirResult optimize(OllirResult ollirResult) {
         ollirResult.getOllirClass().buildCFGs();
-        for (Method method : ollirResult.getOllirClass().getMethods()) {
-            optimization_register_allocation(method);
+        for (int i = 0; i < ollirResult.getOllirClass().getMethods().size(); i++) {
+            optimization_register_allocation(ollirResult.getOllirClass().getMethod(i));
         }
         return ollirResult;
     }
 
-    private Method optimization_register_allocation(Method method) {
+    private void optimization_register_allocation(Method method) {
         // Iterate through the nodes in reverse topological order
         HashMap<Node, ArrayList<String>> LiveIn_prev = new HashMap<>();
         HashMap<Node, ArrayList<String>> LiveInCopy_prev = new HashMap<>();
@@ -127,7 +126,7 @@ public class OllirParser implements JmmOptimization {
 
         do {
             ArrayList<Node> visited = new ArrayList<>();
-            loop_through_nodes(checking_node, LiveIn_prev, LiveInCopy_prev, LiveOut_prev, LiveOutCopy_prev, visited);
+            loop_through_nodes(checking_node, LiveIn_prev, LiveInCopy_prev, LiveOut_prev, LiveOutCopy_prev, visited, method);
         } while (!LiveIn_prev.equals(LiveInCopy_prev) || !LiveOut_prev.equals(LiveOutCopy_prev));
 
         HashMap<Node, HashSet<String>> LiveIn = convert_arraylist_hashset(LiveIn_prev);
@@ -156,19 +155,45 @@ public class OllirParser implements JmmOptimization {
             }
         }
 
-        interferenceGraph.visualizeGraph();
-
         int i = 1;
         int colorsNeeded = interferenceGraph.colorGraph(i);
-        while (colorsNeeded == -1) {
+        while (colorsNeeded == -1 && interferenceGraph.numNodes() != 0) {
             i++;
             colorsNeeded = interferenceGraph.colorGraph(i);
         }
 
+        interferenceGraph.visualizeGraph();
+
         System.out.print("COLOR GRAPHING SOLUTION: ");
         System.out.println(colorsNeeded);
 
-        return method;
+        ArrayList<String> colors = new ArrayList<>();
+
+        int desloc = 0;
+
+        Set<InterferenceGraphNode> graph_nodes = interferenceGraph.getNodes();
+        for (Map.Entry<String, Descriptor> entry : method.getVarTable().entrySet()) {
+            boolean found_it = false;
+            for (InterferenceGraphNode graph_node : graph_nodes) {
+                if (Objects.equals(graph_node.getRegister(), entry.getKey())) {
+                    found_it = true;
+
+                    if (!colors.contains(graph_node.getColor()))
+                        colors.add(graph_node.getColor());
+
+                    entry.getValue().setVirtualReg(colors.indexOf(graph_node.getColor()) + desloc);
+                    method.getVarTable().put(entry.getKey(), entry.getValue());
+                }
+            }
+
+            if (!found_it) {
+                entry.getValue().setVirtualReg(colors.size() + desloc);
+                method.getVarTable().put(entry.getKey(), entry.getValue());
+                desloc++;
+            }
+        }
+
+
     }
 
     private HashMap<Node, HashSet<String>> convert_arraylist_hashset(HashMap<Node, ArrayList<String>> a) {
@@ -180,11 +205,19 @@ public class OllirParser implements JmmOptimization {
         return res;
     }
 
-    private void loop_through_nodes(Node checking_node, HashMap<Node, ArrayList<String>> LiveIn, HashMap<Node, ArrayList<String>> LiveInCopy, HashMap<Node, ArrayList<String>> LiveOut, HashMap<Node, ArrayList<String>> LiveOutCopy, ArrayList<Node> visited) {
+    private void loop_through_nodes(Node checking_node, HashMap<Node, ArrayList<String>> LiveIn, HashMap<Node, ArrayList<String>> LiveInCopy, HashMap<Node, ArrayList<String>> LiveOut, HashMap<Node, ArrayList<String>> LiveOutCopy, ArrayList<Node> visited, Method method) {
         if (checking_node.getNodeType().name().equals("BEGIN")) {
-            for (Node node : checking_node.getSuccessors()) {
-                loop_through_nodes(node, LiveIn, LiveInCopy, LiveOut, LiveOutCopy, visited);
+
+            for (Element m : method.getParams()) {
+                AssignInstruction temp_arg = new AssignInstruction(m, m.getType(), new SingleOpInstruction(m));
+                visited.add(temp_arg);
+                loop_through_nodes(temp_arg, LiveIn, LiveInCopy, LiveOut, LiveOutCopy, visited, method);
             }
+
+            for (Node node : checking_node.getSuccessors()) {
+                loop_through_nodes(node, LiveIn, LiveInCopy, LiveOut, LiveOutCopy, visited, method);
+            }
+
         } else if (checking_node.getNodeType().name().equals("END")) {
         } else if (!visited.contains(checking_node)) {
 
@@ -212,7 +245,7 @@ public class OllirParser implements JmmOptimization {
 
             visited.add(checking_node);
             for (Node node : checking_node.getSuccessors()) {
-                loop_through_nodes(node, LiveIn, LiveInCopy, LiveOut, LiveOutCopy, visited);
+                loop_through_nodes(node, LiveIn, LiveInCopy, LiveOut, LiveOutCopy, visited, method);
             }
         }
     }

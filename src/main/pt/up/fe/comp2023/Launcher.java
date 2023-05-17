@@ -55,7 +55,7 @@ public class Launcher {
                 OllirResult ollirResult = ollirParser.toOllir(jmmSemanticsResult);
                 System.out.println("Ollir code:");
                 System.out.println(ollirResult.getOllirCode());
-                ollirParser.optimize(ollirResult);
+                //ollirResult = ollirParser.optimize(ollirResult);
                 JasminConverter jasminConverter = new JasminConverter();
                 JasminResult jasminResult = jasminConverter.toJasmin(ollirResult);
                 System.out.println("=======================");
