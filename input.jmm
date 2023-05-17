@@ -2,10 +2,21 @@ import io;
 import ioPlus;
 class ComplexArrayAccess {
 
-    public static void main (String[] args) {
+    boolean arg = true;
 
-        int a = 10 + 5*3;
+    public int helper(int b) {
 
+        int var = 10;
+        b = 2;
+
+        arg = false;
+        arg = true && false;
+
+        b = 212;
+        b = 21;
+        b = 21;
+
+        return var;
     }
 
 
