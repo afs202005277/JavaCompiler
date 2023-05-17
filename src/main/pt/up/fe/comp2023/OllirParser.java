@@ -11,6 +11,8 @@ import pt.up.fe.comp.jmm.ollir.OllirResult;
 import java.util.*;
 
 public class OllirParser implements JmmOptimization {
+    // tirar visited
+    // mover condicao para o loop_through_nodes
 
     private void write_import(ArrayList<Symbol> imports) {
         if (imports != null)
@@ -162,7 +164,7 @@ public class OllirParser implements JmmOptimization {
             colorsNeeded = interferenceGraph.colorGraph(i);
         }
 
-        interferenceGraph.visualizeGraph();
+        //interferenceGraph.visualizeGraph();
 
         System.out.print("COLOR GRAPHING SOLUTION: ");
         System.out.println(colorsNeeded);
