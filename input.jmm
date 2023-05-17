@@ -1,28 +1,46 @@
 import io;
-import Simple;
 
-Fac {
-    .construct Fac().V {
-        invokespecial(this, "<init>").V;
-    }
-    .method public compFac(param.Simple).i32 {
-        local.Simple :=.Simple new(Simple).Simple;
-        invokespecial(local.Simple,"<init>", 5.i32).V;
-        param.Simple :=.Simple local.Simple;
-        a.i32 :=.i32 20.i32;
-        b.i32 :=.i32 10.i32;
-        return_value.i32 :=.i32 invokevirtual(param.Simple, "add", a.i32, b.i32).i32;
-        ret.i32 return_value.i32;
+class ArrayAccess {
+
+    public int sum(int[] a) {
+
+        int l;
+        int sum;
+
+        l = a.length;
+        sum = 0;
+
+        while (l > 0) {
+            sum = sum + a[l-1];
+            l = l - 1;
+        }
+
+        return sum;
+
     }
 
-    .method public static main(args.array.String).V {
-        temp_2.Simple :=.Simple new(Simple).Simple;
-        invokespecial(temp_2.Simple,"<init>", 3.i32).V;
-        temp_3.Fac :=.Fac new(Fac).Fac;
-        invokespecial(temp_3.Fac,"<init>").V;
-        temp_res.i32 :=.i32 invokevirtual(temp_3.Fac, "compFac", temp_2.Simple).i32;
-        c.i32 :=.i32 temp_res.i32;
-        invokestatic(io, "println", c.i32).V;
-        ret.V;
+    public static void main(String[] args) {
+
+        ArrayAccess func;
+        int[] a;
+
+        a = new int[10];
+
+        a[0] = 1;
+        a[1] = 2;
+        a[2] = 3;
+        a[3] = 4;
+        a[4] = 5;
+        a[5] = 6;
+        a[6] = 7;
+        a[7] = 8;
+        a[8] = 9;
+        a[9] = 10;
+
+        func = new ArrayAccess();
+        io.println(func.sum(a));
+
     }
+
+
 }
