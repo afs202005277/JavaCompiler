@@ -131,9 +131,9 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         String superClass = symbolTable.getSuper();
         Type intArray = new Type("integer", true);
 
-        if(tp1 == null || tp2 == null){return false;}
+        //if(tp1 == null || tp2 == null){return false;}
 
-        else if(tp1.equals(intArray) || tp2.equals(intArray)){
+        if(tp1.equals(intArray) || tp2.equals(intArray)){
             return tp1.equals(tp2);
         }
 
