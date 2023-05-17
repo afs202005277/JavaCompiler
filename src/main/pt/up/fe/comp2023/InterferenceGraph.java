@@ -1,11 +1,13 @@
 package pt.up.fe.comp2023;
 
+/*
 import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.graph.Graph;
 import org.graphstream.ui.view.Viewer;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.FillMode;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleSheet;
+ */
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -64,6 +66,7 @@ public class InterferenceGraph {
         return adjList.get(node);
     }
 
+    /*
     public void visualizeGraph() {
         Graph graph = new SingleGraph("Interference Graph");
 
@@ -97,6 +100,8 @@ public class InterferenceGraph {
         Viewer viewer = graph.display();
         viewer.setCloseFramePolicy(Viewer.CloseFramePolicy.HIDE_ONLY);
     }
+
+     */
 
     public int colorGraph(int maxNumColors) {
         ArrayList<String> colors = new ArrayList<>();
