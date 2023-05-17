@@ -27,6 +27,8 @@ public class OptimizeAST {
             alterations = constantFoldingOptimization(rootNode);
         }
 
+        //constantFoldingOptimization(rootNode);
+
         return semanticsResult;
     }
 
@@ -64,7 +66,7 @@ public class OptimizeAST {
     }
 
 
-    public void binaryOpOptimization(JmmNode jmmNode){
+    public boolean binaryOpOptimization(JmmNode jmmNode){
         JmmNode child1 = jmmNode.getJmmChild(0), child2 = jmmNode.getJmmChild(1);
 
         if(child1.getKind().equals("Literal") && child2.getKind().equals("Literal")){
@@ -98,6 +100,7 @@ public class OptimizeAST {
                 System.out.println("Binary operation not valid on 2 different types.");
             }
 
+            return true;
         } else if (child1.getKind().equals("BinaryOp")) {
             binaryOpOptimization(child1);
         } else if (child2.getKind().equals("BinaryOp")) {
@@ -106,6 +109,7 @@ public class OptimizeAST {
         else {
             System.out.println("Invalid Binary Operation.");
         }
+        return false;
     }
 
 
@@ -113,8 +117,7 @@ public class OptimizeAST {
         boolean alterations = false;
 
         if(jmmNode.getKind().equals("BinaryOp")){
-            binaryOpOptimization(jmmNode);
-            alterations = true;
+            alterations = binaryOpOptimization(jmmNode);
         }
         else{
             for (JmmNode child: jmmNode.getChildren()) {
