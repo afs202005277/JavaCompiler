@@ -116,7 +116,7 @@ public class OllirParser implements JmmOptimization {
 
     @Override
     public OllirResult optimize(OllirResult ollirResult) {
-        if (!(config.containsKey("registerAllocation") && Integer.parseInt(config.get("registerAllocation")) != -1)) {
+        if (!(config.containsKey("optimize") && Objects.equals(config.get("optimize"), "true")) && !(config.containsKey("registerAllocation") && Integer.parseInt(config.get("registerAllocation")) != -1)) {
             return ollirResult;
         }
 
