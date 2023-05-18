@@ -1,21 +1,50 @@
-import Simple;
 import io;
 
-class Fac {
-    public int compFac(Simple param) {
-        Simple local = new Simple();
+class MethodsAndFields{
+	int field1;
+	boolean field2;
+	MethodsAndFields field3;
+
+	public int getField1(){
+		return field1;
+	}
+
+	public boolean getField2(){
+		return field2;
+	}
+
+	public MethodsAndFields getField3(){
+		return field3;
+	}
+
+	public int all(int a, boolean b, MethodsAndFields maf){
+
+		if (b)
+		    a = 2;
+
+		return 1;
+
+	}
+
+	public static void main(String[] args){
+
         int a;
         int b;
-        int return_value;
-        param = local;
-        a = 20;
-        b = 10;
-        return_value = param.add(a, b);
-        return return_value;
-    }
+        int c = 1;
+        int d;
 
-    public static void main(String[] args) {
-        int temp_res = (new Fac()).compFac(new Simple());
-        io.println(temp_res);
-    }
+        a = 0;
+        while (a < 10) {
+            b = a +1;
+            c = c + b;
+            a = b + 2;
+        }
+
+        d = a;
+
+        io.println(c);
+
+
+
+	}
 }
