@@ -116,18 +116,18 @@ public class OllirParser implements JmmOptimization {
 
     @Override
     public OllirResult optimize(OllirResult ollirResult) {
-        if (config.containsKey("optimize") && Objects.equals(config.get("optimize"), "true")) {
-            if (!(config.containsKey("registerAllocation") && Integer.parseInt(config.get("registerAllocation")) != -1)) {
-                return ollirResult;
-            }
 
-            ollirResult.getOllirClass().buildCFGs();
-            for (int i = 0; i < ollirResult.getOllirClass().getMethods().size(); i++) {
-                Report report = optimization_register_allocation(ollirResult.getOllirClass().getMethod(i));
-                if (report.getType() == ReportType.ERROR)
-                    ollirResult.getReports().add(report);
-            }
+        if (!(config.containsKey("registerAllocation") && Integer.parseInt(config.get("registerAllocation")) != -1)) {
+            return ollirResult;
         }
+
+        ollirResult.getOllirClass().buildCFGs();
+        for (int i = 0; i < ollirResult.getOllirClass().getMethods().size(); i++) {
+            Report report = optimization_register_allocation(ollirResult.getOllirClass().getMethod(i));
+            if (report.getType() == ReportType.ERROR)
+                ollirResult.getReports().add(report);
+        }
+
         return ollirResult;
     }
 
