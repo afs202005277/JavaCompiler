@@ -533,12 +533,16 @@ public class OllirParser implements JmmOptimization {
             }
         } else {
             switch (node.getKind()) {
-                case "Type", "Object" -> handle_before_hand(node, new StringBuilder());
+                case "Type" -> handle_before_hand(node, new StringBuilder());
                 case "Literal", "LiteralS" ->
                         node.put("ollirhelper", handle_literals(node, local_variables, parameter_variables, classfield_variables));
                 case "ObjectInstantiation" -> {
                     node.put("ollirhelper", handle_object_instantiation(node));
                     node.put("id", node.get("ollirhelper"));
+                }
+                case "Object" -> {
+                    node.put("ollirhelper", "this." + root_node.getJmmChild(root_node.getNumChildren()-1).get("className"));
+                    handle_before_hand(node, new StringBuilder());
                 }
             }
         }
