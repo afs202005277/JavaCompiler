@@ -219,13 +219,14 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }
 
     private String addToOperandStack(int value) {
-        if (value < 0)
-            return "ldc " + value + "\n";
-        if (value <= 5)
+        if (value >= -1 && value <= 5) {
+            if (value == -1)
+                return "iconst_m1\n";
             return "iconst_" + value + "\n";
-        if (value <= 127)
+        }
+        if (value >= -128 && value <= 127)
             return "bipush " + value + "\n";
-        if (value <= 32767)
+        if (value >= -32768 && value <= 32767)
             return "sipush " + value + "\n";
         return "ldc " + value + "\n";
     }

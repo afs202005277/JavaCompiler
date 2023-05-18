@@ -101,7 +101,7 @@ public class Launcher {
         Map<String, String> config = new HashMap<>();
         config.put("inputFile", args[0]);
         config.put("optimize", "false");
-        config.put("registerAllocation", "-1");
+        config.put("registerAllocation", "0");
         config.put("debug", "false");
 
         for (int i = 0; i < args.length; i++) {

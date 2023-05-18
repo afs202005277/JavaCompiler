@@ -1,18 +1,23 @@
-import io;
+import ioPlus;
+class ArrayAccess {
 
-class Fac {
-    public int compFac(int param, boolean teste) {
-        int a;
-        int b;
-        int return_value;
-        a = 20;
-        b = 10;
-        return_value = a + b;
-        return return_value;
-    }
+	public int foo(int[] a) {
+		int result;
 
-    public static void main(String[] args) {
-        int temp_res = new Fac().compFac(10, true);
-        io.println(temp_res);
-    }
+		result = a[0];
+		result = a[1] + a[2];
+		result = result + a[3];
+		result = 1 + a[4];
+
+	    a[0] = 1;
+		a[1] = 2;
+		a[2] = 3;
+		a[3] = 4;
+		a[4] = 5;
+
+
+		return result;
+	}
+
+
 }
