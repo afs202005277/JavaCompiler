@@ -219,13 +219,14 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     }
 
     private String addToOperandStack(int value) {
-        if (value < 0)
-            return "ldc " + value + "\n";
-        if (value <= 5)
+        if (value >= -1 && value <= 5) {
+            if (value == -1)
+                return "iconst_m1\n";
             return "iconst_" + value + "\n";
-        if (value <= 127)
+        }
+        if (value >= -128 && value <= 127)
             return "bipush " + value + "\n";
-        if (value <= 32767)
+        if (value >= -32768 && value <= 32767)
             return "sipush " + value + "\n";
         return "ldc " + value + "\n";
     }
@@ -321,13 +322,18 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
             jasminCode.append(outputMethodId(method));
             jasminCode.append("\n");
             StringBuilder limits = new StringBuilder();
+            HashSet<Integer> registers = new HashSet<>();
+            for (Descriptor descriptor : method.getVarTable().values()) {
+                if (descriptor.getVirtualReg() != -1)
+                    registers.add(descriptor.getVirtualReg());
+            }
             if (method.isStaticMethod())
-                limits.append(".limit locals ").append(method.getVarTable().size()).append("\n");
+                limits.append(".limit locals ").append(registers.size()).append("\n");
             else {
                 if (method.getVarTable().containsKey("this"))
-                    limits.append(".limit locals ").append(method.getVarTable().size()).append("\n");
+                    limits.append(".limit locals ").append(registers.size()).append("\n");
                 else
-                    limits.append(".limit locals ").append(method.getVarTable().size() + 1).append("\n");
+                    limits.append(".limit locals ").append(registers.size() + 1).append("\n");
             }
             StringBuilder methodBody = new StringBuilder();
             for (Instruction instruction : instructions) {

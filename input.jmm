@@ -1,15 +1,16 @@
-class PropWithIf {
-    public int foo(int max){
-	  int a;
-	  a = 10;
-	  a = a;
-	  if(max < a){
-		a = max;
-	  }else{
-	    a = a;
-	  }
-	  return a;
-	}
-	public static void main(String[] args) {
-	}
+import io;
+
+class PropSimple {
+
+    public static void main(String[] args) {
+
+        int a;
+        int b;
+
+        a = 2;
+        b = 5;
+
+        if (b < a) {} else {}
+
+    }
 }
