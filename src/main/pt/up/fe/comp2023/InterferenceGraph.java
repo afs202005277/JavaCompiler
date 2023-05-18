@@ -66,8 +66,8 @@ public class InterferenceGraph {
         return adjList.get(node);
     }
 
-
-    /*public void visualizeGraph() {
+/*
+    public void visualizeGraph() {
         Graph graph = new SingleGraph("Interference Graph");
 
         for (Map.Entry<InterferenceGraphNode, List<InterferenceGraphNode>> entry : adjList.entrySet()) {
@@ -99,8 +99,8 @@ public class InterferenceGraph {
 
         Viewer viewer = graph.display();
         viewer.setCloseFramePolicy(Viewer.CloseFramePolicy.HIDE_ONLY);
-    }*/
-
+    }
+*/
 
 
     public int colorGraph(int maxNumColors) {
