@@ -84,6 +84,7 @@ expression
     | expression '.' method = ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
     | expression '.' method='length' #Length
     | expression '.' method = ID #ClassVariable
+    | 'new' 'int' '[' expression ']' #NewArrayInstantiation
     | op='!' expression #UnaryOp
     | expression op=('*' | '/' ) expression #BinaryOp
     | expression op=('+' | '-' ) expression #BinaryOp
