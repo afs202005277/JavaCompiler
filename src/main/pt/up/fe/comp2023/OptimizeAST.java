@@ -67,18 +67,18 @@ public class OptimizeAST {
 
     public boolean binaryOpOptimization(JmmNode jmmNode){
         JmmNode child1 = jmmNode.getJmmChild(0), child2 = jmmNode.getJmmChild(1);
-
         if(child1.getKind().equals("Literal") && child2.getKind().equals("Literal")){
             if(child1.hasAttribute("integer") && child2.hasAttribute("integer")){
                 int child1Value = Integer.parseInt(child1.get("integer")) , child2Value = Integer.parseInt(child2.get("integer"));
                 String result = computeIntegerOperation(child1Value, child2Value, jmmNode.get("op"));
+                String varType = (result.equals("true") || result.equals("false")) ? "bool": "integer";
 
                 removeAllChildren(jmmNode);
 
                 JmmNode newNode = new JmmNodeImpl("Literal");
-                newNode.put("varType", "integer");
+                newNode.put("varType", varType);
                 newNode.put("isArray", "false");
-                newNode.put("integer", result);
+                newNode.put(varType, result);
 
                 jmmNode.replace(newNode);
 
