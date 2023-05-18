@@ -53,17 +53,25 @@ public class Launcher {
             if (jmmSemanticsResult.getReports().isEmpty()) {
                 OllirParser ollirParser = new OllirParser();
                 OllirResult ollirResult = ollirParser.toOllir(jmmSemanticsResult);
-                System.out.println("Ollir code:");
-                System.out.println(ollirResult.getOllirCode());
-                ollirResult = ollirParser.optimize(ollirResult);
-                JasminConverter jasminConverter = new JasminConverter();
-                JasminResult jasminResult = jasminConverter.toJasmin(ollirResult);
-                System.out.println("=======================");
-                System.out.println("Jasmin code:");
-                System.out.println(jasminResult.getJasminCode());
-                System.out.println("=======================");
-                System.out.println("Output:");
-                jasminResult.run();
+                if (ollirResult.getReports().isEmpty()) {
+                    System.out.println("=======================");
+                    System.out.println("Ollir code:");
+                    System.out.println(ollirResult.getOllirCode());
+                    JasminConverter jasminConverter = new JasminConverter();
+                    JasminResult jasminResult = jasminConverter.toJasmin(ollirResult);
+                    System.out.println("=======================");
+                    System.out.println("Jasmin code:");
+                    System.out.println(jasminResult.getJasminCode());
+                    System.out.println("=======================");
+                    System.out.println("Output:");
+                    jasminResult.run();
+                } else {
+                    System.out.println("OPTIMIZATION ERRORS:");
+                    for (Report temp : ollirResult.getReports()) {
+                        System.out.println(temp);
+                        System.out.println('\n');
+                    }
+                }
             } else {
                 System.out.println("SEMANTIC ERRORS:");
                 for (Report temp : jmmSemanticsResult.getReports()) {
@@ -85,7 +93,7 @@ public class Launcher {
         SpecsLogs.info("Executing with args: " + Arrays.toString(args));
 
         // Check if there is at least one argument
-        if (args.length != 1) {
+        if (args.length < 1) {
             throw new RuntimeException("Expected a single argument, a path to an existing input file.");
         }
 
@@ -95,6 +103,15 @@ public class Launcher {
         config.put("optimize", "false");
         config.put("registerAllocation", "-1");
         config.put("debug", "false");
+
+        for (int i = 0; i < args.length; i++) {
+            if(args[i].contains("-r=")) {
+                config.put("num_local_variables", args[i].split("-r=")[1]);
+            }
+        }
+
+        if (!config.containsKey("num_local_variables"))
+            config.put("num_local_variables", "-1");
 
         return config;
     }

@@ -1,50 +1,18 @@
 import io;
 
-class MethodsAndFields{
-	int field1;
-	boolean field2;
-	MethodsAndFields field3;
-
-	public int getField1(){
-		return field1;
-	}
-
-	public boolean getField2(){
-		return field2;
-	}
-
-	public MethodsAndFields getField3(){
-		return field3;
-	}
-
-	public int all(int a, boolean b, MethodsAndFields maf){
-
-		if (b)
-		    a = 2;
-
-		return 1;
-
-	}
-
-	public static void main(String[] args){
-
+class Fac {
+    public int compFac(int param, boolean teste) {
         int a;
         int b;
-        int c = 1;
-        int d;
+        int return_value;
+        a = 20;
+        b = 10;
+        return_value = a + b;
+        return return_value;
+    }
 
-        a = 0;
-        while (a < 10) {
-            b = a +1;
-            c = c + b;
-            a = b + 2;
-        }
-
-        d = a;
-
-        io.println(c);
-
-
-
-	}
+    public static void main(String[] args) {
+        int temp_res = new Fac().compFac(10, true);
+        io.println(temp_res);
+    }
 }

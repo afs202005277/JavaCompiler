@@ -7,12 +7,15 @@ import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ollir.JmmOptimization;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
+import pt.up.fe.comp.jmm.report.Report;
+import pt.up.fe.comp.jmm.report.ReportType;
+import pt.up.fe.comp.jmm.report.Stage;
 
 import java.util.*;
 
 public class OllirParser implements JmmOptimization {
-    // tirar visited
-    // mover condicao para o loop_through_nodes
+
+    private Map<String, String> config;
 
     private void write_import(ArrayList<Symbol> imports) {
         if (imports != null)
@@ -101,23 +104,31 @@ public class OllirParser implements JmmOptimization {
     public OllirResult toOllir(JmmSemanticsResult jmmSemanticsResult) {
         this.symbol_table = (SymbolTable) jmmSemanticsResult.getSymbolTable();
         this.root_node = jmmSemanticsResult.getRootNode();
+        this.config = jmmSemanticsResult.getConfig();
         write_import(this.symbol_table.getSomethingFromTable("import"));
         res.append("\n");
         write_class(this.symbol_table.getSomethingFromTable("class").get(0), this.symbol_table.getMethods());
 
-        return new OllirResult(this.res.toString(), jmmSemanticsResult.getConfig());
+        OllirResult ollirResult = new OllirResult(this.res.toString(), jmmSemanticsResult.getConfig());
+
+        if (Integer.parseInt(config.get("num_local_variables")) != -1)
+            ollirResult = this.optimize(ollirResult);
+
+        return ollirResult;
     }
 
     @Override
     public OllirResult optimize(OllirResult ollirResult) {
         ollirResult.getOllirClass().buildCFGs();
         for (int i = 0; i < ollirResult.getOllirClass().getMethods().size(); i++) {
-            optimization_register_allocation(ollirResult.getOllirClass().getMethod(i));
+            Report report = optimization_register_allocation(ollirResult.getOllirClass().getMethod(i));
+            if (report.getType() == ReportType.ERROR)
+                ollirResult.getReports().add(report);
         }
         return ollirResult;
     }
 
-    private void optimization_register_allocation(Method method) {
+    private Report optimization_register_allocation(Method method) {
         // Iterate through the nodes in reverse topological order
         HashMap<Node, ArrayList<String>> LiveIn_prev = new HashMap<>();
         HashMap<Node, ArrayList<String>> LiveOut_prev = new HashMap<>();
@@ -162,11 +173,32 @@ public class OllirParser implements JmmOptimization {
             }
         }
 
-        int i = 1;
-        int colorsNeeded = interferenceGraph.colorGraph(i);
-        while (colorsNeeded == -1 && interferenceGraph.numNodes() != 0) {
-            i++;
+        int colorsNeeded = 0;
+        if (Integer.parseInt(config.get("num_local_variables")) == 0) {
+            int i = 1;
             colorsNeeded = interferenceGraph.colorGraph(i);
+            while (colorsNeeded == -1 && interferenceGraph.numNodes() != 0) {
+                i++;
+                colorsNeeded = interferenceGraph.colorGraph(i);
+            }
+
+            if (interferenceGraph.numNodes() == 0)
+                colorsNeeded = 0;
+        } else {
+            if (interferenceGraph.numNodes() != 0)
+                colorsNeeded = interferenceGraph.colorGraph(Integer.parseInt(config.get("num_local_variables")));
+        }
+
+        if (colorsNeeded == -1) {
+            int i = 1;
+            colorsNeeded = interferenceGraph.colorGraph(i);
+            while (colorsNeeded == -1 && interferenceGraph.numNodes() != 0) {
+                i++;
+                colorsNeeded = interferenceGraph.colorGraph(i);
+            }
+
+            String report_message = ("Method " + method.getMethodName() + " needs a minimum of " + i + " registers.");
+            return new Report(ReportType.ERROR, Stage.OPTIMIZATION, -1, report_message);
         }
 
         //interferenceGraph.visualizeGraph();
@@ -202,7 +234,7 @@ public class OllirParser implements JmmOptimization {
             }
         }
 
-
+        return new Report(ReportType.LOG, Stage.OPTIMIZATION, -1, "Optimization complete on method " + method.getMethodName());
     }
 
     private HashMap<Node, HashSet<String>> convert_arraylist_hashset(HashMap<Node, ArrayList<String>> a) {
