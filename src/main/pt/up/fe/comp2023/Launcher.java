@@ -107,12 +107,9 @@ public class Launcher {
         for (int i = 0; i < args.length; i++) {
             if(args[i].contains("-r=")) {
                 if (args[i].split("-r=").length > 1)
-                    config.put("num_local_variables", args[i].split("-r=")[1]);
+                    config.put("registerAllocation", args[i].split("-r=")[1]);
             }
         }
-
-        if (!config.containsKey("num_local_variables"))
-            config.put("num_local_variables", "-1");
 
         return config;
     }

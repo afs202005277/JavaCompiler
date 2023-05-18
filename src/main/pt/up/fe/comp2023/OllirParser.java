@@ -111,14 +111,15 @@ public class OllirParser implements JmmOptimization {
 
         OllirResult ollirResult = new OllirResult(this.res.toString(), jmmSemanticsResult.getConfig());
 
-        if (Integer.parseInt(config.get("num_local_variables")) != -1)
-            ollirResult = this.optimize(ollirResult);
-
         return ollirResult;
     }
 
     @Override
     public OllirResult optimize(OllirResult ollirResult) {
+        if (!(config.containsKey("registerAllocation") && Integer.parseInt(config.get("registerAllocation")) != -1)) {
+            return ollirResult;
+        }
+
         ollirResult.getOllirClass().buildCFGs();
         for (int i = 0; i < ollirResult.getOllirClass().getMethods().size(); i++) {
             Report report = optimization_register_allocation(ollirResult.getOllirClass().getMethod(i));
@@ -174,7 +175,7 @@ public class OllirParser implements JmmOptimization {
         }
 
         int colorsNeeded = 0;
-        if (Integer.parseInt(config.get("num_local_variables")) == 0) {
+        if (Integer.parseInt(config.get("registerAllocation")) == 0) {
             int i = 1;
             colorsNeeded = interferenceGraph.colorGraph(i);
             while (colorsNeeded == -1 && interferenceGraph.numNodes() != 0) {
@@ -186,7 +187,7 @@ public class OllirParser implements JmmOptimization {
                 colorsNeeded = 0;
         } else {
             if (interferenceGraph.numNodes() != 0)
-                colorsNeeded = interferenceGraph.colorGraph(Integer.parseInt(config.get("num_local_variables")));
+                colorsNeeded = interferenceGraph.colorGraph(Integer.parseInt(config.get("registerAllocation")));
         }
 
         if (colorsNeeded == -1) {
