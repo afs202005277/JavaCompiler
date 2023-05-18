@@ -101,9 +101,9 @@ public class OptimizeAST {
 
             return true;
         } else if (child1.getKind().equals("BinaryOp")) {
-            binaryOpOptimization(child1);
+            return binaryOpOptimization(child1);
         } else if (child2.getKind().equals("BinaryOp")) {
-            binaryOpOptimization(child2);
+            return binaryOpOptimization(child2);
         } else if (child1.getKind().equals("LiteralS") || child2.getKind().equals("LiteralS")){
 
         }
