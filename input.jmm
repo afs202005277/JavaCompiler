@@ -1,22 +1,48 @@
-import ioPlus;
-class ConditionArgsFuncCall {
+import io;
 
-    public int func(boolean a, boolean b, boolean c, boolean d){
-        ioPlus.printResult(10);
-        return 1;
+class ArrayAccess {
+
+    public int sum(int[] a, boolean b) {
+
+        int l;
+        int sum;
+
+        l = a.length;
+        sum = 0;
+
+        if (b) {
+            while (l > 0) {
+                sum = sum + a[l-1];
+                l = l - 1;
+            }
+        }
+
+        return sum;
+
     }
 
-	public static void main(String[] args) {
-        int a;
-        int b;
-        boolean i;
-        boolean j;
-        ConditionArgsFuncCall d;
-        d = new ConditionArgsFuncCall();
-        a = 10;
-        b = 5;
-        i = true;
-        j = false;
-		a = d.func(a < b, i && j , a < b && i, !i);
-	}
+    public static void main(String[] args) {
+
+        ArrayAccess func;
+        int[] a;
+
+        a = new int[10];
+
+        a[0] = 1;
+        a[1] = 2;
+        a[2] = 3;
+        a[3] = 4;
+        a[4] = 5;
+        a[5] = 6;
+        a[6] = 7;
+        a[7] = 8;
+        a[8] = 9;
+        a[9] = 10;
+
+        func = new ArrayAccess();
+        io.println(func.sum(a, true));
+
+    }
+
+
 }

@@ -816,6 +816,7 @@ public class OllirParser implements JmmOptimization {
                 ArrayList<String> tmp = new ArrayList<>(List.of(node.getJmmChild(0).get("beforehand").split(" ")));
                 tmp.remove(0);
                 tmp.remove(0);
+                handle_before_hand(node, new StringBuilder());
                 return variable + " :=." + get_var_type_from_name(variable) + " " + (Objects.equals(array, "") ? String.join(" ", tmp.toArray(new String[0])) : array);
             }
 
