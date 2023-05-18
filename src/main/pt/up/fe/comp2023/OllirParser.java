@@ -545,6 +545,7 @@ public class OllirParser implements JmmOptimization {
                     node.put("ollirhelper", "this." + root_node.getJmmChild(root_node.getNumChildren()-1).get("className"));
                     handle_before_hand(node, new StringBuilder());
                 }
+                case "Body" -> node.put("ollirhelper", "");
             }
         }
     }
