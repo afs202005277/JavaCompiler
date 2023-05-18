@@ -542,7 +542,7 @@ public class OllirParser implements JmmOptimization {
 
     private String handle_unary_ops(JmmNode node) {
         StringBuilder res = new StringBuilder();
-        res.append("temp_").append(this.temp_n).append(" :=.bool ").append(node.get("op") + ".bool " + node.getJmmChild(0).get("ollirhelper")).append(";\n");
+        res.append("temp_").append(this.temp_n).append(".bool :=.bool ").append(node.get("op") + ".bool " + node.getJmmChild(0).get("ollirhelper")).append(";\n");
         this.temp_n++;
         handle_before_hand(node, res);
         return "temp_" + (this.temp_n-1) + ".bool";

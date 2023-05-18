@@ -1,37 +1,22 @@
 import ioPlus;
-class SwitchStat {
+class ConditionArgsFuncCall {
 
-
-    public int func(int a){
-		int result;
-
-        if(a < 1){
-          result =1;
-        } else {
-            if(a < 2){
-             result = 2;
-            } else {
-                if(a < 3){
-                    result = 3;
-                } else {
-                    if(a < 4){
-                        result = 4;
-                    } else {
-                        if(a < 5){
-                            result = 5;
-                        } else {
-                            if(a < 6){
-                                result = 6;
-                            } else {
-                                result = 7;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return result;
+    public int func(boolean a, boolean b, boolean c, boolean d){
+        ioPlus.printResult(10);
+        return 1;
     }
 
+	public static void main(String[] args) {
+        int a;
+        int b;
+        boolean i;
+        boolean j;
+        ConditionArgsFuncCall d;
+        d = new ConditionArgsFuncCall();
+        a = 10;
+        b = 5;
+        i = true;
+        j = false;
+		a = d.func(a < b, i && j , a < b && i, !i);
+	}
 }
