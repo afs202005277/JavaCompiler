@@ -106,7 +106,8 @@ public class Launcher {
 
         for (int i = 0; i < args.length; i++) {
             if(args[i].contains("-r=")) {
-                config.put("num_local_variables", args[i].split("-r=")[1]);
+                if (args[i].split("-r=").length > 1)
+                    config.put("num_local_variables", args[i].split("-r=")[1]);
             }
         }
 
