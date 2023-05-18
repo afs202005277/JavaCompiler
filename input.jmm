@@ -4,13 +4,17 @@ class PropSimple {
 
     public static void main(String[] args) {
 
-        int a;
-        int b;
+    }
 
-        a = 2;
-        b = 5;
+    public int foo() {
 
-        if (b < a) {} else {}
+        int a = 5;
+        int b = a + 10;
+        int c = b - 2;
+        int d = a * b;
+        int e = c / d;
+
+        return e;
 
     }
 }

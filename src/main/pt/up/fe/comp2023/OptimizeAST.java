@@ -40,26 +40,26 @@ public class OptimizeAST {
 
     private String computeIntegerOperation(int child1Value, int child2Value, String op){
         return switch (op) {
-            case "+" -> String.valueOf(child2Value + child1Value);
-            case "-" -> String.valueOf(child2Value - child1Value);
-            case "*" -> String.valueOf(child2Value * child1Value);
-            case "/" -> String.valueOf(child2Value / child1Value);
-            case "<" -> String.valueOf(child2Value < child1Value);
-            case ">" -> String.valueOf(child2Value > child1Value);
-            case "<=" -> String.valueOf(child2Value <= child1Value);
-            case ">=" -> String.valueOf(child2Value >= child1Value);
-            case "==" -> String.valueOf(child2Value == child1Value);
-            case "!=" -> String.valueOf(child2Value != child1Value);
+            case "+" -> String.valueOf(child1Value + child2Value);
+            case "-" -> String.valueOf(child1Value - child2Value);
+            case "*" -> String.valueOf(child1Value * child2Value);
+            case "/" -> String.valueOf(child1Value / child2Value);
+            case "<" -> String.valueOf(child1Value < child2Value);
+            case ">" -> String.valueOf(child1Value > child2Value);
+            case "<=" -> String.valueOf(child1Value <= child2Value);
+            case ">=" -> String.valueOf(child1Value >= child2Value);
+            case "==" -> String.valueOf(child1Value == child2Value);
+            case "!=" -> String.valueOf(child1Value != child2Value);
             default -> "";
         };
     }
 
     private String computeBooleanOperation(boolean child1Value, boolean child2Value, String op){
         return switch (op) {
-            case "==" -> String.valueOf(child2Value == child1Value);
-            case "!=" -> String.valueOf(child2Value != child1Value);
-            case "&&" -> String.valueOf(child2Value && child1Value);
-            case "||" -> String.valueOf(child2Value || child1Value);
+            case "==" -> String.valueOf(child1Value == child2Value);
+            case "!=" -> String.valueOf(child1Value != child2Value);
+            case "&&" -> String.valueOf(child1Value && child2Value);
+            case "||" -> String.valueOf(child1Value || child2Value);
             default -> "";
         };
     }
