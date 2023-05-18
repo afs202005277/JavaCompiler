@@ -150,4 +150,8 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
         return new JmmSemanticsResult(jmmParserResult, symbolTable, jmmParserResult.getReports());
     }
+
+    public void removeLocalVariable(String funcName, Symbol symbol){
+        table.get(funcName+"_variables").remove(symbol);
+    }
 }

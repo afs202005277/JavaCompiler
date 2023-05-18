@@ -1,20 +1,10 @@
-import io;
-
-class ArrayAccess {
-
-public int func(int a, int b) {
-
-    int
-    b = this.length;
-    return a;
-
-}
-
+class PropSimple {
+    public int foo(){
+	  int a;
+	  a = 10;
+	  return a;
+	}
     public static void main(String[] args) {
 
-
-
     }
-
-
 }

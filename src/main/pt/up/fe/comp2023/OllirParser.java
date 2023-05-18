@@ -994,4 +994,13 @@ public class OllirParser implements JmmOptimization {
         handle_before_hand(node, res);
         return "error.error";
     }
+
+    @Override
+    public JmmSemanticsResult optimize(JmmSemanticsResult semanticsResult) {
+
+        if(!semanticsResult.getConfig().isEmpty() && semanticsResult.getConfig().get("optimize").equals("true")){
+            semanticsResult = (new OptimizeAST()).optimize(semanticsResult);
+        }
+        return semanticsResult;
+    }
 }

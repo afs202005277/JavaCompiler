@@ -7,7 +7,7 @@ import pt.up.fe.comp.jmm.report.Report;
 
 import java.util.List;
 
-public class Analyser implements JmmAnalysis {
+public class SemanticAnalyser implements JmmAnalysis {
     @Override
     public JmmSemanticsResult semanticAnalysis(JmmParserResult jmmParserResult) {
 

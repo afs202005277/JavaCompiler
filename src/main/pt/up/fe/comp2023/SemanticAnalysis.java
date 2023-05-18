@@ -34,6 +34,7 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         addVisit("ArrayDeclaration", this::dealWithArray);
         addVisit("AssignmentArray", this::dealWithArray);
         addVisit("Length", this::dealWithLength);
+        addVisit("NewArrayInstantiation", this::dealWithNewArrayInstantiation);
     }
 
     SemanticAnalysis(){
@@ -548,6 +549,36 @@ public class SemanticAnalysis extends PostorderJmmVisitor<SymbolTable, List<Repo
         return reports;
     }
 
+    private List<Report> dealWithNewArrayInstantiation(JmmNode jmmNode, SymbolTable symbolTable){
+        List<Report> reports = new ArrayList<>();
+        List<Symbol> accessibleVars = getAccessibleVariables(getCallerFunctionName(jmmNode),symbolTable);
+        JmmNode child1 = jmmNode.getJmmChild(0);
+        String id;
+        if(jmmNode.getJmmParent().hasAttribute("id")){
+            id = jmmNode.getJmmParent().get("id");
+        }
+        else { id = jmmNode.getJmmParent().get("variable");}
+        Type tp = matchVariable(accessibleVars, id);
+
+        if(tp == null){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable not found."));
+            putType(jmmNode, new Type("undefined", false));
+        }
+
+        else if(!tp.isArray()){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Variable "+id+" is of type "+tp.getName()+"."));
+            putType(jmmNode, new Type("undefined", false));
+        }
+        else if(!getVarType(child1).equals(new Type("integer", false))){
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(jmmNode.get("lineStart")), "Array access must be of type integer."));
+            putType(jmmNode, new Type("undefined", false));
+        }
+        else{
+            putType(jmmNode, new Type("integer", true));
+        }
+
+        return reports;
+    }
     private List<Report> dealWithObjectInstantiation(JmmNode jmmNode, SymbolTable symbolTable) {
         List<Report> reports = new ArrayList<>();
 
