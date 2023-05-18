@@ -1,18 +1,37 @@
-import io;
+import ioPlus;
+class SwitchStat {
 
-class Fac {
-    public int compFac(int param, boolean teste) {
-        int a;
-        int b;
-        int return_value;
-        a = 20;
-        b = 10;
-        return_value = a + b;
-        return return_value;
+
+    public int func(int a){
+		int result;
+
+        if(a < 1){
+          result =1;
+        } else {
+            if(a < 2){
+             result = 2;
+            } else {
+                if(a < 3){
+                    result = 3;
+                } else {
+                    if(a < 4){
+                        result = 4;
+                    } else {
+                        if(a < 5){
+                            result = 5;
+                        } else {
+                            if(a < 6){
+                                result = 6;
+                            } else {
+                                result = 7;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
     }
 
-    public static void main(String[] args) {
-        int temp_res = new Fac().compFac(10, true);
-        io.println(temp_res);
-    }
 }

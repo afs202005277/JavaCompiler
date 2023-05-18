@@ -541,8 +541,11 @@ public class OllirParser implements JmmOptimization {
     }
 
     private String handle_unary_ops(JmmNode node) {
-        handle_before_hand(node, new StringBuilder());
-        return node.get("op") + ".bool " + node.getJmmChild(0).get("ollirhelper");
+        StringBuilder res = new StringBuilder();
+        res.append("temp_").append(this.temp_n).append(" :=.bool ").append(node.get("op") + ".bool " + node.getJmmChild(0).get("ollirhelper")).append(";\n");
+        this.temp_n++;
+        handle_before_hand(node, res);
+        return "temp_" + (this.temp_n-1) + ".bool";
     }
 
     private String handle_array_index(JmmNode node) {
@@ -809,6 +812,7 @@ public class OllirParser implements JmmOptimization {
                 return "putfield(this, " + node.get("variable") + "." + get_var_type_from_name(variable) + ", " + node.getJmmChild(0).get("ollirhelper") + ").V;";
             }
 
+            handle_before_hand(node, new StringBuilder());
             if (node.getJmmChild(0).get("beforehand").split("\n").length == 1 && !Objects.equals(node.getJmmChild(0).get("beforehand"), "")) {
                 ArrayList<String> tmp = new ArrayList<>(List.of(node.getJmmChild(0).get("beforehand").split(" ")));
                 tmp.remove(0);
@@ -816,7 +820,6 @@ public class OllirParser implements JmmOptimization {
                 return variable + " :=." + get_var_type_from_name(variable) + " " + (Objects.equals(array, "") ? String.join(" ", tmp.toArray(new String[0])) : array);
             }
 
-            handle_before_hand(node, new StringBuilder());
             return variable + " :=." + get_var_type_from_name(variable) + " " + (Objects.equals(array, "") ? node.getJmmChild(0).get("ollirhelper") + ";" : array);
         }
     }
