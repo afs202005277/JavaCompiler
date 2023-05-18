@@ -530,6 +530,7 @@ public class OllirParser implements JmmOptimization {
                 case "ArrayIndex" -> node.put("ollirhelper", handle_array_index(node));
                 case "UnaryOp" -> node.put("ollirhelper", handle_unary_ops(node));
                 case "ArrayDeclaration" -> node.put("ollirhelper", handle_array_declaration(node));
+                case "NewArrayInstantiation" -> node.put("ollirhelper", handle_new_array_instantiation(node));
             }
         } else {
             switch (node.getKind()) {
@@ -546,6 +547,16 @@ public class OllirParser implements JmmOptimization {
                 }
             }
         }
+    }
+
+    private String handle_new_array_instantiation(JmmNode node) {
+        String var_type = convert_type(new Type(node.get("varType"), true));
+        StringBuilder res = new StringBuilder();
+        res.append("temp_").append(this.temp_n).append(".").append(var_type).append(" :=.").append(var_type).append(" new(array, ").append(node.getJmmChild(0).get("ollirhelper")).append(").").append(var_type).append(";");
+        this.temp_n++;
+        handle_before_hand(node, res);
+        return "temp_" + (this.temp_n-1) + "." + var_type;
+
     }
 
     private String handle_unary_ops(JmmNode node) {
@@ -998,7 +1009,7 @@ public class OllirParser implements JmmOptimization {
     @Override
     public JmmSemanticsResult optimize(JmmSemanticsResult semanticsResult) {
 
-        if(!semanticsResult.getConfig().isEmpty() && semanticsResult.getConfig().get("optimize").equals("true")){
+        if(!semanticsResult.getConfig().isEmpty() && semanticsResult.getConfig().containsKey("optimize") && semanticsResult.getConfig().get("optimize").equals("true")){
             semanticsResult = (new OptimizeAST()).optimize(semanticsResult);
         }
         return semanticsResult;
