@@ -3,7 +3,9 @@ package pt.up.fe.comp2023;
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
+import org.specs.comp.ollir.AccessModifiers;
 
+import java.rmi.AccessException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -269,6 +271,30 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
     public JasminResult toJasmin(OllirResult ollirResult) {
         StringBuilder jasminCode = new StringBuilder();
         ClassUnit ollirClassUnit = ollirResult.getOllirClass();
+
+        boolean foundMain = false;
+        for (Method method : ollirClassUnit.getMethods()) {
+            if (method.getMethodName().equals("main") && method.isStaticMethod()) {
+                foundMain = true;
+                break;
+            }
+        }
+        if (!foundMain) {
+            Method main = new Method(ollirClassUnit);
+            main.setReturnType(new Type(ElementType.VOID));
+            main.setMethodName("main");
+            main.setMethodAccessModifier(AccessModifiers.PUBLIC);
+            main.buildVarTable();
+            main.getVarTable().put("args", new Descriptor(VarScope.PARAMETER, 0));
+            main.addInstr(new ReturnInstruction());
+            main.setStaticMethod();
+            ArrayType arg = new ArrayType();
+            arg.setTypeOfElements(ElementType.STRING);
+            arg.setNumDimensions(1);
+            main.addParam(new ArrayOperand("args", arg));
+            ollirClassUnit.addMethod(main);
+        }
+
         if (ollirClassUnit.getSuperClass() == null) {
             ollirClassUnit.setSuperClass("java/lang/Object");
         }

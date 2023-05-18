@@ -1,10 +1,95 @@
-class PropSimple {
-    public int foo(){
-	  int a;
-	  a = 10;
-	  return a;
-	}
-    public static void main(String[] args) {
+import io;
+class RegisterAllocationTests {
 
+    public int testLargeNumberOfVariables() {
+        int a = 1;
+        int b = 2;
+        // Declare a large number of variables
+        int c1=0;
+        int c2=0;
+        int c3=0;
+        int c4=0;
+        int c5=0;
+        int c6=0;
+        int c7=0;
+        int c8=0;
+        int c9=0;
+        int c10=0;
+        int c11=0;
+        int c12=0;
+        int c13=0;
+        int c14=0;
+        int c15=0;
+        int c16=0;
+        int c17=0;
+        int c18=0;
+        int c19=0;
+        int c20=0;
+        // Use the variables
+        int result = a + b + c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9 + c10 + c11 + c12 + c13 + c14 + c15 + c16 + c17 + c18 + c19 + c20;
+        io.println(result);
+        return 5;
+    }
+
+    public int testHighRegisterPressure() {
+        // Declare variables exceeding the available registers
+        int a = 1;
+        int b = 2;
+        int c = 3;
+        int d = 4;
+        int e = 5;
+        int f = 6;
+        int g = 7;
+        int h = 8;
+        int i = 9;
+        int j = 10;
+        int k = 11;
+        int l = 12;
+        // Use the variables
+        int result = a + b + c + d + e + f + g + h + i + j + k + l;
+        io.println(result);
+        return 1;
+    }
+
+    public int testComplexControlFlow() {
+        int a = 1;
+        int b = 2;
+        int i = 0;
+        int result = 0;
+        if (a > 0) {
+            while(i < 10){
+                result = result + b;
+                i = i+1;
+            }
+        } else {
+            while (b > 0) {
+                result = result - b;
+                b = b - 1;
+            }
+        }
+        io.println(result);
+        return 1;
+    }
+
+    public int recursiveFunction(int n) {
+        int res = 0;
+        if (n > 0) {
+            res = n + this.recursiveFunction(n - 1);
+        }
+        return res;
+    }
+
+    public int testRecursiveFunctions() {
+        int result = this.recursiveFunction(5);
+        io.println(result);
+        return 1;
+    }
+
+    public static void main(String[] args) {
+        RegisterAllocationTests obj = new RegisterAllocationTests();
+        obj.testLargeNumberOfVariables();
+        obj.testHighRegisterPressure();
+        obj.testComplexControlFlow();
+        obj.testRecursiveFunctions();
     }
 }
