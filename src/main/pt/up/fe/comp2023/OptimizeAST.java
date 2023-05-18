@@ -23,7 +23,8 @@ public class OptimizeAST {
         boolean alterations = true;
 
         while(alterations) {
-            boolean b1 = constantPropagationOptimization(), b2 = constantFoldingOptimization(rootNode);
+            boolean b1 = constantPropagationOptimization();
+            boolean b2 = constantFoldingOptimization(rootNode);
             alterations = b1 || b2;
         }
 
@@ -103,6 +104,8 @@ public class OptimizeAST {
             binaryOpOptimization(child1);
         } else if (child2.getKind().equals("BinaryOp")) {
             binaryOpOptimization(child2);
+        } else if (child1.getKind().equals("LiteralS") || child2.getKind().equals("LiteralS")){
+
         }
         else {
             System.out.println("Invalid Binary Operation.");
@@ -160,13 +163,13 @@ public class OptimizeAST {
 
 
     public HashMap<JmmNode, Integer> getAllVariableAssignments(JmmNode jmmNode, HashMap<JmmNode, Integer> variableAssignments){
-        if(jmmNode.getKind().equals("Assignment") && jmmNode.getJmmChild(0).getKind().equals("Literal")){
+        if(jmmNode.getKind().equals("Assignment")){
             if(!checkIfFieldOrParameter(jmmNode)){
                 Optional<JmmNode> hashmapKey = variableIsInHashMap(variableAssignments, jmmNode);
                 if(hashmapKey.isPresent()){
                     int assignmentCounter = variableAssignments.get(hashmapKey.get());
                     variableAssignments.put(hashmapKey.get(), assignmentCounter + 1);
-                } else {
+                } else if(jmmNode.getJmmChild(0).getKind().equals("Literal")){
                     variableAssignments.put(jmmNode, 1);
                 }
             }

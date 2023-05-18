@@ -1,23 +1,10 @@
-import io;
-import ioPlus;
-class ComplexArrayAccess {
+class PropSimple {
+    public int foo(){
+	  int a;
+	  a = 10;
+	  return a;
+	}
+    public static void main(String[] args) {
 
-    boolean arg = true;
-
-    public int helper(int b) {
-
-        int var = 10;
-        b = 2;
-
-        arg = false;
-        arg = true && false;
-
-        b = 212;
-        b = 21;
-        b = 21;
-
-        return var;
     }
-
-
 }

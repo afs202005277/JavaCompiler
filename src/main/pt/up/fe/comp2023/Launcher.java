@@ -37,32 +37,41 @@ public class Launcher {
         // Read contents of input file
         String code = SpecsIo.read(inputFile);
 
-        /*
+
         // Instantiate JmmParser
-        SimpleParser parser = new SimpleParser();
+        SimpleParser parser = new SimpleParser(), copyParser = new SimpleParser();
 
         // Parse stage
-        JmmParserResult parserResult = parser.parse(code, config);
+        JmmParserResult parserResult = parser.parse(code, config), copyParserResult = copyParser.parse(code, config);
         if (parserResult == null) {
             System.out.println(new Report(ReportType.ERROR, Stage.SYNTATIC, -1, -1, "[PARSING ERROR] Invalid characters detected, terminating."));
         } else if (parserResult.getRootNode() != null) {
 
-            SemanticAnalyser analyser = new SemanticAnalyser();
-            JmmSemanticsResult jmmSemanticsResult = analyser.semanticAnalysis(parserResult);
+            SemanticAnalyser analyser = new SemanticAnalyser(), copyAnalyser = new SemanticAnalyser();
+            JmmSemanticsResult jmmSemanticsResult = analyser.semanticAnalysis(parserResult), copySemanticResult = copyAnalyser.semanticAnalysis(copyParserResult);
 
             if (jmmSemanticsResult.getReports().isEmpty()) {
                 OllirParser ollirParser = new OllirParser();
                 OllirResult ollirResult = ollirParser.toOllir(jmmSemanticsResult);
                 System.out.println("Ollir code:");
                 System.out.println(ollirResult.getOllirCode());
-                JasminConverter jasminConverter = new JasminConverter();
+
+                if(true){
+                    OllirParser ollirParserCopy = new OllirParser();
+                    JmmSemanticsResult optimizedResult = new OptimizeAST().optimize(copySemanticResult);
+                    OllirResult ollirResultCopy = ollirParserCopy.toOllir(optimizedResult);
+                    System.out.println("Optimized Ollir code:");
+                    System.out.println(ollirResultCopy.getOllirCode());
+                }
+
+                /*JasminConverter jasminConverter = new JasminConverter();
                 JasminResult jasminResult = jasminConverter.toJasmin(ollirResult);
                 System.out.println("=======================");
                 System.out.println("Jasmin code:");
                 System.out.println(jasminResult.getJasminCode());
                 System.out.println("=======================");
                 System.out.println("Output:");
-                jasminResult.run();
+                jasminResult.run();*/
             } else {
                 System.out.println("SEMANTIC ERRORS:");
                 for (Report temp : jmmSemanticsResult.getReports()) {
@@ -77,22 +86,19 @@ public class Launcher {
                 System.out.println('\n');
             }
         }
-         */
 
-        /**/JasminConverter jasminConverter = new JasminConverter();
+
+        /*JasminConverter jasminConverter = new JasminConverter();
         JasminResult jasminResult = jasminConverter.toJasmin(new OllirResult(code, config));
         System.out.println("COMPILED:");
         System.out.println(jasminResult.getJasminCode());
         System.out.println("RUN:");
-        jasminResult.run();
+        jasminResult.run();*/
 
-        /* parser = new SimpleParser();
-        JmmParserResult parserResult = parser.parse(code, config);
-        SemanticAnalyser analyser = new SemanticAnalyser();
-        JmmSemanticsResult jmmSemanticsResult = analyser.semanticAnalysis(parserResult);
+        /**/
+        //if(config.get("optimize").equals("true")){
 
-        JmmSemanticsResult optimizedResult = new OptimizeAST().optimize(jmmSemanticsResult);
-        System.out.println(optimizedResult);*/
+        //}
     }
 
     private static Map<String, String> parseArgs(String[] args) {
@@ -109,6 +115,12 @@ public class Launcher {
         config.put("optimize", "false");
         config.put("registerAllocation", "-1");
         config.put("debug", "false");
+
+        for (int i = 0; i < args.length; i++) {
+            if(args[i].equals("-o")){
+                config.put("optimize", "true");
+            }
+        }
 
         return config;
     }
