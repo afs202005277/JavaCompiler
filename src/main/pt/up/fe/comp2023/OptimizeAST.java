@@ -166,7 +166,10 @@ public class OptimizeAST {
         if(jmmNode.getKind().equals("Assignment")){
             if(!checkIfFieldOrParameter(jmmNode)){
                 Optional<JmmNode> hashmapKey = variableIsInHashMap(variableAssignments, jmmNode);
-                if(hashmapKey.isPresent()){
+                if (jmmNode.getJmmChild(0).getKind().equals("LiteralS") && jmmNode.getJmmChild(0).get("id").equals(jmmNode.get("variable"))/*TODO se for um LieralS no right hand side, é preciso lidar*/) {
+                    jmmNode.delete();
+                }
+                else if(hashmapKey.isPresent()){
                     int assignmentCounter = variableAssignments.get(hashmapKey.get());
                     variableAssignments.put(hashmapKey.get(), assignmentCounter + 1);
                 } else if(jmmNode.getJmmChild(0).getKind().equals("Literal")){
