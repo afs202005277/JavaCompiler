@@ -208,16 +208,24 @@ public class OllirParser implements JmmOptimization {
         System.out.println(colorsNeeded);
 
         ArrayList<String> colors = new ArrayList<>();
-
-        int desloc = 0;
-
-        ArrayList<Integer> prohibited_registers = new ArrayList<>();
-        for (Map.Entry<String, Descriptor> entry : method.getVarTable().entrySet()) {
-            if (!entry.getValue().getScope().equals(VarScope.LOCAL) || entry.getKey().equals("this"))
-                prohibited_registers.add(entry.getValue().getVirtualReg());
-        }
+        colors.add("this_color");
 
         Set<InterferenceGraphNode> graph_nodes = interferenceGraph.getNodes();
+
+
+        for (Map.Entry<String, Descriptor> entry : method.getVarTable().entrySet()) {
+            if (!entry.getValue().getScope().equals(VarScope.LOCAL)) {
+                for (InterferenceGraphNode n : graph_nodes) {
+                    if (Objects.equals(n.getRegister(), entry.getKey())) {
+                        if (!colors.contains(n.getColor()))
+                            colors.add(n.getColor());
+                        break;
+                    }
+                }
+            }
+        }
+
+
         for (Map.Entry<String, Descriptor> entry : method.getVarTable().entrySet()) {
             for (InterferenceGraphNode graph_node : graph_nodes) {
                 if (Objects.equals(graph_node.getRegister(), entry.getKey())) {
@@ -225,11 +233,7 @@ public class OllirParser implements JmmOptimization {
                     if (!colors.contains(graph_node.getColor()))
                         colors.add(graph_node.getColor());
 
-                    while (prohibited_registers.contains(colors.indexOf(graph_node.getColor()) + desloc)) {
-                        desloc++;
-                    }
-
-                    entry.getValue().setVirtualReg(colors.indexOf(graph_node.getColor()) + desloc);
+                    entry.getValue().setVirtualReg(colors.indexOf(graph_node.getColor()));
                     method.getVarTable().put(entry.getKey(), entry.getValue());
                 }
             }

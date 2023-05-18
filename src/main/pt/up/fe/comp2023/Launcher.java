@@ -53,6 +53,7 @@ public class Launcher {
             if (jmmSemanticsResult.getReports().isEmpty()) {
                 OllirParser ollirParser = new OllirParser();
                 OllirResult ollirResult = ollirParser.toOllir(jmmSemanticsResult);
+                ollirResult = ollirParser.optimize(ollirResult);
                 if (ollirResult.getReports().isEmpty()) {
                     System.out.println("=======================");
                     System.out.println("Ollir code:");
@@ -101,7 +102,7 @@ public class Launcher {
         Map<String, String> config = new HashMap<>();
         config.put("inputFile", args[0]);
         config.put("optimize", "false");
-        config.put("registerAllocation", "0");
+        config.put("registerAllocation", "-1");
         config.put("debug", "false");
 
         for (int i = 0; i < args.length; i++) {
