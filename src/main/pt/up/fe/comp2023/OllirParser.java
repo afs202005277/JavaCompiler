@@ -104,18 +104,16 @@ public class OllirParser implements JmmOptimization {
     public OllirResult toOllir(JmmSemanticsResult jmmSemanticsResult) {
         this.symbol_table = (SymbolTable) jmmSemanticsResult.getSymbolTable();
         this.root_node = jmmSemanticsResult.getRootNode();
-        this.config = jmmSemanticsResult.getConfig();
         write_import(this.symbol_table.getSomethingFromTable("import"));
         res.append("\n");
         write_class(this.symbol_table.getSomethingFromTable("class").get(0), this.symbol_table.getMethods());
 
-        OllirResult ollirResult = new OllirResult(this.res.toString(), jmmSemanticsResult.getConfig());
-
-        return ollirResult;
+        return new OllirResult(this.res.toString(), jmmSemanticsResult.getConfig());
     }
 
     @Override
     public OllirResult optimize(OllirResult ollirResult) {
+        this.config = ollirResult.getConfig();
 
         if (!(config.containsKey("registerAllocation") && Integer.parseInt(config.get("registerAllocation")) != -1)) {
             return ollirResult;
