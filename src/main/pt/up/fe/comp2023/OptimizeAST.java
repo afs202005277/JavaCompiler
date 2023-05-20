@@ -457,11 +457,14 @@ public class OptimizeAST {
 
     public boolean constantPropagationOptimization(){
 
-        //HashMap<JmmNode, Integer> variableAssignments = new HashMap<>();
+        HashMap<JmmNode, Integer> variableAssignments = new HashMap<>();
 
-        boolean alterations = checkAllInstances(rootNode);
+        boolean alterations = false;
+        // alterations = checkAllInstances(rootNode);
 
-        /*variableAssignments = getAllVariableAssignments(rootNode, variableAssignments);
+        /**/
+
+        variableAssignments = getAllVariableAssignments(rootNode, variableAssignments);
 
         for (Map.Entry<JmmNode, Integer> entry: variableAssignments.entrySet()) {
             if(entry.getValue() == 1){
@@ -471,9 +474,8 @@ public class OptimizeAST {
                 Symbol symbol = new Symbol(new Type(entry.getKey().get("varType").equals("integer")? "int": entry.getKey().get("varType"), entry.getKey().get("isArray").equals("true")), entry.getKey().get("variable"));
                 symbolTable.removeLocalVariable(funcName, symbol);
             }
-        }*/
+        }
 
-        //System.out.println(variableAssignments);
         return alterations;
     }
 }
