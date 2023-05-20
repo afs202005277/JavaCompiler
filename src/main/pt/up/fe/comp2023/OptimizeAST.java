@@ -5,10 +5,10 @@ import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.ast.JmmNodeImpl;
+import pt.up.fe.comp.jmm.ast.PostorderJmmVisitor;
+import pt.up.fe.comp.jmm.report.Report;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class OptimizeAST {
 
@@ -224,16 +224,245 @@ public class OptimizeAST {
     }
 
 
-    // instancias de variaveis = LiteralS
-    // 1º substituir todas as instâncias de LiteralS com id = var por value
-    // 2º eliminar nó da declaração VarDeclaration (e o primeiro assignment, pode ser filho ou nao)
-    // 3º retirar da symbolTable
+
+    public static JmmNode findNodeWithTargetValue(JmmNode startNode, String targetVariable) {
+        if (startNode == null)
+            return null;
+
+        JmmNode currentNode = startNode;
+        JmmNode targetNode = null;
+
+        while (currentNode != null) {
+            targetNode = findNodeWithTargetValueHelper(currentNode, targetVariable);
+            if (targetNode != null)
+                break;
+
+            currentNode = currentNode.getJmmParent();
+        }
+
+        return targetNode;
+    }
+
+    private static JmmNode findNodeWithTargetValueHelper(JmmNode node, String targetVariable) {
+        if (node == null)
+            return null;
+
+        if (node.getKind().equals("Assignment") && node.get("variable").equals(targetVariable))
+            return node;
+
+        ArrayList<JmmNode> reverseChildren = new ArrayList<>(node.getChildren());
+        Collections.reverse(reverseChildren);
+
+        for (JmmNode child : reverseChildren) {
+            JmmNode result = findNodeWithTargetValueHelper(child, targetVariable);
+            if (result != null)
+                return result;
+        }
+
+        return null;
+    }
+
+
+    public JmmNode getVariableLastAssignment(JmmNode node, String var){
+        return findNodeWithTargetValue(node, var);
+    }
+
+    private Type matchVariable(List<Symbol> list, String id){
+        for (Symbol s: list) {
+            if(s.getName().equals(id)){
+                return new Type(s.getType().getName().equals("int")? "integer": s.getType().getName(), s.getType().isArray());
+            }
+        }
+        return null;
+    }
+
+    // Retorna se num dado JmmNode a variável var é constante
+    public boolean isVarConstant(JmmNode node, String var){
+        JmmNode assignment = getVariableLastAssignment(node, var);
+        if(assignment.getAncestor("IfStatement").isPresent() || assignment.getAncestor("WhileLoop").isPresent()){
+            return false;
+        } else if (assignment.getJmmChild(0).getKind().equals("LiteralS")) {
+            String id = assignment.getJmmChild(0).get("id");
+
+            // check if RHS is a field
+            boolean isField = matchVariable(symbolTable.getFields(), id) != null;
+
+            // check if RHS is a parameter
+            boolean nodeInsideFunction = node.getAncestor("method").isPresent();
+
+            if(!nodeInsideFunction) return false;
+
+            List<Symbol> functionParams = symbolTable.getParameters(node.getAncestor("method").get().get("method"));
+            boolean isParam = matchVariable(functionParams, id) != null;
+
+            if(isField || isParam) return false;
+
+            return isVarConstant(node, id);
+        } else if (assignment.getJmmChild(0).getKind().equals("BinaryOp")) {
+            JmmNode binOp1 = assignment.getJmmChild(0).getJmmChild(0), binOp2 = assignment.getJmmChild(0).getJmmChild(1);
+            boolean res1 = false, res2 = false;
+
+            if(binOp1.getKind().equals("LiteralS")){
+                res1 = isVarConstant(node, binOp1.get("id"));
+            }
+            else if(binOp1.getKind().equals("Literal")){
+                res1 = true;
+            }
+
+            if (binOp2.getKind().equals("LiteralS")) {
+                res2 = isVarConstant(node, binOp2.get("id"));
+            }
+            else if(binOp2.getKind().equals("Literal")){
+                res2 = true;
+            }
+
+            return res1 && res2;
+        }
+
+        return true;
+    }
+
+    // Starting at the assignment node, remove all instances of variable
+    public boolean deleteAllInstances(JmmNode currentNode, String id, JmmNode assignmentNode, boolean fairplay){
+
+        if(currentNode.equals(assignmentNode)){
+            return true;
+        }
+
+        if(currentNode.getKind().equals("LiteralS") && currentNode.get("id").equals(id)){
+            JmmNode newNode = new JmmNodeImpl("Literal");
+
+            String valueAttribute = assignmentNode.get("varType").equals("boolean")? "bool": "integer";
+            newNode.put("varType", assignmentNode.get("varType"));
+            newNode.put("isArray", assignmentNode.get("isArray"));
+            newNode.put(valueAttribute, assignmentNode.getJmmChild(0).get(valueAttribute));
+
+            currentNode.replace(newNode);
+        } else if (currentNode.getKind().equals("Assignment") && currentNode.get("variable").equals(id)) {
+            return false;
+        }
+        else if(currentNode.getKind().equals("ReturnStmt")){
+            return deleteAllInstances(currentNode.getJmmChild(0), id, assignmentNode, fairplay);
+        }
+
+
+        for (JmmNode child: currentNode.getChildren()){
+            boolean res = deleteAllInstances(child, id, assignmentNode, fairplay);
+            fairplay = fairplay || res;
+        }
+
+        return fairplay;
+    }
+
+    public void deleteVarDeclaration(JmmNode jmmNode, String var){
+
+        if((jmmNode.getKind().equals("VarDeclaration") && jmmNode.hasAttribute("variableName") && jmmNode.get("variableName").equals(var))){
+            jmmNode.delete();
+            return;
+        }
+
+        for(JmmNode child: jmmNode.getChildren()){
+            deleteVarDeclaration(child, var);
+        }
+    }
+
+    public boolean checkAllInstances(JmmNode currentNode){
+        boolean functionAncestor = currentNode.getAncestor("MethodDeclaration").isPresent();
+        boolean isConst = false;
+
+        if(currentNode.getKind().equals("LiteralS")){
+            isConst = isVarConstant(currentNode, currentNode.get("id"));
+            JmmNode assignment = getVariableLastAssignment(currentNode, currentNode.get("id"));
+            // se for const, remover o ultimo assignment dela e substituir todos os literalS a partir desse assign
+            if(isConst && functionAncestor){
+                JmmNode methodNode = currentNode.getAncestor("MethodDeclaration").get();
+                assignment.delete();
+
+                JmmNode lastAssignment = getVariableLastAssignment(currentNode, currentNode.get("id"));
+                deleteAllInstances(methodNode, currentNode.get("id"), assignment, false);
+
+                if(lastAssignment == null){
+                    deleteVarDeclaration(methodNode, currentNode.get("id"));
+                    Symbol symbol = new Symbol(new Type(assignment.get("varType").equals("integer")? "int": assignment.get("varType"), assignment.get("isArray").equals("true")), assignment.get("variable"));
+                    symbolTable.removeLocalVariable(methodNode.get("methodName"), symbol);
+                }
+
+                return isConst;
+            }
+        }
+
+        for (JmmNode child: currentNode.getChildren()) {
+            boolean res = checkAllInstances(child);
+            isConst = isConst || res;
+        }
+
+
+
+        if (currentNode.getKind().equals("ReturnStmt")) {
+
+            JmmNode methodNode = currentNode.getAncestor("MethodDeclaration").get();
+            ArrayList<JmmNode> nodes = new ArrayList<>();
+
+            nodes = getAllVariableDeclarations(methodNode, nodes);
+
+            for (JmmNode node : nodes) {
+                boolean used = dropDeadVars(node, methodNode);
+
+                if(!used){
+                    JmmNode assign = getVariableLastAssignment(methodNode, node.get("variableName"));
+                    while (assign != null){
+                        assign.delete();
+                        assign = getVariableLastAssignment(methodNode, node.get("variableName"));
+                    }
+                    node.delete();
+                }
+            }
+
+        }
+
+        return isConst;
+    }
+
+
+    public ArrayList<JmmNode> getAllVariableDeclarations(JmmNode currentNode, ArrayList<JmmNode> nodes){
+        if(currentNode.getKind().equals("VarDeclaration")){
+            nodes.add(currentNode);
+        }
+        else if(currentNode.getKind().equals("ReturnStmt")){
+            return nodes;
+        }
+
+        for (JmmNode child: currentNode.getChildren()) {
+            getAllVariableDeclarations(child, nodes);
+        }
+
+        return nodes;
+    }
+
+
+
+    public boolean dropDeadVars(JmmNode node, JmmNode currentNode){
+
+        boolean used = currentNode.getKind().equals("LiteralS") && currentNode.get("id").equals(node.get("variableName"));
+
+        for (JmmNode child: currentNode.getChildren()) {
+            used = used || dropDeadVars(node, child);
+        }
+
+
+        return used;
+    }
+
+
+
     public boolean constantPropagationOptimization(){
 
-        HashMap<JmmNode, Integer> variableAssignments = new HashMap<>();
-        boolean alterations = false;
+        //HashMap<JmmNode, Integer> variableAssignments = new HashMap<>();
 
-        variableAssignments = getAllVariableAssignments(rootNode, variableAssignments);
+        boolean alterations = checkAllInstances(rootNode);
+
+        /*variableAssignments = getAllVariableAssignments(rootNode, variableAssignments);
+
         for (Map.Entry<JmmNode, Integer> entry: variableAssignments.entrySet()) {
             if(entry.getValue() == 1){
                 String funcName = entry.getKey().getAncestor("MethodDeclaration").get().get("methodName");
@@ -242,9 +471,9 @@ public class OptimizeAST {
                 Symbol symbol = new Symbol(new Type(entry.getKey().get("varType").equals("integer")? "int": entry.getKey().get("varType"), entry.getKey().get("isArray").equals("true")), entry.getKey().get("variable"));
                 symbolTable.removeLocalVariable(funcName, symbol);
             }
-        }
+        }*/
 
-        System.out.println(variableAssignments);
+        //System.out.println(variableAssignments);
         return alterations;
     }
 }

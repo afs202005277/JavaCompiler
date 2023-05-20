@@ -2,8 +2,13 @@ import io;
 class RegisterAllocationTests {
 
     public int foo() {
-
-        return 5*10/3-54;
+        int a;
+        int b;
+        a = 10;
+        b = 5;
+        b = 2;
+        a = b;
+        return a;
     }
 
     public static void main(String[] args) {
