@@ -5,7 +5,7 @@ class PropWithLoop {
 	  int res;
 	  a = 10;
 	  i = 0;
-	  while (i < a){
+	  if (i < a){
 	    i=i+1;
 	  }
 	  res = i*a;
