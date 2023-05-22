@@ -358,7 +358,11 @@ public class OptimizeAST {
 
         if(currentNode.getKind().equals("LiteralS")){
             JmmNode node = variables.get(currentNode.get("id"));
-            if(node != null){
+            if(currentNode.getAncestor("WhileLoop").isPresent()){
+                return false;
+            }
+
+            else if(node != null){
                 currentNode.replace(node);
             }
 
