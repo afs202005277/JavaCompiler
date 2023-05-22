@@ -1,17 +1,16 @@
-import io;
-class RegisterAllocationTests {
-
-    public int foo() {
-        int a;
-        int b;
-        a = 10;
-        b = 5;
-        b = 2;
-        a = b;
-        return a;
-    }
-
-    public static void main(String[] args) {
-
-    }
+class PropWithLoop {
+    public int foo(){
+	  int a;
+	  int i;
+	  int res;
+	  a = 10;
+	  i = 0;
+	  while (i < a){
+	    i=i+1;
+	  }
+	  res = i*a;
+	  return res;
+	}
+	public static void main(String[] args) {
+	}
 }

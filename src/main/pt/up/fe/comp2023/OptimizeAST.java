@@ -15,6 +15,8 @@ public class OptimizeAST {
     private SymbolTable symbolTable = new SymbolTable();
     private JmmNode rootNode;
 
+    private HashMap<String, JmmNode> variables = new HashMap<>();
+
 
     public JmmSemanticsResult optimize(JmmSemanticsResult semanticsResult){
         symbolTable = (SymbolTable) semanticsResult.getSymbolTable();
@@ -277,8 +279,8 @@ public class OptimizeAST {
     }
 
     // Retorna se num dado JmmNode a variável var é constante
-    public boolean isVarConstant(JmmNode node, String var){
-        JmmNode assignment = getVariableLastAssignment(node, var);
+    public boolean isVarConstant(JmmNode assignment){
+
         if(assignment.getAncestor("IfStatement").isPresent() || assignment.getAncestor("WhileLoop").isPresent()){
             return false;
         } else if (assignment.getJmmChild(0).getKind().equals("LiteralS")) {
@@ -288,38 +290,22 @@ public class OptimizeAST {
             boolean isField = matchVariable(symbolTable.getFields(), id) != null;
 
             // check if RHS is a parameter
-            boolean nodeInsideFunction = node.getAncestor("method").isPresent();
+            boolean nodeInsideFunction = assignment.getAncestor("method").isPresent();
 
             if(!nodeInsideFunction) return false;
 
-            List<Symbol> functionParams = symbolTable.getParameters(node.getAncestor("method").get().get("method"));
+            List<Symbol> functionParams = symbolTable.getParameters(assignment.getAncestor("method").get().get("method"));
             boolean isParam = matchVariable(functionParams, id) != null;
 
             if(isField || isParam) return false;
 
-            return isVarConstant(node, id);
-        } else if (assignment.getJmmChild(0).getKind().equals("BinaryOp")) {
-            JmmNode binOp1 = assignment.getJmmChild(0).getJmmChild(0), binOp2 = assignment.getJmmChild(0).getJmmChild(1);
-            boolean res1 = false, res2 = false;
+            return isVarConstant(assignment);
 
-            if(binOp1.getKind().equals("LiteralS")){
-                res1 = isVarConstant(node, binOp1.get("id"));
-            }
-            else if(binOp1.getKind().equals("Literal")){
-                res1 = true;
-            }
-
-            if (binOp2.getKind().equals("LiteralS")) {
-                res2 = isVarConstant(node, binOp2.get("id"));
-            }
-            else if(binOp2.getKind().equals("Literal")){
-                res2 = true;
-            }
-
-            return res1 && res2;
         }
 
-        return true;
+        else
+            return assignment.getJmmChild(0).getKind().equals("Literal");
+
     }
 
     // Starting at the assignment node, remove all instances of variable
@@ -368,31 +354,34 @@ public class OptimizeAST {
 
     public boolean checkAllInstances(JmmNode currentNode){
 
-        if(!currentNode.getKind().equals("LiteralS")){
-            return false;
-        }
-
-        boolean functionAncestor = currentNode.getAncestor("MethodDeclaration").isPresent();
         boolean isConst, alterations = false;
 
-        isConst = isVarConstant(currentNode, currentNode.get("id"));
-        JmmNode assignmentNode = getVariableLastAssignment(currentNode, currentNode.get("id"));
+        if(currentNode.getKind().equals("LiteralS")){
+            JmmNode node = variables.get(currentNode.get("id"));
+            if(node != null){
+                currentNode.replace(node);
+            }
+
+        } else if (currentNode.getKind().equals("Assignment")) {
+            isConst = isVarConstant(currentNode);
+
+            if(isConst){
+                JmmNode newNode = new JmmNodeImpl("Literal");
+
+                String valueAttribute = currentNode.get("varType").equals("boolean")? "bool": "integer";
+                newNode.put("varType", currentNode.get("varType"));
+                newNode.put("isArray", currentNode.get("isArray"));
+                newNode.put(valueAttribute, currentNode.getJmmChild(0).get(valueAttribute));
+
+                variables.put(currentNode.get("variable"), newNode);
+            }
+
+            else variables.put(currentNode.get("variable"), null);
 
 
-        if(isConst && functionAncestor){
-
-            JmmNode newNode = new JmmNodeImpl("Literal");
-
-            String valueAttribute = assignmentNode.get("varType").equals("boolean")? "bool": "integer";
-            newNode.put("varType", assignmentNode.get("varType"));
-            newNode.put("isArray", assignmentNode.get("isArray"));
-            newNode.put(valueAttribute, assignmentNode.getJmmChild(0).get(valueAttribute));
-
-            currentNode.replace(newNode);
-
-            alterations = true;
+        } else if (currentNode.getKind().equals("MethodDeclaration")) {
+            variables.clear();
         }
-
 
         return alterations;
     }
