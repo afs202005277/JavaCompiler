@@ -367,102 +367,59 @@ public class OptimizeAST {
     }
 
     public boolean checkAllInstances(JmmNode currentNode){
-        boolean functionAncestor = currentNode.getAncestor("MethodDeclaration").isPresent();
-        boolean isConst = false;
 
-        if(currentNode.getKind().equals("LiteralS")){
-            isConst = isVarConstant(currentNode, currentNode.get("id"));
-            JmmNode assignment = getVariableLastAssignment(currentNode, currentNode.get("id"));
-            // se for const, remover o ultimo assignment dela e substituir todos os literalS a partir desse assign
-            if(isConst && functionAncestor){
-                JmmNode methodNode = currentNode.getAncestor("MethodDeclaration").get();
-                assignment.delete();
-
-                JmmNode lastAssignment = getVariableLastAssignment(currentNode, currentNode.get("id"));
-                deleteAllInstances(methodNode, currentNode.get("id"), assignment, false);
-
-                if(lastAssignment == null){
-                    deleteVarDeclaration(methodNode, currentNode.get("id"));
-                    Symbol symbol = new Symbol(new Type(assignment.get("varType").equals("integer")? "int": assignment.get("varType"), assignment.get("isArray").equals("true")), assignment.get("variable"));
-                    symbolTable.removeLocalVariable(methodNode.get("methodName"), symbol);
-                }
-
-                return isConst;
-            }
+        if(!currentNode.getKind().equals("LiteralS")){
+            return false;
         }
 
+        boolean functionAncestor = currentNode.getAncestor("MethodDeclaration").isPresent();
+        boolean isConst, alterations = false;
+
+        isConst = isVarConstant(currentNode, currentNode.get("id"));
+        JmmNode assignmentNode = getVariableLastAssignment(currentNode, currentNode.get("id"));
+
+
+        if(isConst && functionAncestor){
+
+            JmmNode newNode = new JmmNodeImpl("Literal");
+
+            String valueAttribute = assignmentNode.get("varType").equals("boolean")? "bool": "integer";
+            newNode.put("varType", assignmentNode.get("varType"));
+            newNode.put("isArray", assignmentNode.get("isArray"));
+            newNode.put(valueAttribute, assignmentNode.getJmmChild(0).get(valueAttribute));
+
+            currentNode.replace(newNode);
+
+            alterations = true;
+        }
+
+
+        return alterations;
+    }
+
+
+
+    public boolean visitAllNodes(JmmNode currentNode){
+        boolean alterations = false;
         for (JmmNode child: currentNode.getChildren()) {
             boolean res = checkAllInstances(child);
-            isConst = isConst || res;
+            alterations = alterations || res;
+            visitAllNodes(child);
         }
-
-
-
-        if (currentNode.getKind().equals("ReturnStmt")) {
-
-            JmmNode methodNode = currentNode.getAncestor("MethodDeclaration").get();
-            ArrayList<JmmNode> nodes = new ArrayList<>();
-
-            nodes = getAllVariableDeclarations(methodNode, nodes);
-
-            for (JmmNode node : nodes) {
-                boolean used = dropDeadVars(node, methodNode);
-
-                if(!used){
-                    JmmNode assign = getVariableLastAssignment(methodNode, node.get("variableName"));
-                    while (assign != null){
-                        assign.delete();
-                        assign = getVariableLastAssignment(methodNode, node.get("variableName"));
-                    }
-                    node.delete();
-                }
-            }
-
-        }
-
-        return isConst;
+        return alterations;
     }
 
-
-    public ArrayList<JmmNode> getAllVariableDeclarations(JmmNode currentNode, ArrayList<JmmNode> nodes){
-        if(currentNode.getKind().equals("VarDeclaration")){
-            nodes.add(currentNode);
-        }
-        else if(currentNode.getKind().equals("ReturnStmt")){
-            return nodes;
-        }
-
-        for (JmmNode child: currentNode.getChildren()) {
-            getAllVariableDeclarations(child, nodes);
-        }
-
-        return nodes;
-    }
-
-
-
-    public boolean dropDeadVars(JmmNode node, JmmNode currentNode){
-
-        boolean used = currentNode.getKind().equals("LiteralS") && currentNode.get("id").equals(node.get("variableName"));
-
-        for (JmmNode child: currentNode.getChildren()) {
-            used = used || dropDeadVars(node, child);
-        }
-
-
-        return used;
-    }
 
 
 
     public boolean constantPropagationOptimization(){
 
-        HashMap<JmmNode, Integer> variableAssignments = new HashMap<>();
+        //HashMap<JmmNode, Integer> variableAssignments = new HashMap<>();
 
         boolean alterations = false;
-        // alterations = checkAllInstances(rootNode);
+        alterations = visitAllNodes(rootNode);
 
-        /**/
+        /*
 
         variableAssignments = getAllVariableAssignments(rootNode, variableAssignments);
 
@@ -474,7 +431,7 @@ public class OptimizeAST {
                 Symbol symbol = new Symbol(new Type(entry.getKey().get("varType").equals("integer")? "int": entry.getKey().get("varType"), entry.getKey().get("isArray").equals("true")), entry.getKey().get("variable"));
                 symbolTable.removeLocalVariable(funcName, symbol);
             }
-        }
+        }*/
 
         return alterations;
     }
