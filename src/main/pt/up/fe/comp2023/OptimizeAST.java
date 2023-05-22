@@ -193,11 +193,7 @@ public class OptimizeAST {
                 JmmNode whileBody = currentNode.getAncestor("WhileLoop").get().getJmmChild(1);
                 eraseAssignmentsInsideLoop(whileBody);
             }
-            /* start codigo estupido */
-            else if(currentNode.getAncestor("IfStatement").isPresent()){
-                return false;
-            }
-            /* end codigo estupido */
+
             JmmNode node = variables.get(currentNode.get("id"));
 
             if(node != null){
