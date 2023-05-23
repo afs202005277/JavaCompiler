@@ -106,11 +106,6 @@ public class OptimizeAST {
             return binaryOpOptimization(child1);
         } else if (child2.getKind().equals("BinaryOp")) {
             return binaryOpOptimization(child2);
-        } else if (child1.getKind().equals("LiteralS") || child2.getKind().equals("LiteralS")){
-
-        }
-        else {
-            System.out.println("Invalid Binary Operation.");
         }
         return false;
     }

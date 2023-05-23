@@ -89,6 +89,7 @@ public class OllirParser implements JmmOptimization {
 
     private void write_methods(List<String> class_methods, String class_name) {
         for (String m : class_methods) {
+            this.temp_n = 0;
             write_method(m, class_name, this.symbol_table.getParameters(m));
         }
     }
@@ -108,7 +109,7 @@ public class OllirParser implements JmmOptimization {
         res.append("\n");
         write_class(this.symbol_table.getSomethingFromTable("class").get(0), this.symbol_table.getMethods());
 
-        return new OllirResult(this.res.toString(), jmmSemanticsResult.getConfig());
+        return new OllirResult(this.res.toString().replaceAll("\\n+", "\n").replaceAll("\\.method", "\n.method"), jmmSemanticsResult.getConfig());
     }
 
     @Override
@@ -207,8 +208,12 @@ public class OllirParser implements JmmOptimization {
 
         //interferenceGraph.visualizeGraph();
 
-        System.out.print("COLOR GRAPHING SOLUTION: ");
-        System.out.println(colorsNeeded);
+        System.out.print("Color graphing solution: ");
+
+        if (method.getVarTable().size() == 1)
+            System.out.println(1);
+        else
+            System.out.println(colorsNeeded);
 
         ArrayList<String> colors = new ArrayList<>();
         colors.add("this_color");
@@ -246,6 +251,7 @@ public class OllirParser implements JmmOptimization {
         for (Map.Entry<String, Descriptor> entry : method.getVarTable().entrySet()) {
             System.out.println(entry.getKey() + " -> " + entry.getValue().getVirtualReg());
         }
+        System.out.println();
 
         return new Report(ReportType.LOG, Stage.OPTIMIZATION, -1, "Optimization complete on method " + method.getMethodName());
     }

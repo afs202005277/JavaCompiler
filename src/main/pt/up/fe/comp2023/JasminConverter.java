@@ -507,7 +507,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         Element returnVar = instruction.getOperand();
         if (returnVar != null) {
             if (returnVar.isLiteral()) {
-                return handleLiteral(returnVar, varTable) + "\n" + handleType(returnVar.getType(), "return\n");
+                return handleLiteral(returnVar, varTable) + handleType(returnVar.getType(), "return\n");
             } else {
                 Operand tmp = (Operand) returnVar;
                 if (tmp.getName().equals("this"))

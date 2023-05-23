@@ -54,7 +54,7 @@ public class Launcher {
                 OllirParser ollirParser = new OllirParser();
                 OllirResult ollirResult = ollirParser.toOllir(jmmSemanticsResult);
 
-                System.out.println("Ollir code:");
+                System.out.println("Original ollir code:");
                 System.out.println(ollirResult.getOllirCode());
 
                 OllirParser ollirParserCopy = new OllirParser();
