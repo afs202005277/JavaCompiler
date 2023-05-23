@@ -53,10 +53,18 @@ public class Launcher {
             if (jmmSemanticsResult.getReports().isEmpty()) {
                 OllirParser ollirParser = new OllirParser();
                 OllirResult ollirResult = ollirParser.toOllir(jmmSemanticsResult);
+
+                System.out.println("Ollir code:");
+                System.out.println(ollirResult.getOllirCode());
+
+                OllirParser ollirParserCopy = new OllirParser();
+                JmmSemanticsResult optimizedResult = ollirParserCopy.optimize(copySemanticResult);
+                ollirResult = ollirParserCopy.toOllir(optimizedResult);
+                System.out.println("Optimized Ollir code:");
+                System.out.println(ollirResult.getOllirCode());
+
                 ollirResult = ollirParser.optimize(ollirResult);
                 if (ollirResult.getReports().size() == 0) {
-                    System.out.println("Ollir code:");
-                    System.out.println(ollirResult.getOllirCode());
 
                     JasminConverter jasminConverter = new JasminConverter();
                     JasminResult jasminResult = jasminConverter.toJasmin(ollirResult);

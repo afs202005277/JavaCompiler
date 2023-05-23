@@ -130,6 +130,9 @@ public class OllirParser implements JmmOptimization {
     }
 
     private Report optimization_register_allocation(Method method) {
+
+        System.out.println("Optimization on " + method.getMethodName() + ":");
+
         // Iterate through the nodes in reverse topological order
         HashMap<Node, ArrayList<String>> LiveIn_prev = new HashMap<>();
         HashMap<Node, ArrayList<String>> LiveOut_prev = new HashMap<>();
@@ -237,6 +240,11 @@ public class OllirParser implements JmmOptimization {
                     method.getVarTable().put(entry.getKey(), entry.getValue());
                 }
             }
+        }
+
+        System.out.println("registers:");
+        for (Map.Entry<String, Descriptor> entry : method.getVarTable().entrySet()) {
+            System.out.println(entry.getKey() + " -> " + entry.getValue().getVirtualReg());
         }
 
         return new Report(ReportType.LOG, Stage.OPTIMIZATION, -1, "Optimization complete on method " + method.getMethodName());
