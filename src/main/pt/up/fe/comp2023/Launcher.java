@@ -58,16 +58,6 @@ public class Launcher {
                     System.out.println("Ollir code:");
                     System.out.println(ollirResult.getOllirCode());
 
-
-                /**/if(true){
-                    OllirParser ollirParserCopy = new OllirParser();
-                    JmmSemanticsResult optimizedResult = new OptimizeAST().optimize(copySemanticResult);
-                    OllirResult ollirResultCopy = ollirParserCopy.toOllir(optimizedResult);
-                    System.out.println("Optimized Ollir code:");
-                    System.out.println(ollirResultCopy.getOllirCode());
-                    System.out.println("\n\n\n\n-------------\nCODE IS EQUAL? "+ollirResultCopy.getOllirCode().equals(ollirResult.getOllirCode()));
-                }
-
                     JasminConverter jasminConverter = new JasminConverter();
                     JasminResult jasminResult = jasminConverter.toJasmin(ollirResult);
                     System.out.println("=======================");

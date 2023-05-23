@@ -253,7 +253,6 @@ public class OllirParser implements JmmOptimization {
 
     private void loop_through_nodes(Node checking_node, HashMap<Node, ArrayList<String>> LiveIn, HashMap<Node, ArrayList<String>> LiveOut, ArrayList<Node> visited, Method method, HashMap<Node, DefAndUse> def_use_table) {
         if (checking_node.getNodeType().name().equals("BEGIN")) {
-
             for (Element m : method.getParams()) {
                 AssignInstruction temp_arg = new AssignInstruction(m, m.getType(), new SingleOpInstruction(m));
                 visited.add(temp_arg);
@@ -887,6 +886,8 @@ public class OllirParser implements JmmOptimization {
             if (var_type.contains("array")) {
                 StringBuilder res = new StringBuilder();
                 // Is an array
+                if (!stat_child.get(1).hasAttribute("contents"))
+                    return stat_child.get(1).get("ollirhelper");
                 String c_string = stat_child.get(1).get("contents");
                 String[] contents = c_string.split(", ");
                 contents[0] = contents[0].substring(1);

@@ -207,12 +207,15 @@ public class OptimizeAST {
             if(isConst){
                 JmmNode newNode = new JmmNodeImpl("Literal");
 
-                String valueAttribute = currentNode.get("varType").equals("boolean")? "bool": "integer";
+                String valueAttribute = currentNode.get("varType").equals("boolean") ? "bool" : "integer";
                 newNode.put("varType", currentNode.get("varType"));
                 newNode.put("isArray", currentNode.get("isArray"));
                 newNode.put(valueAttribute, currentNode.getJmmChild(0).get(valueAttribute));
 
-                variables.put(currentNode.get("variable"), newNode);
+                if (currentNode.hasAttribute("variable"))
+                    variables.put(currentNode.get("variable"), newNode);
+                else
+                    variables.put(currentNode.get("id"), newNode);
             }
 
             else variables.put(currentNode.get("variable"), null);
