@@ -90,6 +90,7 @@ public class Launcher {
             }
 
         } else {
+            System.out.println("PARSER ERRORS:");
             for (pt.up.fe.comp.jmm.report.Report temp : parserResult.getReports()) {
                 System.out.println(temp);
                 System.out.println('\n');
@@ -113,13 +114,13 @@ public class Launcher {
         config.put("registerAllocation", "-1");
         config.put("debug", "false");
 
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].equals("-o")) {
+        for (String arg : args) {
+            if (arg.equals("-o")) {
                 config.put("optimize", "true");
             }
-            if (args[i].contains("-r=")) {
-                if (args[i].split("-r=").length == 2)
-                    config.put("registerAllocation", args[i].split("-r=")[1]);
+            if (arg.contains("-r=")) {
+                if (arg.split("-r=").length == 2)
+                    config.put("registerAllocation", arg.split("-r=")[1]);
             }
         }
 
