@@ -11,6 +11,7 @@ import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 public class OllirParser implements JmmOptimization {
@@ -144,20 +145,24 @@ public class OllirParser implements JmmOptimization {
         HashMap<Node, ArrayList<String>> LiveOutCopy;
 
         HashMap<Node, DefAndUse> def_use_table = new HashMap<>();
+        ArrayList<Instruction> argument_vars_instr = new ArrayList<>();
 
         do {
             ArrayList<Node> visited = new ArrayList<>();
             LiveInCopy = new HashMap<>(LiveIn_prev);
             LiveOutCopy = new HashMap<>(LiveOut_prev);
-            loop_through_nodes(checking_node, LiveIn_prev, LiveOut_prev, visited, method, def_use_table);
+            loop_through_nodes(checking_node, LiveIn_prev, LiveOut_prev, visited, method, def_use_table, argument_vars_instr);
         } while (!LiveIn_prev.equals(LiveInCopy) || !LiveOut_prev.equals(LiveOutCopy));
 
         HashMap<Node, HashSet<String>> LiveOut = convert_arraylist_hashset(LiveOut_prev);
 
         InterferenceGraph interferenceGraph = new InterferenceGraph();
 
+        ArrayList<Instruction> instructions = method.getInstructions();
+        instructions.addAll(argument_vars_instr);
+
         // Iterate over each instruction node
-        for (Node instruction : method.getInstructions()) {
+        for (Node instruction : instructions) {
 
             // Get the LiveOut set for the current instruction
             HashSet<String> liveOut = LiveOut.get(instruction);
@@ -265,18 +270,21 @@ public class OllirParser implements JmmOptimization {
         return res;
     }
 
-    private void loop_through_nodes(Node checking_node, HashMap<Node, ArrayList<String>> LiveIn, HashMap<Node, ArrayList<String>> LiveOut, ArrayList<Node> visited, Method method, HashMap<Node, DefAndUse> def_use_table) {
+    private void loop_through_nodes(Node checking_node, HashMap<Node, ArrayList<String>> LiveIn, HashMap<Node, ArrayList<String>> LiveOut, ArrayList<Node> visited, Method method, HashMap<Node, DefAndUse> def_use_table, ArrayList<Instruction> argument_vars_instr) {
         if (checking_node.getNodeType().name().equals("BEGIN")) {
             for (Element m : method.getParams()) {
                 AssignInstruction temp_arg = new AssignInstruction(m, m.getType(), new SingleOpInstruction(m));
+                loop_through_nodes(temp_arg, LiveIn, LiveOut, visited, method, def_use_table, argument_vars_instr);
                 visited.add(temp_arg);
-                loop_through_nodes(temp_arg, LiveIn, LiveOut, visited, method, def_use_table);
+                if (!containsKey(LiveIn, temp_arg) && !containsKey(LiveOut, temp_arg)) {
+                    argument_vars_instr.add(temp_arg);
+                }
             }
 
         } else if (checking_node.getNodeType().name().equals("END")) {
 
             for (Node node : new HashSet<>(checking_node.getPredecessors())) {
-                loop_through_nodes(node, LiveIn, LiveOut, visited, method, def_use_table);
+                loop_through_nodes(node, LiveIn, LiveOut, visited, method, def_use_table, argument_vars_instr);
             }
 
         } else if (!visited.contains(checking_node)) {
@@ -286,30 +294,46 @@ public class OllirParser implements JmmOptimization {
 
 
             // LiveOut - U ( in[n] | S € succ[n] )
-            if (!LiveOut.containsKey(checking_node)) {
+            if (!containsKey(LiveOut, checking_node)) {
                 LiveOut.put(checking_node, new ArrayList<>());
             }
             for (int i = 0; i < checking_node.getSuccessors().size(); i++) {
-                if (LiveIn.containsKey(checking_node.getSuccessors().get(i))) {
-                    if (LiveOut.containsKey(checking_node)) {
-                        LiveOut.get(checking_node).addAll(LiveIn.get(checking_node.getSuccessors().get(i)));
+                if (containsKey(LiveIn, checking_node.getSuccessors().get(i))) {
+                    if (containsKey(LiveOut, checking_node)) {
+                        getKey(LiveOut, checking_node).addAll(LiveIn.get(checking_node.getSuccessors().get(i)));
                     }
                 }
             }
 
             // LiveIn - use[n] U ( out[n] - def[n] )
-            if (LiveIn.containsKey(checking_node)) {
-                LiveIn.get(checking_node).addAll(tmp.use);
+            if (containsKey(LiveIn, checking_node)) {
+                getKey(LiveIn, checking_node).addAll(tmp.use);
             } else {
                 LiveIn.put(checking_node, tmp.use);
             }
-            LiveIn.get(checking_node).addAll(all_but_select_few(LiveOut.get(checking_node), tmp.def));
+            getKey(LiveIn, checking_node).addAll(all_but_select_few(getKey(LiveOut, checking_node), tmp.def));
 
             visited.add(checking_node);
             for (Node node : checking_node.getPredecessors()) {
-                loop_through_nodes(node, LiveIn, LiveOut, visited, method, def_use_table);
+                loop_through_nodes(node, LiveIn, LiveOut, visited, method, def_use_table, argument_vars_instr);
             }
         }
+    }
+
+    private boolean containsKey(HashMap<Node, ArrayList<String>> List, Node bruh) {
+        for (Node instr : List.keySet()) {
+            if (Objects.equals(instr.toString(), bruh.toString()))
+                return true;
+        }
+        return List.containsKey(bruh);
+    }
+
+    private ArrayList<String> getKey(HashMap<Node, ArrayList<String>> List, Node bruh) {
+        for (Map.Entry<Node, ArrayList<String>> instr : List.entrySet()) {
+            if (Objects.equals(instr.getKey().toString(), bruh.toString()))
+                return instr.getValue();
+        }
+        return null;
     }
 
     private ArrayList<String> all_but_select_few(ArrayList<String> total, ArrayList<String> removed) {
