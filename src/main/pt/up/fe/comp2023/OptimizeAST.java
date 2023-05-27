@@ -19,11 +19,23 @@ public class OptimizeAST {
 
     private HashMap<String, JmmNode> variables = new HashMap<>();
 
+    private int countAssignments(JmmNode start, String varName) {
+        int res = 0;
+        for (JmmNode node : start.getChildren()) {
+            res += countAssignments(node, varName);
+            if (node.getKind().equals("Assignment") && node.hasAttribute("variable") && node.get("variable").equals(varName)) {
+                res++;
+            }
+        }
+        return res;
+    }
+
     private void removeDeadVars(JmmNode start) {
         for (JmmNode node : start.getChildren()) {
             removeDeadVars(node);
-            if (node.getKind().equals("Assignment") && node.hasAttribute("variable") && deadVariables.contains(node.get("variable"))) {
-                node.delete();
+            if (node.getKind().equals("Assignment") && node.hasAttribute("variable") && deadVariables.contains(node.get("variable") + ":" + getCurrentMethod(node).get("methodName"))) {
+                if (countAssignments(getCurrentMethod(node), node.get("variable")) <= 1)
+                    node.delete();
             }
         }
     }
@@ -38,8 +50,8 @@ public class OptimizeAST {
             boolean b1 = constantPropagationOptimization(rootNode);
             boolean b2 = constantFoldingOptimization(rootNode);
             alterations = b1 || b2;
-        }
 
+        }
         removeDeadVars(rootNode);
         deadVariables.clear();
 
@@ -185,10 +197,20 @@ public class OptimizeAST {
         }
     }
 
+    private JmmNode getCurrentMethod(JmmNode node) {
+        while (!node.getKind().equals("MethodDeclaration")) {
+            node = node.getJmmParent();
+        }
+        return node;
+    }
 
     public boolean checkAllInstances(JmmNode currentNode) {
 
         boolean isConst, alterations = false;
+        if (currentNode.getKind().equals("ElseStmtBody")) {
+            int a = 5;
+        }
+
 
         if (currentNode.getKind().equals("LiteralS")) {
             if (currentNode.getAncestor("WhileLoop").isPresent()) {
@@ -199,7 +221,7 @@ public class OptimizeAST {
             JmmNode node = variables.get(currentNode.get("id"));
 
             if (node != null) {
-                this.deadVariables.add(currentNode.get("id"));
+                this.deadVariables.add(currentNode.get("id") + ":" + getCurrentMethod(currentNode).get("methodName"));
                 currentNode.replace(node);
                 alterations = true;
             }
@@ -225,7 +247,6 @@ public class OptimizeAST {
 
         return alterations;
     }
-
 
     public boolean constantPropagationOptimization(JmmNode currentNode) {
         boolean alterations = false;
