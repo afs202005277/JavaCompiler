@@ -15,32 +15,45 @@ public class OptimizeAST {
     private SymbolTable symbolTable = new SymbolTable();
     private JmmNode rootNode;
 
+    private HashSet<String> deadVariables = new HashSet<>();
+
     private HashMap<String, JmmNode> variables = new HashMap<>();
 
+    private void removeDeadVars(JmmNode start) {
+        for (JmmNode node : start.getChildren()) {
+            removeDeadVars(node);
+            if (node.getKind().equals("Assignment") && deadVariables.contains(node.get("variable"))) {
+                node.delete();
+            }
+        }
+    }
 
-    public JmmSemanticsResult optimize(JmmSemanticsResult semanticsResult){
+    public JmmSemanticsResult optimize(JmmSemanticsResult semanticsResult) {
         symbolTable = (SymbolTable) semanticsResult.getSymbolTable();
         rootNode = semanticsResult.getRootNode();
 
         boolean alterations = true;
 
-        while(alterations) {
+        while (alterations) {
             boolean b1 = constantPropagationOptimization(rootNode);
             boolean b2 = constantFoldingOptimization(rootNode);
             alterations = b1 || b2;
         }
 
+        removeDeadVars(rootNode);
+        deadVariables.clear();
+
         return semanticsResult;
     }
 
 
-    public void removeAllChildren(JmmNode jmmNode){
-        while(jmmNode.getNumChildren() != 0){
+    public void removeAllChildren(JmmNode jmmNode) {
+        while (jmmNode.getNumChildren() != 0) {
             jmmNode.removeJmmChild(0);
         }
     }
 
-    private String computeIntegerOperation(int child1Value, int child2Value, String op){
+    private String computeIntegerOperation(int child1Value, int child2Value, String op) {
         return switch (op) {
             case "+" -> String.valueOf(child1Value + child2Value);
             case "-" -> String.valueOf(child1Value - child2Value);
@@ -56,7 +69,7 @@ public class OptimizeAST {
         };
     }
 
-    private String computeBooleanOperation(boolean child1Value, boolean child2Value, String op){
+    private String computeBooleanOperation(boolean child1Value, boolean child2Value, String op) {
         return switch (op) {
             case "==" -> String.valueOf(child1Value == child2Value);
             case "!=" -> String.valueOf(child1Value != child2Value);
@@ -67,13 +80,13 @@ public class OptimizeAST {
     }
 
 
-    public boolean binaryOpOptimization(JmmNode jmmNode){
+    public boolean binaryOpOptimization(JmmNode jmmNode) {
         JmmNode child1 = jmmNode.getJmmChild(0), child2 = jmmNode.getJmmChild(1);
-        if(child1.getKind().equals("Literal") && child2.getKind().equals("Literal")){
-            if(child1.hasAttribute("integer") && child2.hasAttribute("integer")){
-                int child1Value = Integer.parseInt(child1.get("integer")) , child2Value = Integer.parseInt(child2.get("integer"));
+        if (child1.getKind().equals("Literal") && child2.getKind().equals("Literal")) {
+            if (child1.hasAttribute("integer") && child2.hasAttribute("integer")) {
+                int child1Value = Integer.parseInt(child1.get("integer")), child2Value = Integer.parseInt(child2.get("integer"));
                 String result = computeIntegerOperation(child1Value, child2Value, jmmNode.get("op"));
-                String varType = (result.equals("true") || result.equals("false")) ? "bool": "integer";
+                String varType = (result.equals("true") || result.equals("false")) ? "bool" : "integer";
 
                 removeAllChildren(jmmNode);
 
@@ -96,8 +109,7 @@ public class OptimizeAST {
                 newNode.put("bool", String.valueOf(result));
 
                 jmmNode.replace(newNode);
-            }
-            else {
+            } else {
                 System.out.println("Binary operation not valid on 2 different types.");
             }
 
@@ -111,14 +123,13 @@ public class OptimizeAST {
     }
 
 
-    public boolean constantFoldingOptimization(JmmNode jmmNode){
+    public boolean constantFoldingOptimization(JmmNode jmmNode) {
         boolean alterations = false;
 
-        if(jmmNode.getKind().equals("BinaryOp")){
+        if (jmmNode.getKind().equals("BinaryOp")) {
             alterations = binaryOpOptimization(jmmNode);
-        }
-        else{
-            for (JmmNode child: jmmNode.getChildren()) {
+        } else {
+            for (JmmNode child : jmmNode.getChildren()) {
                 boolean result = constantFoldingOptimization(child);
                 alterations = alterations || result;
             }
@@ -128,22 +139,20 @@ public class OptimizeAST {
     }
 
 
-
-    private Type matchVariable(List<Symbol> list, String id){
-        for (Symbol s: list) {
-            if(s.getName().equals(id)){
-                return new Type(s.getType().getName().equals("int")? "integer": s.getType().getName(), s.getType().isArray());
+    private Type matchVariable(List<Symbol> list, String id) {
+        for (Symbol s : list) {
+            if (s.getName().equals(id)) {
+                return new Type(s.getType().getName().equals("int") ? "integer" : s.getType().getName(), s.getType().isArray());
             }
         }
         return null;
     }
 
 
-
     // Retorna se num dado JmmNode a variável var é constante
-    public boolean isVarConstant(JmmNode assignment){
+    public boolean isVarConstant(JmmNode assignment) {
 
-        if(assignment.getAncestor("IfStatement").isPresent() || assignment.getAncestor("WhileLoop").isPresent()){
+        if (assignment.getAncestor("IfStatement").isPresent() || assignment.getAncestor("WhileLoop").isPresent()) {
             return false;
         } else if (assignment.getJmmChild(0).getKind().equals("LiteralS")) {
             String id = assignment.getJmmChild(0).get("id");
@@ -154,37 +163,35 @@ public class OptimizeAST {
             // check if RHS is a parameter
             boolean nodeInsideFunction = assignment.getAncestor("method").isPresent();
 
-            if(!nodeInsideFunction) return false;
+            if (!nodeInsideFunction) return false;
 
             List<Symbol> functionParams = symbolTable.getParameters(assignment.getAncestor("method").get().get("method"));
             boolean isParam = matchVariable(functionParams, id) != null;
 
-            if(isField || isParam) return false;
+            if (isField || isParam) return false;
 
             return isVarConstant(assignment);
 
-        }
-
-        else
+        } else
             return assignment.getJmmChild(0).getKind().equals("Literal");
 
     }
 
-    public void eraseAssignmentsInsideLoop(JmmNode whileBody){
-        for(JmmNode statement: whileBody.getChildren()){
-            if(statement.getKind().equals("Assignment")){
+    public void eraseAssignmentsInsideLoop(JmmNode whileBody) {
+        for (JmmNode statement : whileBody.getChildren()) {
+            if (statement.getKind().equals("Assignment")) {
                 variables.put(statement.get("variable"), null);
             }
         }
     }
 
 
-    public boolean checkAllInstances(JmmNode currentNode){
+    public boolean checkAllInstances(JmmNode currentNode) {
 
         boolean isConst, alterations = false;
 
-        if(currentNode.getKind().equals("LiteralS")){
-            if(currentNode.getAncestor("WhileLoop").isPresent()){
+        if (currentNode.getKind().equals("LiteralS")) {
+            if (currentNode.getAncestor("WhileLoop").isPresent()) {
                 JmmNode whileBody = currentNode.getAncestor("WhileLoop").get().getJmmChild(1);
                 eraseAssignmentsInsideLoop(whileBody);
             }
@@ -192,6 +199,7 @@ public class OptimizeAST {
             JmmNode node = variables.get(currentNode.get("id"));
 
             if (node != null) {
+                this.deadVariables.add(currentNode.get("id"));
                 currentNode.replace(node);
                 alterations = true;
             }
@@ -208,10 +216,7 @@ public class OptimizeAST {
                 newNode.put(valueAttribute, currentNode.getJmmChild(0).get(valueAttribute));
 
                 variables.put(currentNode.get("variable"), newNode);
-                currentNode.delete();
-            }
-
-            else variables.put(currentNode.get("variable"), null);
+            } else variables.put(currentNode.get("variable"), null);
 
 
         } else if (currentNode.getKind().equals("MethodDeclaration")) {
@@ -222,11 +227,9 @@ public class OptimizeAST {
     }
 
 
-
-
-    public boolean constantPropagationOptimization(JmmNode currentNode){
+    public boolean constantPropagationOptimization(JmmNode currentNode) {
         boolean alterations = false;
-        for (JmmNode child: currentNode.getChildren()) {
+        for (JmmNode child : currentNode.getChildren()) {
             boolean res = checkAllInstances(child);
             alterations = alterations || res;
             alterations = alterations || constantPropagationOptimization(child);
