@@ -208,6 +208,7 @@ public class OptimizeAST {
                 newNode.put(valueAttribute, currentNode.getJmmChild(0).get(valueAttribute));
 
                 variables.put(currentNode.get("variable"), newNode);
+                currentNode.delete();
             }
 
             else variables.put(currentNode.get("variable"), null);
