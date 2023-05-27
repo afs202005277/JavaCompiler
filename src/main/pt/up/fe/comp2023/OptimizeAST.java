@@ -22,7 +22,7 @@ public class OptimizeAST {
     private void removeDeadVars(JmmNode start) {
         for (JmmNode node : start.getChildren()) {
             removeDeadVars(node);
-            if (node.getKind().equals("Assignment") && deadVariables.contains(node.get("variable"))) {
+            if (node.getKind().equals("Assignment") && node.hasAttribute("variable") && deadVariables.contains(node.get("variable"))) {
                 node.delete();
             }
         }
