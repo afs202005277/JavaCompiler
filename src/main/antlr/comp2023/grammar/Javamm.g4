@@ -70,9 +70,7 @@ statement
     : '{' ( statement )* '}' #Body
     | 'if' '(' condition ')' statement elseStmt? #IfStatement
     | 'while' '(' expression ')' statement #WhileLoop
-    | 'for' '(' (varDeclaration | expression ';') expression ';' expression ')' statement #ForLoop
     | variable = ID '=' expression ';' #Assignment
-    | variable = ID '=' ('new' type)? '{' (contents+=INT',')*contents+=INT '}' ';' #AssignmentArray
     | variable = ID '=' 'new' 'int' '[' expression ']' ';' #ArrayDeclaration
     | id=ID '[' expression ']' '=' expression ';' #Assignment
     | expression ';' #Stmt
