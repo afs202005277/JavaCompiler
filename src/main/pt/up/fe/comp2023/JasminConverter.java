@@ -272,35 +272,14 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
         StringBuilder jasminCode = new StringBuilder();
         ClassUnit ollirClassUnit = ollirResult.getOllirClass();
 
-        boolean foundMain = false;
-        for (Method method : ollirClassUnit.getMethods()) {
-            if (method.getMethodName().equals("main") && method.isStaticMethod()) {
-                foundMain = true;
-                break;
-            }
-        }
-        if (!foundMain) {
-            Method main = new Method(ollirClassUnit);
-            main.setReturnType(new Type(ElementType.VOID));
-            main.setMethodName("main");
-            main.setMethodAccessModifier(AccessModifiers.PUBLIC);
-            main.buildVarTable();
-            main.getVarTable().put("args", new Descriptor(VarScope.PARAMETER, 0));
-            main.addInstr(new ReturnInstruction());
-            main.setStaticMethod();
-            ArrayType arg = new ArrayType();
-            arg.setTypeOfElements(ElementType.STRING);
-            arg.setNumDimensions(1);
-            main.addParam(new ArrayOperand("args", arg));
-            ollirClassUnit.addMethod(main);
-        }
-
         if (ollirClassUnit.getSuperClass() == null) {
             ollirClassUnit.setSuperClass("java/lang/Object");
         }
 
         List<String> methods = new ArrayList<>();
+        HashMap<String, Method> methodMap = new HashMap<>();
         for (Method m : ollirClassUnit.getMethods()) {
+            methodMap.put(m.getMethodName(), m);
             methods.add(m.getMethodName());
         }
         List<String> imports = new ArrayList<>();
@@ -326,10 +305,7 @@ public class JasminConverter implements pt.up.fe.comp.jmm.jasmin.JasminBackend {
                 return 0;
             }
         });
-        HashMap<String, Method> methodMap = new HashMap<>();
-        for (Method method : methodsObject) {
-            methodMap.put(method.getMethodName(), method);
-        }
+
         for (Method method : methodsObject) {
             List<Instruction> instructions = method.getInstructions();
             String staticStr = " static ", finalStr = " final ";
