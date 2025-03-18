@@ -1,32 +1,30 @@
-# Compilers Project
+# Compilers Project: Java-- Compiler Implementation
 
-## Implemented optimizations
+This repository contains the implementation of a compiler for **Java--**, a subset of the Java programming language. The goal of this project was to design and implement various optimization techniques and improvements for the Java-- language, focusing on generating efficient Java bytecode through several compiler transformations.
 
-- Constant folding: integer and boolean expressions
-- Constant propagation: integer and boolean expressions
-- Register allocation
-- Dead code elimination (after running constant propagation and folding)
-- Usage of low-cost instructions in Jasmin:
-  - iload_x, istore_x, astore_x, aload_x
-  - iconst_0, bipush, sipush, ldc
-  - use of iinc
-  - iflt, ifne, etc (compare against zero, instead of two values, e.g., if_icmplt)
+## Features
 
-## Extras
+The Java-- compiler includes several optimizations and additional features to enhance both performance and code efficiency:
 
-- Operators: ==, !=, >, >=, <=, ||
-- Dead code elimination
-- Constant propagation and folding with booleans
+### Optimizations
 
-## Self Evaluation
+- **Constant Folding**: Optimizes integer and boolean expressions at compile time.
+- **Constant Propagation**: Propagates constants in integer and boolean expressions across the program.
+- **Register Allocation**: Optimizes the use of registers during compilation to minimize memory usage.
+- **Dead Code Elimination**: Removes unnecessary code after constant propagation and folding.
+- **Low-Cost Instructions Usage**: Utilizes Jasmin instructions that minimize the bytecode size and improve performance:
+  - `iload_x`, `istore_x`, `astore_x`, `aload_x`
+  - `iconst_0`, `bipush`, `sipush`, `ldc`
+  - Use of `iinc`
+  - Conditional jumps such as `iflt`, `ifne` (comparing against zero instead of two values, e.g., `if_icmplt`)
 
-We believe our project meets all the mandatory requirements and, as far as we know, there are no faults in its
-implementation.
-Furthermore, our project passes all public and private tests (of all checkpoints) with success.
-Therefore, we believe our project deserves a score of 20.
+### Additional Features
 
-## Students
+- Support for operators: `==`, `!=`, `>`, `>=`, `<=`, `||`
+- Dead code elimination and constant propagation and folding with boolean expressions.
 
-- André Sousa (up202005277): 33.3%
-- Matilde Silva (up202007928): 33.3%
-- Pedro Fonseca (up202008307): 33.3%
+## Team Members
+
+- **André Sousa** (up202005277)
+- **Matilde Silva** (up202007928)
+- **Pedro Fonseca** (up202008307)
